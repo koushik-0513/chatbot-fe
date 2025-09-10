@@ -7,6 +7,7 @@ import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
 import { TNews } from "../types/types";
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
+import { useUserId } from "@/hooks/use-user-id";
 
 type TNewsProps = {
   onShowBackButton: (show: boolean) => void;
@@ -14,6 +15,7 @@ type TNewsProps = {
   activePage: string;
   onShowDetails?: (show: boolean) => void;
   onBackFromDetails?: () => void;
+  onAutoMaximize?: () => void;
 };
 
 export const News = ({
@@ -22,9 +24,11 @@ export const News = ({
   activePage,
   onShowDetails,
   onBackFromDetails,
+  onAutoMaximize,
 }: TNewsProps) => {
   const [selectedNewsId, setSelectedNewsId] = useState<string | null>(null);
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+  const { user_id } = useUserId();
   const {
     data: news_data,
     isLoading,
@@ -135,7 +139,11 @@ export const News = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <NewsDetails news={detailed_news.data} onBack={handle_back_click} />
+            <NewsDetails 
+              news={detailed_news.data} 
+              onBack={handle_back_click} 
+              onAutoMaximize={onAutoMaximize}
+            />
           </motion.div>
         )}
 

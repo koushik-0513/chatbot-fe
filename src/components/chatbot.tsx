@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,6 +24,8 @@ import { ChatContainer } from "./sub-components/chat-related/chat-container";
 interface TChatbotProps {
   user_id: string;
   onClose?: () => void;
+  isMaximized?: boolean;
+  onMaximizeChange?: (isMaximized: boolean) => void;
 }
 
 interface NavigationItem {
@@ -39,14 +41,15 @@ const navigationItems: NavigationItem[] = [
   { id: "news", icon: Megaphone, label: "News" },
 ];
 
-export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
+export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, onMaximizeChange }: TChatbotProps) => {
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
   const [backButtonTrigger, setBackButtonTrigger] = useState(0);
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [pageKey, setPageKey] = useState(Date.now());
-  const [isMaximized, setIsMaximized] = useState(false);
+  const [internalIsMaximized, setInternalIsMaximized] = useState(false);
+  const isMaximized = externalIsMaximized !== undefined ? externalIsMaximized : internalIsMaximized;
   const [showDetails, setShowDetails] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const { resetAllScroll, resetScrollToElement, resetAllScrollWithDelay } =
@@ -77,7 +80,12 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
     setActivePage(page);
     setShowBackButton(false);
     setShowDetails(false); // Reset details state when changing pages
-    setIsMaximized(false); // Auto-minimize when changing pages
+    const newMaximized = false;
+    if (externalIsMaximized !== undefined) {
+      onMaximizeChange?.(newMaximized);
+    } else {
+      setInternalIsMaximized(newMaximized);
+    }
     setPageKey(Date.now()); // Force component remount
     if (page === "message") {
       setShowChatHistory(true);
@@ -114,7 +122,12 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
 
   // Handle back navigation from details views with auto-minimize
   const handleBackFromDetails = () => {
-    setIsMaximized(false); // Auto-minimize when going back from details
+    const newMaximized = false;
+    if (externalIsMaximized !== undefined) {
+      onMaximizeChange?.(newMaximized);
+    } else {
+      setInternalIsMaximized(newMaximized);
+    }
     setShowDetails(false);
     setShowBackButton(false);
     resetAllScrollWithDelay(100);
@@ -122,9 +135,24 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
 
   // Handle just the minimize functionality without affecting other states
   const handleMinimizeOnly = () => {
-    setIsMaximized(false); // Auto-minimize when going back from details
+    const newMaximized = false;
+    if (externalIsMaximized !== undefined) {
+      onMaximizeChange?.(newMaximized);
+    } else {
+      setInternalIsMaximized(newMaximized);
+    }
     resetAllScrollWithDelay(100);
   };
+
+  // Handle auto-maximize for details views
+  const handleAutoMaximize = useCallback(() => {
+    const newMaximized = true;
+    if (externalIsMaximized !== undefined) {
+      onMaximizeChange?.(newMaximized);
+    } else {
+      setInternalIsMaximized(newMaximized);
+    }
+  }, [externalIsMaximized, onMaximizeChange]);
 
   // Check if we're on a details page where maximize should be shown
   const shouldShowMaximizeButton = () => {
@@ -205,7 +233,14 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
       <div className="ml-auto flex items-center gap-2">
         {shouldShowMaximizeButton() && (
           <button
-            onClick={() => setIsMaximized(!isMaximized)}
+            onClick={() => {
+              const newMaximized = !isMaximized;
+              if (externalIsMaximized !== undefined) {
+                onMaximizeChange?.(newMaximized);
+              } else {
+                setInternalIsMaximized(newMaximized);
+              }
+            }}
             className="hover:bg-muted rounded-full p-1 transition-colors"
           >
             {isMaximized ? (
@@ -256,7 +291,7 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
     <motion.div
       className={`border-border flex flex-col border shadow-2xl ${
         isMaximized
-          ? "fixed right-6 bottom-6 z-50 h-[calc(90vh-2rem)] w-[calc(40vw-3rem)] rounded-lg"
+          ? "h-[calc(90vh-2rem)] w-[calc(40vw-3rem)] rounded-lg"
           : "h-[600px] w-96 rounded-lg"
       } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
@@ -294,7 +329,10 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
               transition={{ duration: 0.3 }}
               className="p-4"
             >
-              <Homepage onNavigateToHelp={() => handlePageChange("help")} />
+              <Homepage 
+                onNavigateToHelp={() => handlePageChange("help")} 
+                onClose={onClose}
+              />
             </motion.div>
           )}
           {activePage === "message" && (
@@ -328,6 +366,7 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
                 onShowDetails={setShowDetails}
                 onBackFromDetails={handleBackFromDetails}
                 onMinimizeOnly={handleMinimizeOnly}
+                onAutoMaximize={handleAutoMaximize}
               />
             </motion.div>
           )}
@@ -346,6 +385,7 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
                 activePage={activePage}
                 onShowDetails={setShowDetails}
                 onBackFromDetails={handleBackFromDetails}
+                onAutoMaximize={handleAutoMaximize}
               />
             </motion.div>
           )}

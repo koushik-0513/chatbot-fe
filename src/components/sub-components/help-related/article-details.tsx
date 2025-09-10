@@ -22,6 +22,7 @@ interface TArticleDetailsProps {
   isLoading: boolean;
   error: Error | null;
   onBack: () => void;
+  onAutoMaximize?: () => void;
 }
 
 export const ArticleDetails = ({
@@ -30,14 +31,15 @@ export const ArticleDetails = ({
   isLoading,
   error,
   onBack,
+  onAutoMaximize,
 }: TArticleDetailsProps) => {
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const { user_id } = useUserId();
 
-  // Reaction state
+  // Reaction state - initialize from article data if available
   const [selectedReaction, setSelectedReaction] =
-    useState<TArticleReaction | null>(null);
+    useState<TArticleReaction | null>((articleDetailsData as any)?.data?.article?.reaction?.reaction || null);
 
   // Article reaction mutation
   const submitReactionMutation = useSubmitArticleReaction();
@@ -65,6 +67,21 @@ export const ArticleDetails = ({
       contentRef.current.scrollTop = 0;
     }
   }, [resetAllScrollWithDelay]);
+
+  // Auto-maximize when component mounts
+  useEffect(() => {
+    if (onAutoMaximize) {
+      onAutoMaximize();
+    }
+  }, [onAutoMaximize]);
+
+  // Update selected reaction when article data changes
+  useEffect(() => {
+    const existingReaction = (articleDetailsData as any)?.data?.article?.reaction?.reaction;
+    if (existingReaction) {
+      setSelectedReaction(existingReaction);
+    }
+  }, [articleDetailsData]);
 
   // Function to calculate relative time
   const getRelativeTime = (dateString: string) => {
@@ -294,7 +311,7 @@ export const ArticleDetails = ({
                   isSelected
                     ? "border-primary bg-primary/10 scale-110"
                     : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
-                } ${isSubmitting ? "cursor-not-allowed opacity-5" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-1" : ""} `}
+                } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
                 variants={scale_variants}
                 whileHover={!isSubmitting ? { scale: 1.1 } : {}}
                 whileTap={!isSubmitting ? { scale: 0.95 } : {}}

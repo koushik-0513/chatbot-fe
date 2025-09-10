@@ -16,16 +16,17 @@ import { MarkdownRenderer } from "../../ui/markdown-renderer";
 interface TNewsDetailsProps {
   news: TNews;
   onBack: () => void;
+  onAutoMaximize?: () => void;
 }
 
-export const NewsDetails = ({ news }: TNewsDetailsProps) => {
+export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const { user_id } = useUserId();
 
-  // Reaction state
+  // Reaction state - initialize from news data if available
   const [selectedReaction, setSelectedReaction] =
-    useState<TNewsReaction | null>(null);
+    useState<TNewsReaction | null>((news as any)?.reaction?.reaction || null);
 
   // News reaction mutation
   const submitReactionMutation = useSubmitNewsReaction();
@@ -53,6 +54,21 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
       contentRef.current.scrollTop = 0;
     }
   }, [resetAllScrollWithDelay]);
+
+  // Auto-maximize when component mounts
+  useEffect(() => {
+    if (onAutoMaximize) {
+      onAutoMaximize();
+    }
+  }, [onAutoMaximize]);
+
+  // Update selected reaction when news data changes
+  useEffect(() => {
+    const existingReaction = (news as any)?.reaction?.reaction;
+    if (existingReaction) {
+      setSelectedReaction(existingReaction);
+    }
+  }, [news]);
 
   // Function to calculate relative time
   const get_relative_time = (dateString: string | undefined): string => {

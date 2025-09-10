@@ -5,12 +5,14 @@ import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
 import { SearchComponent } from "./sub-components/home-related/search-component";
+import { X } from "lucide-react";
 
 interface THomepageProps {
   onNavigateToHelp?: () => void;
+  onClose?: () => void;
 }
 
-export const Homepage = ({ onNavigateToHelp }: THomepageProps) => {
+export const Homepage = ({ onNavigateToHelp, onClose }: THomepageProps) => {
   const {
     data: posts_data,
     isLoading,
@@ -29,11 +31,26 @@ export const Homepage = ({ onNavigateToHelp }: THomepageProps) => {
 
   return (
     <motion.div
-      className="dark space-y-4 pt-50"
+      className="dark space-y-4 pt-50 relative"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Close button */}
+      {onClose && (
+        <motion.button
+          onClick={onClose}
+          className="absolute top-2 right-1 z-10 transition-colors cursor-pointer"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          aria-label="Close"
+        >
+          <X className="text-muted-foreground h-5 w-5 " />
+        </motion.button>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

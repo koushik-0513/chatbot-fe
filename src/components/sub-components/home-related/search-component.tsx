@@ -57,6 +57,11 @@ export const SearchComponent = ({
     onNavigateToHelp?.();
   };
 
+  const handleInputClick = () => {
+    // Navigate to help page immediately when search input is clicked
+    onNavigateToHelp?.();
+  };
+
   return (
     <motion.div
       className="bg-card border-border rounded-lg border p-6"
@@ -72,7 +77,8 @@ export const SearchComponent = ({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={handleKeyPress}
-          className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none"
+          onClick={handleInputClick}
+          className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none cursor-pointer"
         />
         <Button
           onClick={handleSearch}

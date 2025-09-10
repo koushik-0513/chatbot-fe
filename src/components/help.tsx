@@ -13,6 +13,7 @@ import { ArticleCard } from "./sub-components/help-related/article-cards";
 import { ArticleDetails } from "./sub-components/help-related/article-details";
 import { CollectionDetails } from "./sub-components/help-related/collection-details";
 import { SearchBar } from "./sub-components/help-related/search-bar";
+import { useUserId } from "@/hooks/use-user-id";
 
 type THelppageProps = {
   onShowBackButton: (show: boolean) => void;
@@ -21,6 +22,7 @@ type THelppageProps = {
   onShowDetails?: (show: boolean) => void;
   onBackFromDetails?: () => void;
   onMinimizeOnly?: () => void;
+  onAutoMaximize?: () => void;
 };
 
 export const Helppage = ({
@@ -30,6 +32,7 @@ export const Helppage = ({
   onShowDetails,
   onBackFromDetails,
   onMinimizeOnly,
+  onAutoMaximize,
 }: THelppageProps) => {
   const [pageState, setPageState] = useState<THelpPageState>({
     currentView: "list",
@@ -37,7 +40,7 @@ export const Helppage = ({
     selectedArticle: null,
   });
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
-
+  const { user_id } = useUserId();
   // Fetch collections from API
   const { data: collectionsData, isLoading, error } = useGetCollections();
 
@@ -68,7 +71,7 @@ export const Helppage = ({
     data: articleDetailsData,
     isLoading: isLoadingArticle,
     error: articleError,
-  } = useGetArticleDetails(selectedArticleId);
+  } = useGetArticleDetails(selectedArticleId, user_id);
 
   console.log(collectionDetailsData);
 
@@ -219,6 +222,7 @@ export const Helppage = ({
               isLoading={isLoadingArticle}
               error={articleError}
               onBack={handle_back_to_collection}
+              onAutoMaximize={onAutoMaximize}
             />
           </motion.div>
         )}
