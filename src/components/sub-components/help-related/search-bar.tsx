@@ -2,10 +2,12 @@
 
 import { Search } from "lucide-react";
 
+import { Input } from "@/components/ui/input";
+
 export const SearchBar = () => {
   return (
     <div className="relative mb-4">
-      <input
+      <Input
         type="text"
         placeholder="Search for help"
         className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none"

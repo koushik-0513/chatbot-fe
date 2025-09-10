@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
 
-import { useGetPosts } from "../services/posts-service";
+import { useGetPosts } from "../hooks/api/posts-service";
 import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
+import { SearchComponent } from "./sub-components/home-related/search-component";
 
-export const Homepage = () => {
+interface THomepageProps {
+  onNavigateToHelp?: () => void;
+}
+
+export const Homepage = ({ onNavigateToHelp }: THomepageProps) => {
   const {
     data: posts_data,
     isLoading,
@@ -24,7 +29,7 @@ export const Homepage = () => {
 
   return (
     <motion.div
-      className="space-y-4 pt-50"
+      className="dark space-y-4 pt-50"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -97,7 +102,13 @@ export const Homepage = () => {
             />
           </motion.div>
         ))}
-
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 + 0.1 }}
+      >
+        <SearchComponent onNavigateToHelp={onNavigateToHelp} />
+      </motion.div>
       {/* No posts state */}
       {!isLoading && !error && display_posts.length === 0 && (
         <motion.div

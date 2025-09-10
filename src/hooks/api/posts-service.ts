@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
+import env from "../../config/env";
+
 export type TPost = {
   id: string;
   title: string;
@@ -35,7 +37,7 @@ export const useGetPosts = (params: TGetPostsParams) => {
     queryKey: ["posts", page, limit],
     queryFn: async () => {
       const response = await fetch(
-        `http://localhost:5000/post/get-posts?page=${page}&limit=${limit}`,
+        `${env.backendUrl}/post/get-posts?page=${page}&limit=${limit}`,
         {
           method: "GET",
           headers: {
@@ -66,7 +68,7 @@ export const useGetPost = (post_id: string | null) => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/post/get-post/${post_id}`,
+        `${env.backendUrl}/post/get-post/${post_id}`,
         {
           method: "GET",
           headers: {

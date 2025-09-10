@@ -95,7 +95,7 @@
   --background: #a86dff;
   --card: #000000;
   --popover: #000000;
-  --muted: #a86dff80;
+  --muted: #709beba2;
   --accent: #c5c2d4;
   --sidebar: #060709;
 
@@ -144,7 +144,10 @@
     background: linear-gradient(180deg, #060709 0%, #000000 50%, #060709 100%);
     min-height: 100vh;
   }
-  .dark body {
-    background: linear-gradient(180deg, #060709 0%, #000000 50%, #060709 100%);
+
+  /* Homepage specific gradient background */
+  .homepage-gradient {
+    background: linear-gradient(#a770f986 20%, #ceb1f9 100%) !important;
+    background-attachment: fixed;
   }
 }

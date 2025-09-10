@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { useCreateUser } from "../services/user-service";
 import {
   generateUserId,
   getUserId,
   isUserCreatedOnBackend,
   isValidUserId,
 } from "../utils/user-id";
+import { useCreateUser } from "./api/user-service";
 
-export const use_user_id = () => {
+export const useUserId = () => {
   const [user_id, set_user_id] = useState<string | null>(null);
   const [is_loading, set_is_loading] = useState(true);
   const [is_new_user, set_is_new_user] = useState(false);

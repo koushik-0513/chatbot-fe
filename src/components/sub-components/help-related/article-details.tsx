@@ -1,8 +1,20 @@
-import { motion } from "framer-motion";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'; // For GitHub Flavored Markdown support
+// For GitHub Flavored Markdown support
+import { useEffect, useRef, useState } from "react";
 
+import Image from "next/image";
+
+import { useScrollContext } from "@/contexts/scroll-context";
+import { motion } from "framer-motion";
+
+import { useSubmitArticleReaction } from "../../../hooks/api/article-reaction-service";
+import { useUserId } from "../../../hooks/use-user-id";
 import { THelpArticle, THelpArticleDetailResponse } from "../../../types/types";
+import {
+  ARTICLE_REACTIONS,
+  ARTICLE_REACTION_EMOJI_MAP,
+  TArticleReaction,
+} from "../../../utils/article-reaction-utils";
+import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 interface TArticleDetailsProps {
   initialArticle: THelpArticle;
@@ -19,6 +31,69 @@ export const ArticleDetails = ({
   error,
   onBack,
 }: TArticleDetailsProps) => {
+  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { user_id } = useUserId();
+
+  // Reaction state
+  const [selectedReaction, setSelectedReaction] =
+    useState<TArticleReaction | null>(null);
+
+  // Article reaction mutation
+  const submitReactionMutation = useSubmitArticleReaction();
+
+  // Handle reaction submission
+  const handleReactionSubmit = async (reaction: TArticleReaction) => {
+    if (!user_id || submitReactionMutation.isPending) return;
+
+    try {
+      await submitReactionMutation.mutateAsync({
+        articleId: article.id,
+        reaction: reaction,
+        userId: user_id,
+      });
+      setSelectedReaction(reaction);
+    } catch (error) {
+      console.error("Failed to submit reaction:", error);
+    }
+  };
+
+  // Reset scroll when component mounts
+  useEffect(() => {
+    resetAllScrollWithDelay(100);
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [resetAllScrollWithDelay]);
+
+  // Function to calculate relative time
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    const intervals = [
+      { label: "year", seconds: 31536000 },
+      { label: "month", seconds: 2592000 },
+      { label: "week", seconds: 604800 },
+      { label: "day", seconds: 86400 },
+      { label: "hour", seconds: 3600 },
+      { label: "minute", seconds: 60 },
+      { label: "second", seconds: 1 },
+    ];
+
+    for (const interval of intervals) {
+      const count = Math.floor(diffInSeconds / interval.seconds);
+      if (count >= 1) {
+        return count === 1
+          ? `${count} ${interval.label} ago`
+          : `${count} ${interval.label}s ago`;
+      }
+    }
+
+    return "just now";
+  };
+
   // Animation variants for better performance
   const container_variants = {
     hidden: { opacity: 0 },
@@ -88,7 +163,7 @@ export const ArticleDetails = ({
 
   return (
     <motion.div
-      className="space-y-6"
+      className="space-y-6 p-4"
       variants={container_variants}
       initial="hidden"
       animate="visible"
@@ -118,63 +193,27 @@ export const ArticleDetails = ({
       <motion.div className="space-y-3" variants={item_variants}>
         <div className="flex items-center gap-3">
           <motion.div
-            className="bg-primary/20 flex h-10 w-10 items-center justify-center rounded-full"
+            className="bg-primary/20 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full"
             variants={scale_variants}
           >
-            <span className="text-primary text-sm font-medium">
-              {author.name.charAt(0).toUpperCase()}
-            </span>
+            <Image
+              src={author.profile_image}
+              alt={author.name}
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
           </motion.div>
           <motion.div variants={item_variants}>
             <p className="text-muted-foreground text-sm">
               Written by {author.name}
             </p>
             <p className="text-muted-foreground text-xs">
-              {author.role}
+              {getRelativeTime(article.created_at)}
             </p>
           </motion.div>
         </div>
-
-        {/* Co-authors */}
-        {co_authors.length > 0 && (
-          <motion.div
-            className="flex items-center gap-2"
-            variants={item_variants}
-          >
-            <span className="text-muted-foreground text-xs">
-              Co-authored with:
-            </span>
-            <div className="flex -space-x-1">
-              {co_authors.slice(0, 3).map((coAuthor, index) => (
-                <motion.div
-                  key={coAuthor.id}
-                  className="bg-primary/20 text-primary flex h-6 w-6 items-center justify-center rounded-full border-2 border-white text-xs font-medium"
-                  variants={scale_variants}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  {coAuthor.name.charAt(0)}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
       </motion.div>
-
-      {/* Tags */}
-      {article.tags.length > 0 && (
-        <motion.div className="flex flex-wrap gap-2" variants={item_variants}>
-          {article.tags.map((tag, index) => (
-            <motion.span
-              key={tag}
-              className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs"
-              variants={scale_variants}
-              transition={{ delay: index * 0.05 }}
-            >
-              {tag}
-            </motion.span>
-          ))}
-        </motion.div>
-      )}
 
       {/* Article content */}
       <motion.div
@@ -183,52 +222,14 @@ export const ArticleDetails = ({
       >
         {article.content ? (
           <>
-            {/* Using react-markdown */}
+            {/* Using MarkdownRenderer */}
             {!isHTML(article.content) ? (
               <motion.div
-                className="article-content text-accent prose prose-sm max-w-none
-                  prose-headings:text-card-foreground
-                  prose-p:text-accent prose-p:leading-relaxed
-                  prose-strong:text-card-foreground
-                  prose-ul:text-accent prose-ol:text-accent
-                  prose-blockquote:border-l-primary prose-blockquote:text-muted-foreground
-                  prose-code:bg-muted prose-code:text-card-foreground prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-                  prose-pre:bg-muted prose-pre:text-card-foreground
-                  prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    // Custom component rendering
-                    h1: ({children}) => <h1 className="text-2xl font-bold mb-4">{children}</h1>,
-                    h2: ({children}) => <h2 className="text-xl font-semibold mb-3">{children}</h2>,
-                    h3: ({children}) => <h3 className="text-lg font-medium mb-2">{children}</h3>,
-                    p: ({children}) => <p className="mb-4 leading-relaxed">{children}</p>,
-                    ul: ({children}) => <ul className="list-disc pl-6 mb-4">{children}</ul>,
-                    ol: ({children}) => <ol className="list-decimal pl-6 mb-4">{children}</ol>,
-                    li: ({children}) => <li className="mb-1">{children}</li>,
-                    blockquote: ({children}) => (
-                      <blockquote className="border-l-4 border-primary pl-4 italic my-4">
-                        {children}
-                      </blockquote>
-                    ),
-                    code: ({children, className}) => {
-                      const isInline = !className;
-                      return isInline ? (
-                        <code className="bg-muted px-1 py-0.5 rounded text-sm">{children}</code>
-                      ) : (
-                        <pre className="bg-muted p-3 rounded-md overflow-x-auto">
-                          <code>{children}</code>
-                        </pre>
-                      );
-                    },
-                  }}
-                >
-                  {article.content}
-                </ReactMarkdown>
+                <MarkdownRenderer content={article.content} />
               </motion.div>
             ) : (
               // If content is already HTML, render it as before
@@ -268,35 +269,44 @@ export const ArticleDetails = ({
         )}
       </motion.div>
 
-      {/* Article metadata */}
+      {/* Reactions Section */}
       <motion.div
-        className="border-border border-t pt-4"
+        className="flex flex-col items-center justify-center text-center"
         variants={item_variants}
       >
-        <div className="text-muted-foreground flex items-center justify-between text-xs">
-          <span>
-            Created: {new Date(article.created_at).toLocaleDateString()}
-          </span>
-          <span>
-            Updated: {new Date(article.updated_at).toLocaleDateString()}
-          </span>
-        </div>
-        {articleDetailsData && (
-          <motion.div
-            className="mt-2 flex items-center gap-2 text-xs text-green-600"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <motion.div
-              className="h-2 w-2 rounded-full bg-green-500"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2 }}
-            />
-            Content enhanced with latest data
-          </motion.div>
-        )}
+        <motion.h3
+          className="text-card-foreground text-md mb-4 font-semibold"
+          variants={item_variants}
+        >
+          How helpful was this article?
+        </motion.h3>
+        <motion.div className="flex gap-3" variants={item_variants}>
+          {ARTICLE_REACTIONS.map((reaction, index) => {
+            const isSelected = selectedReaction === reaction;
+            const isSubmitting = submitReactionMutation.isPending;
+
+            return (
+              <motion.button
+                key={reaction}
+                onClick={() => handleReactionSubmit(reaction)}
+                disabled={isSubmitting}
+                className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                  isSelected
+                    ? "border-primary bg-primary/10 scale-110"
+                    : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                } ${isSubmitting ? "cursor-not-allowed opacity-5" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-1" : ""} `}
+                variants={scale_variants}
+                whileHover={!isSubmitting ? { scale: 1.1 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.95 } : {}}
+                transition={{ delay: index * 0.05 }}
+              >
+                <span className="text-xl">
+                  {ARTICLE_REACTION_EMOJI_MAP[reaction]}
+                </span>
+              </motion.button>
+            );
+          })}
+        </motion.div>
       </motion.div>
     </motion.div>
   );

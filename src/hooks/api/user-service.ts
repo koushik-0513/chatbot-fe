@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
-import { setUserCreatedOnBackend } from "../utils/user-id";
+import env from "../../config/env";
+import { setUserCreatedOnBackend } from "../../utils/user-id";
 
 type TCreateUserRequest = {
   user_id: string;
@@ -20,7 +21,7 @@ type TCreateUserResponse = {
 export const useCreateUser = () => {
   return useMutation<TCreateUserResponse, Error, TCreateUserRequest>({
     mutationFn: async (data: TCreateUserRequest) => {
-      const response = await fetch("http://localhost:5000/user/create-user", {
+      const response = await fetch(`${env.backendUrl}/user/create-user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

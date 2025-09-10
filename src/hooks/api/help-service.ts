@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 
+import env from "../../config/env";
 import {
   THelp,
   THelpArticleDetailResponse,
   THelpCollectionDetailResponse,
   THelpCollectionsResponse,
-} from "../types/types";
+} from "../../types/types";
 
 export type THelpResponse = {
   message: string;
@@ -39,7 +40,7 @@ export const useGetCollections = (params: TGetCollectionsParams = {}) => {
   return useQuery<THelpCollectionsResponse, Error>({
     queryKey: ["help-collections", page, limit],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:5000/help/collections`, {
+      const response = await fetch(`${env.backendUrl}/help/collections`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -69,7 +70,7 @@ export const useGetCollectionDetails = (collection_id: string | null) => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/help/collections/${collection_id}`,
+        `${env.backendUrl}/help/collections/${collection_id}`,
         {
           method: "GET",
           headers: {
@@ -102,7 +103,7 @@ export const useGetArticleDetails = (article_id: string | null) => {
       }
 
       const response = await fetch(
-        `http://localhost:5000/help/articles/${article_id}`,
+        `${env.backendUrl}/help/articles/${article_id}`,
         {
           method: "GET",
           headers: {
@@ -133,7 +134,7 @@ export const useGetHelp = (collection_id: string, params: TGetHelpParams) => {
     queryKey: ["help", collection_id, page, limit],
     queryFn: async () => {
       const response = await fetch(
-        `http://localhost:5000/help/collections/${collection_id}`,
+        `${env.backendUrl}/help/collections/${collection_id}`,
         {
           method: "GET",
           headers: {
@@ -164,7 +165,7 @@ export const useGetHelpById = (help_id: string | null) => {
         throw new Error("Help ID is required");
       }
 
-      const response = await fetch(`http://localhost:5000/help/${help_id}`, {
+      const response = await fetch(`${env.backendUrl}/help/${help_id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 
 import { TNews } from "../../../types/types";
+import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 type TNewsCardProps = {
   news: TNews;
@@ -17,7 +18,11 @@ type TNewsCardProps = {
   maxTagsToShow?: number; // Optional prop to customize how many tags to show
 };
 
-export const NewsCard = ({ news, onClick, maxTagsToShow = 2 }: TNewsCardProps) => {
+export const NewsCard = ({
+  news,
+  onClick,
+  maxTagsToShow = 2,
+}: TNewsCardProps) => {
   const handle_click = () => {
     onClick(news);
   };
@@ -47,7 +52,7 @@ export const NewsCard = ({ news, onClick, maxTagsToShow = 2 }: TNewsCardProps) =
             {visibleTags.map((tag: string) => (
               <span
                 key={tag}
-                className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium "
+                className="bg-muted text-muted-foreground rounded-full px-3 py-1 text-xs font-medium"
               >
                 {tag}
               </span>
@@ -61,34 +66,26 @@ export const NewsCard = ({ news, onClick, maxTagsToShow = 2 }: TNewsCardProps) =
 
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <CardTitle className="text-card-foreground mb-2 line-clamp-2 text-lg font-bold">
+              <CardTitle className="text-card-foreground text-md mb-2 line-clamp-2 font-bold">
                 {news.title}
               </CardTitle>
-              <CardDescription className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
-                {news.description}
-              </CardDescription>
-
-              {/* Metadata */}
-              <div className="text-muted-foreground mt-3 flex items-center gap-4 text-xs">
-                {news.author &&
-                  typeof news.author === "object" &&
-                  news.author.name && <span>By {news.author.name}</span>}
-                {news.readTime && <span>⏱️ {news.readTime} min read</span>}
-                {news.isFeatured && (
-                  <motion.span
-                    className="text-primary font-medium"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    ⭐ Featured
-                  </motion.span>
-                )}
+              <div className="flex justify-between">
+                <div className="text-muted-foreground flex-1 text-xs leading-relaxed">
+                  <div className="line-clamp-2">
+                    <MarkdownRenderer
+                      content={news.description}
+                      className="prose-p:text-xs prose-p:mb-0.5 prose-p:text-muted-foreground prose-headings:text-xs prose-headings:font-normal prose-headings:text-muted-foreground prose-strong:text-muted-foreground prose-em:text-muted-foreground prose-code:text-xs text-xs"
+                    />
+                  </div>
+                </div>
+                <motion.div
+                  whileHover={{ x: 2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronRight className="text-muted-foreground mt-1 h-5 w-5 flex-shrink-0" />
+                </motion.div>
               </div>
             </div>
-
-            <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.2 }}>
-              <ChevronRight className="text-muted-foreground mt-1 h-5 w-5 flex-shrink-0" />
-            </motion.div>
           </div>
         </CardHeader>
       </Card>

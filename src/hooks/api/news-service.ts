@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { TNews } from "../types/types";
+import env from "../../config/env";
+import { TNews } from "../../types/types";
 
 export type TNewsResponse = {
   message: string;
@@ -30,7 +31,7 @@ export const useGetNews = (params: TGetNewsParams) => {
     queryKey: ["news", page, limit],
     queryFn: async () => {
       const response = await fetch(
-        `http://localhost:5000/news/?page=${page}&limit=${limit}`,
+        `${env.backendUrl}/news/?page=${page}&limit=${limit}`,
         {
           method: "GET",
           headers: {
@@ -61,7 +62,7 @@ export const useGetNewsById = (news_id: string | null) => {
         throw new Error("News ID is required");
       }
 
-      const response = await fetch(`http://localhost:5000/news/${news_id}`, {
+      const response = await fetch(`${env.backendUrl}/news/${news_id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

@@ -13,6 +13,7 @@ export type THelpCollection = {
   id: string;
   title: string;
   description: string;
+  profile_image?: string;
   slug: string;
   icon: string;
   article_count: number;
@@ -128,5 +129,35 @@ export type THelpArticleDetailResponse = {
     article: THelpArticleDetail;
     author: THelpAuthor;
     co_authors: THelpAuthor[];
+  };
+};
+
+export type TChatHistoryItem = {
+  id?: number;
+  conversation_id?: number;
+  _id?: number;
+  conversationId?: number;
+  title?: string;
+  name?: string;
+  timestamp?: string;
+  created_at?: string;
+  day?: string;
+};
+
+export type TChatHistoryRequest = {
+  user_id: string;
+  page?: number;
+  limit?: number;
+};
+
+export type TChatHistoryResponse = {
+  success: boolean;
+  message: string;
+  data: TChatHistoryItem[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total_pages: number;
+    total_conversations: number;
   };
 };

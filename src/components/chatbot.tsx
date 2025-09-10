@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -10,10 +11,10 @@ import {
   Maximize2,
   Megaphone,
   MessageSquareText,
+  Minimize2,
   X,
 } from "lucide-react";
 
-import { chatHistoryData } from "../data/data";
 import { Helppage } from "./help";
 import { Homepage } from "./home";
 import { Message } from "./message";
@@ -22,6 +23,7 @@ import { ChatContainer } from "./sub-components/chat-related/chat-container";
 
 interface TChatbotProps {
   user_id: string;
+  onClose?: () => void;
 }
 
 interface NavigationItem {
@@ -37,58 +39,130 @@ const navigationItems: NavigationItem[] = [
   { id: "news", icon: Megaphone, label: "News" },
 ];
 
-export const Chatbot = ({ user_id }: TChatbotProps) => {
+export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
   const [backButtonTrigger, setBackButtonTrigger] = useState(0);
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [pageKey, setPageKey] = useState(Date.now());
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { resetAllScroll, resetScrollToElement, resetAllScrollWithDelay } =
+    useScrollContext();
+
+  // Reset scroll position when active page changes
+  useEffect(() => {
+    // Reset main content scroll
+    if (contentRef.current) {
+      resetScrollToElement(contentRef as React.RefObject<HTMLElement>);
+    }
+
+    // Reset all scroll positions globally with proper timing
+    resetAllScrollWithDelay(150);
+  }, [
+    activePage,
+    resetAllScroll,
+    resetScrollToElement,
+    resetAllScrollWithDelay,
+  ]);
+
+  // Reset scroll when pageKey changes (component remount)
+  useEffect(() => {
+    resetAllScrollWithDelay(100);
+  }, [pageKey, resetAllScrollWithDelay]);
 
   const handlePageChange = (page: string) => {
     setActivePage(page);
     setShowBackButton(false);
+    setShowDetails(false); // Reset details state when changing pages
+    setIsMaximized(false); // Auto-minimize when changing pages
+    setPageKey(Date.now()); // Force component remount
     if (page === "message") {
       setShowChatHistory(true);
     }
+
+    // Force scroll reset immediately when page changes
+    if (contentRef.current) {
+      resetScrollToElement(contentRef as React.RefObject<HTMLElement>);
+    }
+    resetAllScrollWithDelay(100);
   };
 
   const handleBackToHistory = () => {
     setSelectedChatId(null);
     setShowChatHistory(true);
+
+    // Reset scroll when going back to chat history
+    resetAllScrollWithDelay(100);
   };
 
   const handleChatSelected = (chatId: number) => {
+    console.log("handleChatSelected called with chatId:", chatId);
+    console.log("Setting selectedChatId to:", chatId);
     setSelectedChatId(chatId);
     setShowChatHistory(false);
+    console.log("Chat selection state updated");
   };
 
   const handleBackClick = () => {
+    // Reset scroll when back button is clicked
+    resetAllScrollWithDelay(100);
     setBackButtonTrigger((prev) => prev + 1);
+  };
+
+  // Handle back navigation from details views with auto-minimize
+  const handleBackFromDetails = () => {
+    setIsMaximized(false); // Auto-minimize when going back from details
+    setShowDetails(false);
+    setShowBackButton(false);
+    resetAllScrollWithDelay(100);
+  };
+
+  // Handle just the minimize functionality without affecting other states
+  const handleMinimizeOnly = () => {
+    setIsMaximized(false); // Auto-minimize when going back from details
+    resetAllScrollWithDelay(100);
+  };
+
+  // Check if we're on a details page where maximize should be shown
+  const shouldShowMaximizeButton = () => {
+    return showDetails && (activePage === "help" || activePage === "news");
+  };
+
+  // Get proper title for each page
+  const getPageTitle = (page: string) => {
+    switch (page) {
+      case "homepage":
+        return "Home";
+      case "message":
+        return "Chat";
+      case "help":
+        return "Help";
+      case "news":
+        return "News";
+      default:
+        return page;
+    }
   };
 
   // Navigation Component
   const Navigation = () => (
-    <motion.div
-      className="border-border bg-card flex gap-1 rounded-b-lg border-t p-3"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3, delay: 0.3 }}
-    >
+    <div className="border-border bg-card flex gap-1 rounded-b-lg border-t p-3">
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const isActive = activePage === item.id;
 
         return (
-          <motion.button
+          <button
             key={item.id}
             onClick={() => handlePageChange(item.id)}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-md p-2 transition-all ${
+            className={`flex flex-1 flex-col items-center gap-1 rounded-md p-2 transition-colors ${
               isActive
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
           >
             <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
             <span
@@ -96,10 +170,10 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
             >
               {item.label}
             </span>
-          </motion.button>
+          </button>
         );
       })}
-    </motion.div>
+    </div>
   );
 
   // Header Component
@@ -110,57 +184,57 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
     title: string;
     showBack?: boolean;
   }) => (
-    <motion.div
-      className="border-border bg-card flex items-center rounded-t-lg border-b p-4"
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
-    >
-      <AnimatePresence>
-        {showBack && (
-          <motion.button
-            onClick={handleBackClick}
-            className="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <ArrowLeft className="text-muted-foreground h-5 w-5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-      <h2
+    <div className="border-border bg-card flex items-center rounded-t-lg border-b p-4">
+      {showBack && (
+        <button
+          onClick={handleBackClick}
+          className="hover:bg-muted mr-3 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+        >
+          <ArrowLeft className="text-muted-foreground h-5 w-5" />
+        </button>
+      )}
+      <motion.h2
+        key={title}
         className={`${showBack ? "" : "flex-1"} text-foreground text-center text-lg font-semibold`}
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
       >
         {title}
-      </h2>
+      </motion.h2>
       <div className="ml-auto flex items-center gap-2">
-        <motion.button
+        {shouldShowMaximizeButton() && (
+          <button
+            onClick={() => setIsMaximized(!isMaximized)}
+            className="hover:bg-muted rounded-full p-1 transition-colors"
+          >
+            {isMaximized ? (
+              <Minimize2 className="text-muted-foreground h-4 w-4" />
+            ) : (
+              <Maximize2 className="text-muted-foreground h-4 w-4" />
+            )}
+          </button>
+        )}
+        <button
+          onClick={onClose}
           className="hover:bg-muted rounded-full p-1 transition-colors"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <Maximize2 className="text-muted-foreground h-4 w-4" />
-        </motion.button>
-        <motion.button
-          className="hover:bg-muted rounded-full p-1 transition-colors"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
         >
           <X className="text-muted-foreground h-5 w-5" />
-        </motion.button>
+        </button>
       </div>
-    </motion.div>
+    </div>
   );
 
   // If a chat is selected, show the full ChatContainer
+  console.log(
+    "Current state - selectedChatId:",
+    selectedChatId,
+    "activePage:",
+    activePage
+  );
+
   if (selectedChatId && activePage === "message") {
-    const selectedChat = chatHistoryData.find(
-      (chat) => chat.id === selectedChatId
-    );
+    console.log("Rendering ChatContainer with selectedChatId:", selectedChatId);
     return (
       <motion.div
         className="border-border bg-background flex h-[600px] w-96 flex-col rounded-lg border shadow-2xl"
@@ -170,7 +244,7 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
       >
         <ChatContainer
           chatId={selectedChatId}
-          chatTitle={selectedChat?.title || "Chat"}
+          chatTitle="Chat"
           onBack={handleBackToHistory}
         />
       </motion.div>
@@ -180,22 +254,35 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
   // Main layout for all other views
   return (
     <motion.div
-      className="border-border bg-background flex h-[600px] w-96 flex-col rounded-lg border shadow-2xl"
+      className={`border-border flex flex-col border shadow-2xl ${
+        isMaximized
+          ? "fixed right-6 bottom-6 z-50 h-[calc(90vh-2rem)] w-[calc(40vw-3rem)] rounded-lg"
+          : "h-[600px] w-96 rounded-lg"
+      } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
     >
       {/* Header - only show for non-homepage */}
       {activePage !== "homepage" && (
-        <Header title={activePage} showBack={showBackButton} />
+        <Header title={getPageTitle(activePage)} showBack={showBackButton} />
       )}
 
       {/* Content Area */}
       <motion.div
-        className="flex-1 overflow-y-auto p-4"
+        key={activePage}
+        ref={contentRef}
+        className="scroll-container flex-1 overflow-y-auto"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        animate={{ opacity: 100 }}
         transition={{ duration: 0.3, delay: 0.1 }}
+        onAnimationComplete={() => {
+          // Reset scroll after animation completes
+          if (contentRef.current) {
+            contentRef.current.scrollTop = 0;
+          }
+          resetAllScroll();
+        }}
       >
         <AnimatePresence mode="wait">
           {activePage === "homepage" && (
@@ -205,8 +292,9 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              className="p-4"
             >
-              <Homepage />
+              <Homepage onNavigateToHelp={() => handlePageChange("help")} />
             </motion.div>
           )}
           {activePage === "message" && (
@@ -216,6 +304,7 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              className="p-4"
             >
               <Message
                 showChatHistory={showChatHistory}
@@ -226,7 +315,7 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
           )}
           {activePage === "help" && (
             <motion.div
-              key="help"
+              key={`help-${pageKey}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -235,28 +324,36 @@ export const Chatbot = ({ user_id }: TChatbotProps) => {
               <Helppage
                 onShowBackButton={setShowBackButton}
                 backButtonTrigger={backButtonTrigger}
+                activePage={activePage}
+                onShowDetails={setShowDetails}
+                onBackFromDetails={handleBackFromDetails}
+                onMinimizeOnly={handleMinimizeOnly}
               />
             </motion.div>
           )}
           {activePage === "news" && (
             <motion.div
-              key="news"
+              key={`news-${pageKey}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              className="p-4"
             >
               <News
                 onShowBackButton={setShowBackButton}
                 backButtonTrigger={backButtonTrigger}
+                activePage={activePage}
+                onShowDetails={setShowDetails}
+                onBackFromDetails={handleBackFromDetails}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
-      {/* Navigation - always shown */}
-      <Navigation />
+      {/* Navigation - hide only when showing article/news details */}
+      {!showDetails && <Navigation />}
     </motion.div>
   );
 };

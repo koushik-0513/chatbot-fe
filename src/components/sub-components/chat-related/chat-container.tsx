@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -11,7 +12,11 @@ import {
   X,
 } from "lucide-react";
 
-import { initialChatMessages } from "../../../data/data";
+import {
+  useChatHistoryById,
+  useSendMessage,
+} from "../../../hooks/api/chat-service";
+import { useUserId } from "../../../hooks/use-user-id";
 import { TChatMessage } from "../../../types/types";
 import { EmojiPicker } from "./emoji-picker";
 
@@ -26,40 +31,57 @@ export const ChatContainer = ({
   chatTitle,
   onBack,
 }: TChatContainerProps) => {
-  const [messages, setMessages] = useState<TChatMessage[]>(initialChatMessages);
+  console.log(
+    "ChatContainer rendered with chatId:",
+    chatId,
+    "chatTitle:",
+    chatTitle
+  );
+
+  const { user_id } = useUserId();
+  const {
+    data: chatHistoryResponse,
+    isLoading,
+    error,
+  } = useChatHistoryById(chatId);
+  const sendMessageMutation = useSendMessage();
+  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+  const messagesRef = useRef<HTMLDivElement>(null);
+
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const userMessage: TChatMessage = {
-        id: messages.length + 1,
-        text: newMessage,
-        isUser: true,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-
-      setMessages([...messages, userMessage]);
-      setNewMessage("");
-
-      // Simulate bot response
-      setTimeout(() => {
-        const botMessage: TChatMessage = {
-          id: messages.length + 2,
-          text: "Thank you for your message. I'm here to help!",
-          isUser: false,
-          timestamp: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-        };
-        setMessages((prev) => [...prev, botMessage]);
-      }, 1000);
+  // Reset scroll when component mounts or chatId changes
+  useEffect(() => {
+    resetAllScrollWithDelay(100);
+    if (messagesRef.current) {
+      messagesRef.current.scrollTop = 0;
     }
+  }, [chatId, resetAllScrollWithDelay]);
+
+  // Get messages from API or use empty array as fallback
+  const messages = chatHistoryResponse?.data || [];
+
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && user_id) {
+      try {
+        await sendMessageMutation.mutateAsync({
+          conversationId: chatId,
+          message: newMessage,
+          user_id,
+        });
+        setNewMessage("");
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    // Reset scroll before going back
+    resetAllScrollWithDelay(100);
+    onBack();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -82,6 +104,37 @@ export const ChatContainer = ({
     }
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <motion.div
+        className="flex h-full flex-col items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-muted-foreground">Loading chat...</div>
+      </motion.div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <motion.div
+        className="flex h-full flex-col items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-destructive">Failed to load chat</div>
+        <div className="text-muted-foreground mt-2 text-sm">
+          {error.message}
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="flex h-full flex-col"
@@ -98,7 +151,7 @@ export const ChatContainer = ({
       >
         <div className="flex items-center gap-3">
           <motion.button
-            onClick={onBack}
+            onClick={handleBack}
             className="hover:bg-muted rounded-full p-1 transition-colors"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -142,6 +195,7 @@ export const ChatContainer = ({
 
       {/* Messages Area */}
       <motion.div
+        ref={messagesRef}
         className="flex-1 space-y-3 overflow-y-auto p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -302,9 +356,12 @@ export const ChatContainer = ({
           />
           <motion.button
             onClick={handleSendMessage}
-            className="bg-secondary hover:bg-muted/80 rounded-full p-2 transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            disabled={
+              sendMessageMutation.isPending || !newMessage.trim() || !user_id
+            }
+            className="bg-secondary hover:bg-muted/80 rounded-full p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            whileHover={{ scale: sendMessageMutation.isPending ? 1 : 1.1 }}
+            whileTap={{ scale: sendMessageMutation.isPending ? 1 : 0.9 }}
           >
             <Send className="text-secondary-foreground h-4 w-4" />
           </motion.button>

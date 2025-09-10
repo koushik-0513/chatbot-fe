@@ -3,16 +3,16 @@
 import React, { useState } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Bot } from "lucide-react";
+import { Bot, ChevronDown } from "lucide-react";
 
 import { Chatbot } from "@/components/chatbot";
 
-import { use_user_id } from "@/hooks/use-user-id";
+import { useUserId } from "@/hooks/use-user-id";
 
 export default function Home() {
   const [isChatbotopen, setIsChatbotOpen] = useState(false);
   const { user_id, is_loading, is_creating_user, create_user_error } =
-    use_user_id();
+    useUserId();
   return (
     <motion.div
       className="bg-card min-h-screen"
@@ -49,6 +49,7 @@ export default function Home() {
           <AnimatePresence>
             {is_loading && (
               <motion.div
+                key="loading-indicator"
                 className="text-muted-foreground mb-4 text-sm"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -61,6 +62,7 @@ export default function Home() {
 
             {is_creating_user && (
               <motion.div
+                key="creating-user-indicator"
                 className="text-primary mb-4 text-sm"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -73,6 +75,7 @@ export default function Home() {
 
             {create_user_error && (
               <motion.div
+                key="error-indicator"
                 className="bg-destructive/10 mb-4 rounded-lg px-4 py-2"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -87,6 +90,7 @@ export default function Home() {
 
             {user_id && !is_loading && (
               <motion.div
+                key="user-active-indicator"
                 className="bg-primary/10 mb-4 rounded-lg px-4 py-2"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -101,34 +105,57 @@ export default function Home() {
       </div>
 
       {/* Chatbot toggle button positioned at bottom right */}
-      <motion.button
-        onClick={() => setIsChatbotOpen(!isChatbotopen)}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 rounded-lg px-4 py-3 font-medium transition-colors"
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{
-          duration: 0.4,
-          delay: 0.8,
-          type: "spring",
-          stiffness: 200,
-        }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Bot />
-      </motion.button>
+      {isChatbotopen ? (
+        <motion.button
+          onClick={() => setIsChatbotOpen(!isChatbotopen)}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 rounded-lg px-4 py-3 font-medium transition-colors"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{
+            duration: 0.4,
+            delay: 0.8,
+            type: "spring",
+            stiffness: 200,
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <ChevronDown />
+        </motion.button>
+      ) : (
+        <motion.button
+          onClick={() => setIsChatbotOpen(!isChatbotopen)}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 rounded-lg px-4 py-3 font-medium transition-colors"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{
+            duration: 0.4,
+            delay: 0.8,
+            type: "spring",
+            stiffness: 200,
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Bot />
+        </motion.button>
+      )}
 
       {/* Chatbot positioned at bottom right */}
       <AnimatePresence>
         {isChatbotopen && user_id && (
           <motion.div
+            key="chatbot-container"
             className="fixed right-6 bottom-20 z-50"
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
           >
-            <Chatbot user_id={user_id} />
+            <Chatbot
+              user_id={user_id}
+              onClose={() => setIsChatbotOpen(false)}
+            />
           </motion.div>
         )}
       </AnimatePresence>

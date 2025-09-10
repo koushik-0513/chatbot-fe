@@ -1,6 +1,17 @@
+import { useEffect, useRef, useState } from "react";
+
+import { useScrollContext } from "@/contexts/scroll-context";
 import { motion } from "framer-motion";
 
+import { useSubmitNewsReaction } from "../../../hooks/api/news-reaction-service";
+import { useUserId } from "../../../hooks/use-user-id";
 import { TNews } from "../../../types/types";
+import {
+  NEWS_REACTIONS,
+  REACTION_EMOJI_MAP,
+  TNewsReaction,
+} from "../../../utils/news-reaction-utils";
+import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 interface TNewsDetailsProps {
   news: TNews;
@@ -8,6 +19,75 @@ interface TNewsDetailsProps {
 }
 
 export const NewsDetails = ({ news }: TNewsDetailsProps) => {
+  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const { user_id } = useUserId();
+
+  // Reaction state
+  const [selectedReaction, setSelectedReaction] =
+    useState<TNewsReaction | null>(null);
+
+  // News reaction mutation
+  const submitReactionMutation = useSubmitNewsReaction();
+
+  // Handle reaction submission
+  const handleReactionSubmit = async (reaction: TNewsReaction) => {
+    if (!user_id || submitReactionMutation.isPending) return;
+
+    try {
+      await submitReactionMutation.mutateAsync({
+        newsId: news.id,
+        reaction: reaction,
+        userId: user_id,
+      });
+      setSelectedReaction(reaction);
+    } catch (error) {
+      console.error("Failed to submit reaction:", error);
+    }
+  };
+
+  // Reset scroll when component mounts
+  useEffect(() => {
+    resetAllScrollWithDelay(100);
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [resetAllScrollWithDelay]);
+
+  // Function to calculate relative time
+  const get_relative_time = (dateString: string | undefined): string => {
+    if (!dateString) return "Recently";
+
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+      const intervals = [
+        { label: "year", seconds: 31536000 },
+        { label: "month", seconds: 2592000 },
+        { label: "week", seconds: 604800 },
+        { label: "day", seconds: 86400 },
+        { label: "hour", seconds: 3600 },
+        { label: "minute", seconds: 60 },
+        { label: "second", seconds: 1 },
+      ];
+
+      for (const interval of intervals) {
+        const count = Math.floor(diffInSeconds / interval.seconds);
+        if (count >= 1) {
+          return count === 1
+            ? `${count} ${interval.label} ago`
+            : `${count} ${interval.label}s ago`;
+        }
+      }
+
+      return "just now";
+    } catch {
+      return "Recently";
+    }
+  };
+
   const format_date = (date_string: string | undefined): string => {
     if (!date_string) return "Recently";
     try {
@@ -90,13 +170,11 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
     >
       {/* Main Image - Full Width */}
       {(news.imageUrl || news.image) && (
-        <div
-          className="mb-6 w-full"
-        >
+        <div className="-mx-4 -my-4 mb-6 w-[calc(100%+2rem)]">
           <img
             src={news.imageUrl || news.image}
             alt={news.title}
-            className="h-full w-full object-cover"
+            className="h-auto w-full object-cover"
           />
         </div>
       )}
@@ -110,7 +188,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
               key={index}
               className="bg-muted text-muted-foreground cursor-pointer rounded-full px-3 py-1 text-sm"
             >
-              #{tag}
+              {tag}
             </span>
           ))}
         </div>
@@ -146,12 +224,15 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
                 </span>
               </motion.div>
             )}
-            <motion.div variants={item_variants}>
+            <motion.div
+              className="flex flex-row items-center gap-2"
+              variants={item_variants}
+            >
               <p className="text-card-foreground text-sm font-medium">
                 {get_author_name()}
               </p>
               <p className="text-muted-foreground text-xs">
-                {format_date(news.publishedAt)}
+                {get_relative_time(news.publishedAt)}
               </p>
             </motion.div>
           </div>
@@ -160,15 +241,12 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
         {/* Content */}
         {news.content && (
           <motion.div
-            className="prose prose-lg text-foreground max-w-none"
             variants={item_variants}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <motion.div
-              dangerouslySetInnerHTML={{ __html: news.content }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            />
+            <MarkdownRenderer content={news.content} />
           </motion.div>
         )}
 
@@ -206,6 +284,46 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
             </motion.ul>
           </motion.div>
         )}
+
+        {/* Reactions Section */}
+        <motion.div
+          className="flex flex-col items-center justify-center text-center"
+          variants={item_variants}
+        >
+          <motion.h3
+            className="text-card-foreground text-md mb-4 font-semibold"
+            variants={item_variants}
+          >
+            How do you feel about this news?
+          </motion.h3>
+          <motion.div className="flex gap-3" variants={item_variants}>
+            {NEWS_REACTIONS.map((reaction, index) => {
+              const isSelected = selectedReaction === reaction;
+              const isSubmitting = submitReactionMutation.isPending;
+
+              return (
+                <motion.button
+                  key={reaction}
+                  onClick={() => handleReactionSubmit(reaction)}
+                  disabled={isSubmitting}
+                  className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                    isSelected
+                      ? "border-primary bg-primary/10 scale-110"
+                      : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                  } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
+                  variants={scale_variants}
+                  whileHover={!isSubmitting ? { scale: 1.1 } : {}}
+                  whileTap={!isSubmitting ? { scale: 0.95 } : {}}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <span className="text-xl">
+                    {REACTION_EMOJI_MAP[reaction]}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        </motion.div>
       </div>
     </motion.div>
   );
