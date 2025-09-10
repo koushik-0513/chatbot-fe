@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useUserId } from "@/hooks/use-user-id";
+
 import {
   useGetArticleDetails,
   useGetCollectionDetails,
@@ -13,7 +15,6 @@ import { ArticleCard } from "./sub-components/help-related/article-cards";
 import { ArticleDetails } from "./sub-components/help-related/article-details";
 import { CollectionDetails } from "./sub-components/help-related/collection-details";
 import { SearchBar } from "./sub-components/help-related/search-bar";
-import { useUserId } from "@/hooks/use-user-id";
 
 type THelppageProps = {
   onShowBackButton: (show: boolean) => void;

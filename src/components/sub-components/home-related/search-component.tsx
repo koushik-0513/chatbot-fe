@@ -78,7 +78,7 @@ export const SearchComponent = ({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={handleKeyPress}
           onClick={handleInputClick}
-          className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none cursor-pointer"
+          className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full cursor-pointer rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none"
         />
         <Button
           onClick={handleSearch}

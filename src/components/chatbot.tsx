@@ -41,7 +41,12 @@ const navigationItems: NavigationItem[] = [
   { id: "news", icon: Megaphone, label: "News" },
 ];
 
-export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, onMaximizeChange }: TChatbotProps) => {
+export const Chatbot = ({
+  user_id,
+  onClose,
+  isMaximized: externalIsMaximized,
+  onMaximizeChange,
+}: TChatbotProps) => {
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
@@ -49,7 +54,10 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [pageKey, setPageKey] = useState(Date.now());
   const [internalIsMaximized, setInternalIsMaximized] = useState(false);
-  const isMaximized = externalIsMaximized !== undefined ? externalIsMaximized : internalIsMaximized;
+  const isMaximized =
+    externalIsMaximized !== undefined
+      ? externalIsMaximized
+      : internalIsMaximized;
   const [showDetails, setShowDetails] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const { resetAllScroll, resetScrollToElement, resetAllScrollWithDelay } =
@@ -177,7 +185,10 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
 
   // Navigation Component
   const Navigation = () => (
-    <div className="border-border bg-card flex gap-1 rounded-b-lg border-t p-3">
+    <motion.div
+      className="border-border bg-card flex gap-1 rounded-b-lg border-t p-3"
+      layout
+    >
       {navigationItems.map((item) => {
         const Icon = item.icon;
         const isActive = activePage === item.id;
@@ -201,7 +212,7 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
           </button>
         );
       })}
-    </div>
+    </motion.div>
   );
 
   // Header Component
@@ -212,7 +223,10 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
     title: string;
     showBack?: boolean;
   }) => (
-    <div className="border-border bg-card flex items-center rounded-t-lg border-b p-4">
+    <motion.div
+      className="border-border bg-card flex items-center rounded-t-lg border-b p-4"
+      layout
+    >
       {showBack && (
         <button
           onClick={handleBackClick}
@@ -257,7 +271,7 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
           <X className="text-muted-foreground h-5 w-5" />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 
   // If a chat is selected, show the full ChatContainer
@@ -275,7 +289,12 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
         className="border-border bg-background flex h-[600px] w-96 flex-col rounded-lg border shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+        transition={{
+          duration: 0.6,
+          type: "spring",
+          stiffness: 200,
+          damping: 25,
+        }}
       >
         <ChatContainer
           chatId={selectedChatId}
@@ -295,8 +314,20 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
           : "h-[600px] w-96 rounded-lg"
       } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+        height: isMaximized ? "calc(90vh - 2rem)" : "600px",
+        width: isMaximized ? "calc(40vw - 3rem)" : "384px",
+      }}
+      transition={{
+        duration: 0.8,
+        type: "spring",
+        stiffness: 200,
+        damping: 25,
+        mass: 1.2,
+      }}
+      layout
     >
       {/* Header - only show for non-homepage */}
       {activePage !== "homepage" && (
@@ -310,7 +341,8 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
         className="scroll-container flex-1 overflow-y-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 100 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        layout
         onAnimationComplete={() => {
           // Reset scroll after animation completes
           if (contentRef.current) {
@@ -326,11 +358,11 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
               className="p-4"
             >
-              <Homepage 
-                onNavigateToHelp={() => handlePageChange("help")} 
+              <Homepage
+                onNavigateToHelp={() => handlePageChange("help")}
                 onClose={onClose}
               />
             </motion.div>
@@ -341,7 +373,7 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
               className="p-4"
             >
               <Message
@@ -357,7 +389,7 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
             >
               <Helppage
                 onShowBackButton={setShowBackButton}
@@ -376,7 +408,7 @@ export const Chatbot = ({ user_id, onClose, isMaximized: externalIsMaximized, on
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.5 }}
               className="p-4"
             >
               <News

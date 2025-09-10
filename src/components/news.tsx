@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useUserId } from "@/hooks/use-user-id";
+
 import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
 import { TNews } from "../types/types";
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
-import { useUserId } from "@/hooks/use-user-id";
 
 type TNewsProps = {
   onShowBackButton: (show: boolean) => void;
@@ -139,9 +140,9 @@ export const News = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <NewsDetails 
-              news={detailed_news.data} 
-              onBack={handle_back_click} 
+            <NewsDetails
+              news={detailed_news.data}
+              onBack={handle_back_click}
               onAutoMaximize={onAutoMaximize}
             />
           </motion.div>

@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
+import { X } from "lucide-react";
 
 import { useGetPosts } from "../hooks/api/posts-service";
 import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
 import { SearchComponent } from "./sub-components/home-related/search-component";
-import { X } from "lucide-react";
 
 interface THomepageProps {
   onNavigateToHelp?: () => void;
@@ -31,7 +31,7 @@ export const Homepage = ({ onNavigateToHelp, onClose }: THomepageProps) => {
 
   return (
     <motion.div
-      className="dark space-y-4 pt-50 relative"
+      className="dark relative space-y-4 pt-50"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -40,7 +40,7 @@ export const Homepage = ({ onNavigateToHelp, onClose }: THomepageProps) => {
       {onClose && (
         <motion.button
           onClick={onClose}
-          className="absolute top-2 right-1 z-10 transition-colors cursor-pointer"
+          className="absolute top-2 right-1 z-10 cursor-pointer transition-colors"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
@@ -48,7 +48,7 @@ export const Homepage = ({ onNavigateToHelp, onClose }: THomepageProps) => {
           whileTap={{ scale: 0.95 }}
           aria-label="Close"
         >
-          <X className="text-muted-foreground h-5 w-5 " />
+          <X className="text-muted-foreground h-5 w-5" />
         </motion.button>
       )}
       <motion.div

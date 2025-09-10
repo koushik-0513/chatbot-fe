@@ -54,7 +54,10 @@ export const useGetNews = (params: TGetNewsParams) => {
 };
 
 // Get single news by ID
-export const useGetNewsById = (news_id: string | null) => {
+export const useGetNewsById = (
+  news_id: string | null,
+  user_id: string | null
+) => {
   return useQuery<TNewsDetailResponse, Error>({
     queryKey: ["news", news_id],
     queryFn: async () => {
@@ -62,12 +65,15 @@ export const useGetNewsById = (news_id: string | null) => {
         throw new Error("News ID is required");
       }
 
-      const response = await fetch(`${env.backendUrl}/news/${news_id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `${env.backendUrl}/news/${news_id}/?user_id=${user_id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

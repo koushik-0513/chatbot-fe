@@ -94,7 +94,10 @@ export const useGetCollectionDetails = (collection_id: string | null) => {
 };
 
 // Get article details by ID
-export const useGetArticleDetails = (article_id: string | null , user_id: string | null) => {
+export const useGetArticleDetails = (
+  article_id: string | null,
+  user_id: string | null
+) => {
   return useQuery<THelpArticleDetailResponse, Error>({
     queryKey: ["help-article-details", article_id, user_id],
     queryFn: async () => {

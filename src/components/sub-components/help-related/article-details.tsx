@@ -39,7 +39,9 @@ export const ArticleDetails = ({
 
   // Reaction state - initialize from article data if available
   const [selectedReaction, setSelectedReaction] =
-    useState<TArticleReaction | null>((articleDetailsData as any)?.data?.article?.reaction?.reaction || null);
+    useState<TArticleReaction | null>(
+      (articleDetailsData as any)?.data?.article?.reaction?.reaction || null
+    );
 
   // Article reaction mutation
   const submitReactionMutation = useSubmitArticleReaction();
@@ -77,7 +79,8 @@ export const ArticleDetails = ({
 
   // Update selected reaction when article data changes
   useEffect(() => {
-    const existingReaction = (articleDetailsData as any)?.data?.article?.reaction?.reaction;
+    const existingReaction = (articleDetailsData as any)?.data?.article
+      ?.reaction?.reaction;
     if (existingReaction) {
       setSelectedReaction(existingReaction);
     }
@@ -213,13 +216,19 @@ export const ArticleDetails = ({
             className="bg-primary/20 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full"
             variants={scale_variants}
           >
-            <Image
-              src={author.profile_image}
-              alt={author.name}
-              width={40}
-              height={40}
-              className="rounded-full"
-            />
+            {author.profile_image && author.profile_image.trim() !== "" ? (
+              <Image
+                src={author.profile_image}
+                alt={author.name}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            ) : (
+              <div className="bg-primary/30 text-primary flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold">
+                {author.name.charAt(0).toUpperCase()}
+              </div>
+            )}
           </motion.div>
           <motion.div variants={item_variants}>
             <p className="text-muted-foreground text-sm">
