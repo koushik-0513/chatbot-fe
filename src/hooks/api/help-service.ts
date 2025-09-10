@@ -186,3 +186,40 @@ export const useGetHelpById = (help_id: string | null) => {
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };
+
+// Top articles response type
+export type TTopArticlesResponse = {
+  message: string;
+  data: {
+    articles: Array<{
+      id: string;
+      title: string;
+    }>;
+    total_count: number;
+  };
+};
+
+// Get top articles
+export const useGetTopArticles = () => {
+  return useQuery<TTopArticlesResponse, Error>({
+    queryKey: ["help-top-articles"],
+    queryFn: async () => {
+      const response = await fetch(`${env.backendUrl}/help/articles/top`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+};

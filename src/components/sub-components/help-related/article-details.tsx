@@ -39,9 +39,9 @@ export const ArticleDetails = ({
 
   // Reaction state - initialize from article data if available
   const [selectedReaction, setSelectedReaction] =
-    useState<TArticleReaction | null>(
-      (articleDetailsData as any)?.data?.article?.reaction?.reaction || null
-    );
+    useState<TArticleReaction | null>(() => {
+      return (articleDetailsData as any)?.data?.article?.reaction?.reaction || null;
+    });
 
   // Article reaction mutation
   const submitReactionMutation = useSubmitArticleReaction();
@@ -49,6 +49,11 @@ export const ArticleDetails = ({
   // Handle reaction submission
   const handleReactionSubmit = async (reaction: TArticleReaction) => {
     if (!user_id || submitReactionMutation.isPending) return;
+
+    // Don't make API call if the same reaction is already selected
+    if (selectedReaction === reaction) {
+      return;
+    }
 
     try {
       await submitReactionMutation.mutateAsync({
@@ -81,9 +86,7 @@ export const ArticleDetails = ({
   useEffect(() => {
     const existingReaction = (articleDetailsData as any)?.data?.article
       ?.reaction?.reaction;
-    if (existingReaction) {
-      setSelectedReaction(existingReaction);
-    }
+    setSelectedReaction(existingReaction || null);
   }, [articleDetailsData]);
 
   // Function to calculate relative time

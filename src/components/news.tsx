@@ -39,7 +39,7 @@ export const News = ({
     data: detailed_news,
     isLoading: isDetailedLoading,
     error: detailedError,
-  } = useGetNewsById(selectedNewsId);
+  } = useGetNewsById(selectedNewsId, user_id);
 
   // Reset internal navigation state when component mounts or when switching away from news
   useEffect(() => {

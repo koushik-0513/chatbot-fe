@@ -26,7 +26,9 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
 
   // Reaction state - initialize from news data if available
   const [selectedReaction, setSelectedReaction] =
-    useState<TNewsReaction | null>((news as any)?.reaction?.reaction || null);
+    useState<TNewsReaction | null>(() => {
+      return (news as any)?.reaction?.reaction || null;
+    });
 
   // News reaction mutation
   const submitReactionMutation = useSubmitNewsReaction();
@@ -34,6 +36,11 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
   // Handle reaction submission
   const handleReactionSubmit = async (reaction: TNewsReaction) => {
     if (!user_id || submitReactionMutation.isPending) return;
+
+    // Don't make API call if the same reaction is already selected
+    if (selectedReaction === reaction) {
+      return;
+    }
 
     try {
       await submitReactionMutation.mutateAsync({
@@ -65,9 +72,7 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
   // Update selected reaction when news data changes
   useEffect(() => {
     const existingReaction = (news as any)?.reaction?.reaction;
-    if (existingReaction) {
-      setSelectedReaction(existingReaction);
-    }
+    setSelectedReaction(existingReaction || null);
   }, [news]);
 
   // Function to calculate relative time

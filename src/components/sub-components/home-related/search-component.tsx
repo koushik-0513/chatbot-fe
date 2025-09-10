@@ -5,39 +5,21 @@ import { ChevronRight, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useGetTopArticles } from "../../../hooks/api/help-service";
 
 interface TSearchComponentProps {
   onNavigateToHelp?: () => void;
 }
 
-// Sample articles data
-const sampleArticles = [
-  {
-    id: "1",
-    title: "How ticket states work",
-    description: "Learn about different ticket states and their meanings",
-  },
-  {
-    id: "2",
-    title: "Create a custom report",
-    description: "Step-by-step guide to creating custom reports",
-  },
-  {
-    id: "3",
-    title: "HubSpot app",
-    description: "Integration guide for HubSpot application",
-  },
-  {
-    id: "4",
-    title: "Import your Mixpanel contacts",
-    description: "How to import contacts from Mixpanel platform",
-  },
-];
-
 export const SearchComponent = ({
   onNavigateToHelp,
 }: TSearchComponentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Fetch top articles from API
+  const { data: topArticlesData, isLoading, error } = useGetTopArticles();
+
+
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -89,29 +71,46 @@ export const SearchComponent = ({
         </Button>
       </div>
 
-      {/* Sample Articles */}
+      {/* Top Articles */}
       <div className="space-y-3">
-        {sampleArticles.map((article, index) => (
-          <motion.button
-            key={article.id}
-            onClick={() => handleArticleClick(article.id)}
-            className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-3 text-left transition-colors"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}
-            whileHover={{ x: 4 }}
-          >
-            <div className="flex-1">
-              <h3 className="text-foreground text-sm font-medium">
-                {article.title}
-              </h3>
-              <p className="text-muted-foreground text-xs">
-                {article.description}
-              </p>
-            </div>
-            <ChevronRight className="text-muted-foreground h-4 w-4" />
-          </motion.button>
-        ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <motion.div
+              className="text-muted-foreground text-sm"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              Loading articles...
+            </motion.div>
+          </div>
+        ) : error ? (
+          <div className="text-destructive text-sm text-center py-4">
+            Failed to load articles
+          </div>
+        ) : topArticlesData?.data?.articles && topArticlesData.data.articles.length > 0 ? (
+          topArticlesData.data.articles.slice(0, 4).map((article, index) => (
+            <motion.button
+              key={article.id}
+              onClick={() => handleArticleClick(article.id)}
+              className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-3 text-left transition-colors"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}
+              whileHover={{ x: 4 }}
+            >
+              <div className="flex-1">
+                <h3 className="text-foreground text-sm font-medium">
+                  {article.title}
+                </h3>
+              </div>
+              <ChevronRight className="text-muted-foreground h-4 w-4" />
+            </motion.button>
+          ))
+        ) : (
+          <div className="text-muted-foreground text-sm text-center py-4">
+            No articles available
+          </div>
+        )}
       </div>
     </motion.div>
   );
