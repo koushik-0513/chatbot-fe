@@ -8,11 +8,11 @@ import { ResentMessage } from "./sub-components/home-related/resent-message";
 import { SearchComponent } from "./sub-components/home-related/search-component";
 
 interface THomepageProps {
-  onNavigateToHelp?: () => void;
+  onNavigateToHelp?: (articleId?: string) => void;
   onClose?: () => void;
 }
 
-export const Homepage = ({ onNavigateToHelp, onClose }: THomepageProps) => {
+export const Home = ({ onNavigateToHelp, onClose }: THomepageProps) => {
   const {
     data: posts_data,
     isLoading,

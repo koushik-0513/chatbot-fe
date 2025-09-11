@@ -33,6 +33,17 @@ export type TGetCollectionsParams = {
   limit?: number;
 };
 
+export type TTopArticlesResponse = {
+  message: string;
+  data: {
+    articles: Array<{
+      id: string;
+      title: string;
+    }>;
+    total_count: number;
+  };
+};
+
 // Get all collections query
 export const useGetCollections = (params: TGetCollectionsParams = {}) => {
   const { page = 1, limit = 10 } = params;
@@ -185,18 +196,6 @@ export const useGetHelpById = (help_id: string | null) => {
     retry: 2,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
-};
-
-// Top articles response type
-export type TTopArticlesResponse = {
-  message: string;
-  data: {
-    articles: Array<{
-      id: string;
-      title: string;
-    }>;
-    total_count: number;
-  };
 };
 
 // Get top articles

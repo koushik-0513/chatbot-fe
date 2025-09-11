@@ -5,21 +5,20 @@ import { ChevronRight, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
 import { useGetTopArticles } from "../../../hooks/api/help-service";
 
 interface TSearchComponentProps {
-  onNavigateToHelp?: () => void;
+  onNavigateToHelp?: (articleId?: string) => void;
 }
 
 export const SearchComponent = ({
   onNavigateToHelp,
 }: TSearchComponentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Fetch top articles from API
   const { data: topArticlesData, isLoading, error } = useGetTopArticles();
-
-
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -34,9 +33,9 @@ export const SearchComponent = ({
     }
   };
 
-  const handleArticleClick = (articleId: string) => {
-    // Navigate to help page when article is clicked
-    onNavigateToHelp?.();
+  const handleArticleClick = (article: any) => {
+    // Navigate to help page with article ID
+    onNavigateToHelp?.(article.id);
   };
 
   const handleInputClick = () => {
@@ -84,14 +83,15 @@ export const SearchComponent = ({
             </motion.div>
           </div>
         ) : error ? (
-          <div className="text-destructive text-sm text-center py-4">
+          <div className="text-destructive py-4 text-center text-sm">
             Failed to load articles
           </div>
-        ) : topArticlesData?.data?.articles && topArticlesData.data.articles.length > 0 ? (
+        ) : topArticlesData?.data?.articles &&
+          topArticlesData.data.articles.length > 0 ? (
           topArticlesData.data.articles.slice(0, 4).map((article, index) => (
             <motion.button
               key={article.id}
-              onClick={() => handleArticleClick(article.id)}
+              onClick={() => handleArticleClick(article)}
               className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-3 text-left transition-colors"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -107,7 +107,7 @@ export const SearchComponent = ({
             </motion.button>
           ))
         ) : (
-          <div className="text-muted-foreground text-sm text-center py-4">
+          <div className="text-muted-foreground py-4 text-center text-sm">
             No articles available
           </div>
         )}

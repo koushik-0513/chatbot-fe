@@ -15,24 +15,24 @@ import {
   X,
 } from "lucide-react";
 
-import { Helppage } from "./help";
-import { Homepage } from "./home";
+import { Help } from "./help";
+import { Home } from "./home";
 import { Message } from "./message";
 import { News } from "./news";
 import { ChatContainer } from "./sub-components/chat-related/chat-container";
 
-interface TChatbotProps {
+type TChatbotProps = {
   user_id: string;
   onClose?: () => void;
   isMaximized?: boolean;
   onMaximizeChange?: (isMaximized: boolean) => void;
-}
+};
 
-interface NavigationItem {
+type NavigationItem = {
   id: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-}
+};
 
 const navigationItems: NavigationItem[] = [
   { id: "homepage", icon: House, label: "Home" },
@@ -54,6 +54,11 @@ export const Chatbot = ({
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [pageKey, setPageKey] = useState(Date.now());
   const [internalIsMaximized, setInternalIsMaximized] = useState(false);
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
+    null
+  );
+  const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
+  const [navigatedFromHomepage, setNavigatedFromHomepage] = useState(false);
   const isMaximized =
     externalIsMaximized !== undefined
       ? externalIsMaximized
@@ -84,10 +89,20 @@ export const Chatbot = ({
     resetAllScrollWithDelay(100);
   }, [pageKey, resetAllScrollWithDelay]);
 
-  const handlePageChange = (page: string) => {
+  const handlePageChange = (page: string, articleId?: string) => {
+    // Track if we're navigating from homepage to help with an article
+    if (activePage === "homepage" && page === "help" && articleId) {
+      setNavigatedFromHomepage(true);
+      setShowBackButton(true); // Show back button immediately for homepage->article navigation
+    } else {
+      setNavigatedFromHomepage(false);
+      setShowBackButton(false);
+    }
+
     setActivePage(page);
-    setShowBackButton(false);
     setShowDetails(false); // Reset details state when changing pages
+    setSelectedArticleId(articleId || null); // Set article ID if provided
+    setDynamicTitle(null); // Reset dynamic title when changing pages
     const newMaximized = false;
     if (externalIsMaximized !== undefined) {
       onMaximizeChange?.(newMaximized);
@@ -114,6 +129,11 @@ export const Chatbot = ({
     resetAllScrollWithDelay(100);
   };
 
+  const handleNavigateToHome = () => {
+    setNavigatedFromHomepage(false);
+    handlePageChange("homepage");
+  };
+
   const handleChatSelected = (chatId: number) => {
     console.log("handleChatSelected called with chatId:", chatId);
     console.log("Setting selectedChatId to:", chatId);
@@ -123,9 +143,14 @@ export const Chatbot = ({
   };
 
   const handleBackClick = () => {
-    // Reset scroll when back button is clicked
-    resetAllScrollWithDelay(100);
-    setBackButtonTrigger((prev) => prev + 1);
+    // If we navigated from homepage, go back to homepage
+    if (navigatedFromHomepage) {
+      handleNavigateToHome();
+    } else {
+      // Otherwise, trigger the normal back behavior
+      resetAllScrollWithDelay(100);
+      setBackButtonTrigger((prev) => prev + 1);
+    }
   };
 
   // Handle back navigation from details views with auto-minimize
@@ -169,6 +194,21 @@ export const Chatbot = ({
 
   // Get proper title for each page
   const getPageTitle = (page: string) => {
+    // Use dynamic title if available for help page
+    if (page === "help" && dynamicTitle) {
+      return dynamicTitle;
+    }
+
+    // If we navigated from homepage and have an article selected, don't show "Help" initially
+    if (
+      page === "help" &&
+      navigatedFromHomepage &&
+      selectedArticleId &&
+      !dynamicTitle
+    ) {
+      return ""; // Return empty string or you can return the article title if available
+    }
+
     switch (page) {
       case "homepage":
         return "Home";
@@ -238,8 +278,8 @@ export const Chatbot = ({
       <motion.h2
         key={title}
         className={`${showBack ? "" : "flex-1"} text-foreground text-center text-lg font-semibold`}
-        initial={{ opacity: 0, y: -5 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: title ? 1 : 0, y: title ? 0 : -5 }}
+        animate={{ opacity: title ? 1 : 0, y: 0 }}
         transition={{ duration: 0.2 }}
       >
         {title}
@@ -361,8 +401,10 @@ export const Chatbot = ({
               transition={{ duration: 0.5 }}
               className="p-4"
             >
-              <Homepage
-                onNavigateToHelp={() => handlePageChange("help")}
+              <Home
+                onNavigateToHelp={(articleId) =>
+                  handlePageChange("help", articleId)
+                }
                 onClose={onClose}
               />
             </motion.div>
@@ -391,7 +433,7 @@ export const Chatbot = ({
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
             >
-              <Helppage
+              <Help
                 onShowBackButton={setShowBackButton}
                 backButtonTrigger={backButtonTrigger}
                 activePage={activePage}
@@ -399,6 +441,10 @@ export const Chatbot = ({
                 onBackFromDetails={handleBackFromDetails}
                 onMinimizeOnly={handleMinimizeOnly}
                 onAutoMaximize={handleAutoMaximize}
+                selectedArticleId={selectedArticleId}
+                onTitleChange={setDynamicTitle}
+                onNavigateToHome={handleNavigateToHome}
+                navigatedFromHomepage={navigatedFromHomepage}
               />
             </motion.div>
           )}
@@ -429,5 +475,3 @@ export const Chatbot = ({
     </motion.div>
   );
 };
-
-export default Chatbot;

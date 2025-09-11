@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ArticleNavigationProvider } from "@/contexts/article-navigation-context";
 import { ScrollProvider } from "@/contexts/scroll-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -24,7 +25,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ScrollProvider>{children}</ScrollProvider>
+      <ScrollProvider>
+        <ArticleNavigationProvider>{children}</ArticleNavigationProvider>
+      </ScrollProvider>
     </QueryClientProvider>
   );
 };

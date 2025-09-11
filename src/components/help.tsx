@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
@@ -24,9 +24,13 @@ type THelppageProps = {
   onBackFromDetails?: () => void;
   onMinimizeOnly?: () => void;
   onAutoMaximize?: () => void;
+  selectedArticleId?: string | null;
+  onTitleChange?: (title: string) => void;
+  onNavigateToHome?: () => void;
+  navigatedFromHomepage?: boolean;
 };
 
-export const Helppage = ({
+export const Help = ({
   onShowBackButton,
   backButtonTrigger,
   activePage,
@@ -34,6 +38,10 @@ export const Helppage = ({
   onBackFromDetails,
   onMinimizeOnly,
   onAutoMaximize,
+  selectedArticleId: propSelectedArticleId,
+  onTitleChange,
+  onNavigateToHome,
+  navigatedFromHomepage = false,
 }: THelppageProps) => {
   const [pageState, setPageState] = useState<THelpPageState>({
     currentView: "list",
@@ -50,15 +58,21 @@ export const Helppage = ({
     string | null
   >(null);
 
-  // State for selected article ID
+  // State for selected article ID - use prop if provided, otherwise use state
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
-    null
+    propSelectedArticleId || null
   );
 
   // State for parent collection ID to track navigation
   const [parentCollectionId, setParentCollectionId] = useState<string | null>(
     null
   );
+  const [showTitle, setShowTitle] = useState(false);
+
+  // State for article navigation history - store only IDs for efficiency
+  const [articleNavigationStack, setArticleNavigationStack] = useState<
+    string[]
+  >([]);
 
   // Fetch collection details when a collection is selected
   const {
@@ -76,18 +90,112 @@ export const Helppage = ({
 
   console.log(collectionDetailsData);
 
+  // Handle prop changes for selectedArticleId
+  useEffect(() => {
+    if (propSelectedArticleId && propSelectedArticleId !== selectedArticleId) {
+      setSelectedArticleId(propSelectedArticleId);
+    }
+  }, [propSelectedArticleId, selectedArticleId]);
+
+  // Auto-show article when selectedArticleId is provided and article data is loaded
+  useEffect(() => {
+    if (selectedArticleId && articleDetailsData?.data?.article) {
+      const article = articleDetailsData.data.article;
+      setPageState({
+        currentView: "article",
+        selectedCollection: null,
+        selectedArticle: {
+          id: article.id,
+          title: article.title,
+          description: article.excerpt || "",
+          content: article.content || "",
+          author: articleDetailsData.data.author?.name || "Anonymous",
+        },
+      });
+      onShowDetails?.(true);
+      onAutoMaximize?.();
+
+      // If navigated from homepage, immediately set the article title
+      if (navigatedFromHomepage && article.title) {
+        onTitleChange?.(article.title);
+      }
+    }
+  }, [
+    selectedArticleId,
+    articleDetailsData,
+    onShowDetails,
+    onAutoMaximize,
+    navigatedFromHomepage,
+    onTitleChange,
+  ]);
+
+  // Get the current title based on the view
+  const getCurrentTitle = () => {
+    if (pageState.currentView === "article" && pageState.selectedArticle) {
+      return pageState.selectedArticle.title;
+    }
+    return "Help";
+  };
+
+  // Handle scroll-based title visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      // Don't handle scroll-based title if we navigated from homepage
+      if (navigatedFromHomepage) return;
+
+      // Find the scroll container in the parent
+      const scrollContainer = document.querySelector(".scroll-container");
+      if (scrollContainer) {
+        const scrollTop = scrollContainer.scrollTop;
+        // Show title when scrolled up more than 50px
+        setShowTitle(scrollTop > 50);
+      }
+    };
+
+    const scrollContainer = document.querySelector(".scroll-container");
+    if (scrollContainer) {
+      scrollContainer.addEventListener("scroll", handleScroll);
+      return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    }
+  }, [pageState.currentView, navigatedFromHomepage]);
+
+  // Notify parent component when title changes
+  useEffect(() => {
+    const currentTitle = getCurrentTitle();
+
+    // If navigated from homepage and viewing an article, always show article title
+    if (navigatedFromHomepage && pageState.currentView === "article") {
+      onTitleChange?.(currentTitle);
+    } else if (pageState.currentView === "article" && showTitle) {
+      // Otherwise, only show title if scrolled up
+      onTitleChange?.(currentTitle);
+    } else if (!navigatedFromHomepage) {
+      onTitleChange?.("Help");
+    }
+  }, [
+    pageState.currentView,
+    pageState.selectedArticle,
+    showTitle,
+    onTitleChange,
+    navigatedFromHomepage,
+  ]);
+
   // Reset internal navigation state when component mounts or when switching away from help
   useEffect(() => {
     if (activePage === "help") {
-      setPageState({
-        currentView: "list",
-        selectedCollection: null,
-        selectedArticle: null,
-      });
-      setSelectedCollectionId(null);
-      setSelectedArticleId(null);
-      setParentCollectionId(null);
-      onShowBackButton(false);
+      // Don't reset everything if we're navigating from homepage with an article
+      if (!navigatedFromHomepage) {
+        setPageState({
+          currentView: "list",
+          selectedCollection: null,
+          selectedArticle: null,
+        });
+        setSelectedCollectionId(null);
+        setSelectedArticleId(propSelectedArticleId || null);
+        setParentCollectionId(null);
+        setArticleNavigationStack([]); // Clear navigation stack
+        onShowBackButton(false);
+      }
 
       // Force scroll reset for this component
       resetAllScrollWithDelay(100);
@@ -101,48 +209,87 @@ export const Helppage = ({
       setSelectedCollectionId(null);
       setSelectedArticleId(null);
       setParentCollectionId(null);
+      setArticleNavigationStack([]); // Clear navigation stack
       onShowBackButton(false);
     }
-  }, [activePage, resetAllScroll, resetAllScrollWithDelay]);
+  }, [
+    activePage,
+    resetAllScroll,
+    resetAllScrollWithDelay,
+    propSelectedArticleId,
+    navigatedFromHomepage,
+  ]);
 
   // Handle back button trigger from navbar
   useEffect(() => {
-    if (backButtonTrigger > 0) {
+    if (backButtonTrigger > 0 && !navigatedFromHomepage) {
       if (pageState.currentView === "article") {
         handle_back_to_collection();
       } else if (pageState.currentView === "collection") {
         handle_back_to_list();
       }
     }
-  }, [backButtonTrigger]);
+  }, [backButtonTrigger, navigatedFromHomepage]);
 
-  const handle_collection_click = (collection: THelpCollection) => {
-    setSelectedCollectionId(collection.id);
-    setPageState({
-      currentView: "collection",
-      selectedCollection: collection,
-      selectedArticle: null,
-    });
-    onShowBackButton(true);
-    // Don't hide navbar for collection details
-    onShowDetails?.(false);
+  const handle_collection_click = useCallback(
+    (collection: THelpCollection) => {
+      setSelectedCollectionId(collection.id);
+      setPageState({
+        currentView: "collection",
+        selectedCollection: collection,
+        selectedArticle: null,
+      });
+      onShowBackButton(true);
+      // Don't hide navbar for collection details
+      onShowDetails?.(false);
 
-    // Reset scroll when navigating to collection
-    resetAllScrollWithDelay(100);
-  };
+      // Reset scroll when navigating to collection
+      resetAllScrollWithDelay(100);
+    },
+    [onShowBackButton, onShowDetails, resetAllScrollWithDelay]
+  );
 
-  const handle_article_click = (article: THelpArticle) => {
-    setSelectedArticleId(article.id);
-    setPageState({
-      currentView: "article",
-      selectedCollection: pageState.selectedCollection,
-      selectedArticle: article,
-    });
-    onShowDetails?.(true);
+  const handle_article_click = useCallback(
+    (article: THelpArticle) => {
+      setSelectedArticleId(article.id);
+      setPageState({
+        currentView: "article",
+        selectedCollection: pageState.selectedCollection,
+        selectedArticle: article,
+      });
 
-    // Reset scroll when navigating to article
-    resetAllScrollWithDelay(100);
-  };
+      // Don't add to navigation stack when coming from collection
+      // Navigation stack is only for related article navigation
+
+      onShowDetails?.(true);
+
+      // Reset scroll when navigating to article
+      resetAllScrollWithDelay(100);
+    },
+    [pageState.selectedCollection, onShowDetails, resetAllScrollWithDelay]
+  );
+
+  // Handle related article navigation
+  const handle_related_article_click = useCallback(
+    (articleId: string) => {
+      // Add current article ID to navigation stack before navigating to related article
+      if (selectedArticleId) {
+        setArticleNavigationStack((prev) => [...prev, selectedArticleId]);
+      }
+
+      // Directly set the new article ID without clearing first
+      setSelectedArticleId(articleId);
+      setPageState({
+        currentView: "article",
+        selectedCollection: pageState.selectedCollection,
+        selectedArticle: null, // Will be populated by the useEffect when article loads
+      });
+
+      // Reset scroll position for new article
+      resetAllScrollWithDelay(100);
+    },
+    [selectedArticleId, pageState.selectedCollection, resetAllScrollWithDelay]
+  );
 
   const handle_back_to_list = (parentId?: string) => {
     if (parentCollectionId) {
@@ -163,6 +310,7 @@ export const Helppage = ({
         selectedCollection: null,
         selectedArticle: null,
       });
+      setArticleNavigationStack([]); // Clear navigation stack
       onShowBackButton(false);
       onShowDetails?.(false);
       onBackFromDetails?.(); // Call the callback to auto-minimize
@@ -172,20 +320,57 @@ export const Helppage = ({
     resetAllScrollWithDelay(100);
   };
 
-  const handle_back_to_collection = () => {
-    setSelectedArticleId(null);
-    setPageState({
-      currentView: "collection",
-      selectedCollection: pageState.selectedCollection,
-      selectedArticle: null,
-    });
-    // Don't hide navbar for collection view
-    onShowDetails?.(false);
-    // Call onMinimizeOnly to trigger minimize without affecting back button state
-    onMinimizeOnly?.();
+  const handle_back_to_collection = useCallback(() => {
+    // Check if we have articles in the navigation stack (related article navigation)
+    if (articleNavigationStack.length > 0) {
+      // Go back to the previous article in the stack
+      const previousArticleId =
+        articleNavigationStack[articleNavigationStack.length - 1];
+      setArticleNavigationStack((prev) => prev.slice(0, -1)); // Remove the last article
 
-    // Reset scroll when going back to collection
-    resetAllScrollWithDelay(100);
+      setSelectedArticleId(previousArticleId);
+      setPageState({
+        currentView: "article",
+        selectedCollection: pageState.selectedCollection,
+        selectedArticle: null, // Will be populated by the useEffect when article loads
+      });
+
+      // Reset scroll when going back to previous article
+      resetAllScrollWithDelay(100);
+    } else {
+      // No previous articles in stack, go back to collection
+      setSelectedArticleId(null);
+      setPageState({
+        currentView: "collection",
+        selectedCollection: pageState.selectedCollection,
+        selectedArticle: null,
+      });
+      // Clear navigation stack when going back to collection
+      setArticleNavigationStack([]);
+      // Don't hide navbar for collection view
+      onShowDetails?.(false);
+      // Call onMinimizeOnly to trigger minimize without affecting back button state
+      onMinimizeOnly?.();
+
+      // Reset scroll when going back to collection
+      resetAllScrollWithDelay(100);
+    }
+  }, [
+    articleNavigationStack,
+    pageState.selectedCollection,
+    onShowDetails,
+    onMinimizeOnly,
+    resetAllScrollWithDelay,
+  ]);
+
+  // Custom back handler for when coming from home page
+  const handle_back_from_home = () => {
+    if (onNavigateToHome) {
+      onNavigateToHome();
+    } else {
+      // Fallback to normal back behavior
+      handle_back_to_collection();
+    }
   };
 
   const handle_child_collection_click = (
@@ -199,6 +384,7 @@ export const Helppage = ({
       selectedCollection: collection,
       selectedArticle: null,
     });
+    setArticleNavigationStack([]); // Clear navigation stack when navigating to child collection
     // Ensure back button is visible for collection view
     onShowBackButton(true);
     // Don't hide navbar for collection view
@@ -222,8 +408,14 @@ export const Helppage = ({
               articleDetailsData={articleDetailsData}
               isLoading={isLoadingArticle}
               error={articleError}
-              onBack={handle_back_to_collection}
+              onBack={
+                navigatedFromHomepage
+                  ? handle_back_from_home
+                  : handle_back_to_collection
+              }
               onAutoMaximize={onAutoMaximize}
+              navigatedFromHomepage={navigatedFromHomepage}
+              onRelatedArticleClick={handle_related_article_click}
             />
           </motion.div>
         )}

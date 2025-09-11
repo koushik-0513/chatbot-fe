@@ -121,6 +121,10 @@ export type THelpArticleDetail = {
   read_time: number;
   created_at: string;
   updated_at: string;
+  related_articles?: Array<{
+    id: string;
+    title: string;
+  }>;
 };
 
 export type THelpArticleDetailResponse = {

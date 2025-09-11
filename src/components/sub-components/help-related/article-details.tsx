@@ -23,6 +23,8 @@ interface TArticleDetailsProps {
   error: Error | null;
   onBack: () => void;
   onAutoMaximize?: () => void;
+  navigatedFromHomepage?: boolean;
+  onRelatedArticleClick?: (articleId: string) => void;
 }
 
 export const ArticleDetails = ({
@@ -32,6 +34,8 @@ export const ArticleDetails = ({
   error,
   onBack,
   onAutoMaximize,
+  navigatedFromHomepage = false,
+  onRelatedArticleClick,
 }: TArticleDetailsProps) => {
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -40,7 +44,9 @@ export const ArticleDetails = ({
   // Reaction state - initialize from article data if available
   const [selectedReaction, setSelectedReaction] =
     useState<TArticleReaction | null>(() => {
-      return (articleDetailsData as any)?.data?.article?.reaction?.reaction || null;
+      return (
+        (articleDetailsData as any)?.data?.article?.reaction?.reaction || null
+      );
     });
 
   // Article reaction mutation
@@ -64,6 +70,16 @@ export const ArticleDetails = ({
       setSelectedReaction(reaction);
     } catch (error) {
       console.error("Failed to submit reaction:", error);
+    }
+  };
+
+  // Handle related article click
+  const handleRelatedArticleClick = (articleId: string) => {
+    if (onRelatedArticleClick) {
+      onRelatedArticleClick(articleId);
+    } else {
+      // Fallback: just log if no handler provided
+      console.log("Navigate to related article:", articleId);
     }
   };
 
@@ -164,6 +180,7 @@ export const ArticleDetails = ({
     tags: [],
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    related_articles: [],
   };
 
   const author = articleDetailsData?.data.author || {
@@ -297,6 +314,73 @@ export const ArticleDetails = ({
           </motion.div>
         )}
       </motion.div>
+
+      {/* Tips Section */}
+      <motion.div
+        className="border-primary/20 bg-primary/5 rounded-lg border-t-2 border-b-2 p-4"
+        variants={item_variants}
+      >
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-2xl">💡</span>
+          <h3 className="text-lg font-semibold">Tip</h3>
+        </div>
+        <div className="space-y-1 text-center">
+          <p>
+            <span className="font-semibold">Need more help?</span> Get support
+            from our{" "}
+            <a href="#" className="text-primary hover:underline">
+              Community Forum
+            </a>
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Find answers and get help from Intercom Support and Community
+            Experts
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Related Articles Section */}
+      {article.related_articles && article.related_articles.length > 0 && (
+        <motion.div className="space-y-3" variants={item_variants}>
+          <h3 className="text-card-foreground text-lg font-semibold">
+            Related Articles
+          </h3>
+          <div className="space-y-2">
+            {article.related_articles.map((relatedArticle, index) => (
+              <motion.div
+                key={relatedArticle.id}
+                className="group border-border bg-card hover:border-primary/50 cursor-pointer rounded-lg border p-3 transition-all hover:shadow-sm"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() => handleRelatedArticleClick(relatedArticle.id)}
+                whileHover={{ x: 4 }}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-foreground group-hover:text-primary text-sm font-medium transition-colors">
+                    {relatedArticle.title}
+                  </p>
+                  <motion.svg
+                    className="text-muted-foreground group-hover:text-primary h-4 w-4 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 2 }}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </motion.svg>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Reactions Section */}
       <motion.div
