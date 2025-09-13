@@ -31,7 +31,7 @@ export const useSubmitNewsReaction = () => {
   >({
     mutationFn: async ({ newsId, reaction, userId }) => {
       const response = await fetch(
-        `${env.backendUrl}/news/${newsId}/reaction`,
+        `${env.backendUrl}/api/v1/news/${newsId}/reaction`,
         {
           method: "POST",
           headers: {

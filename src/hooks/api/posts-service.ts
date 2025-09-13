@@ -37,7 +37,7 @@ export const useGetPosts = (params: TGetPostsParams) => {
     queryKey: ["posts", page, limit],
     queryFn: async () => {
       const response = await fetch(
-        `${env.backendUrl}/post/get-posts?page=${page}&limit=${limit}`,
+        `${env.backendUrl}/api/v1/post/?page=${page}&limit=${limit}`,
         {
           method: "GET",
           headers: {
@@ -55,36 +55,5 @@ export const useGetPosts = (params: TGetPostsParams) => {
     retry: 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
-  });
-};
-
-// Get single post by ID
-export const useGetPost = (post_id: string | null) => {
-  return useQuery<TPost, Error>({
-    queryKey: ["post", post_id],
-    queryFn: async () => {
-      if (!post_id) {
-        throw new Error("Post ID is required");
-      }
-
-      const response = await fetch(
-        `${env.backendUrl}/post/get-post/${post_id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
-    },
-    enabled: !!post_id,
-    retry: 2,
-    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };

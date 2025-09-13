@@ -30,7 +30,7 @@ export const useChatHistory = (
       );
 
       const response = await fetch(
-        `${env.backendUrl}/conversation/all?page=${page}&limit=${limit}`,
+        `${env.backendUrl}/api/v1/conversation/all?page=${page}&limit=${limit}`,
         {
           method: "POST",
           headers: {
@@ -75,7 +75,7 @@ export const useCreateNewChat = () => {
     { user_id: string }
   >({
     mutationFn: async ({ user_id }) => {
-      const response = await fetch(`${env.backendUrl}/conversation`, {
+      const response = await fetch(`${env.backendUrl}/api/v1/conversation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -165,7 +165,7 @@ export const useSendMessage = () => {
   >({
     mutationFn: async ({ conversationId, message, user_id }) => {
       const response = await fetch(
-        `${env.backendUrl}/chat/stream/${conversationId}`,
+        `${env.backendUrl}/api/v1/chat/stream/${conversationId}`,
         {
           method: "POST",
           headers: {

@@ -31,7 +31,7 @@ export const useGetNews = (params: TGetNewsParams) => {
     queryKey: ["news", page, limit],
     queryFn: async () => {
       const response = await fetch(
-        `${env.backendUrl}/news/?page=${page}&limit=${limit}`,
+        `${env.backendUrl}/api/v1/news/?page=${page}&limit=${limit}`,
         {
           method: "GET",
           headers: {
@@ -66,7 +66,7 @@ export const useGetNewsById = (
       }
 
       const response = await fetch(
-        `${env.backendUrl}/news/${news_id}/?user_id=${user_id}`,
+        `${env.backendUrl}/api/v1/news/${news_id}/?user_id=${user_id}`,
         {
           method: "GET",
           headers: {

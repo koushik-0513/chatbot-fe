@@ -1,20 +1,24 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { useScrollContext } from "@/contexts/scroll-context";
+import { useArticleNavigation } from "@/contexts/article-navigation-context";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { useUserId } from "@/hooks/use-user-id";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import {
   useGetArticleDetails,
   useGetCollectionDetails,
   useGetCollections,
 } from "../hooks/api/help-service";
+import { useSearchArticles } from "../hooks/api/article-search-service";
 import { THelpArticle, THelpCollection, THelpPageState } from "../types/types";
 import { ArticleCard } from "./sub-components/help-related/article-cards";
 import { ArticleDetails } from "./sub-components/help-related/article-details";
 import { CollectionDetails } from "./sub-components/help-related/collection-details";
 import { SearchBar } from "./sub-components/help-related/search-bar";
+import { SearchResults } from "./sub-components/help-related/search-results";
 
 type THelppageProps = {
   onShowBackButton: (show: boolean) => void;
@@ -50,18 +54,59 @@ export const Help = ({
   });
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const { user_id } = useUserId();
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [cameFromSearch, setCameFromSearch] = useState(false);
+  
+  // Debounce search query with 500ms delay
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  
+  // Use article navigation context
+  const {
+    selectedArticleId,
+    articleDetailsData,
+    isLoadingArticle,
+    articleError,
+    openArticleDetails,
+    setArticleDetailsData,
+    setLoadingArticle,
+    setArticleError,
+  } = useArticleNavigation();
+  
+  // Fetch article details when an article is selected
+  const {
+    data: fetchedArticleDetailsData,
+    isLoading: isFetchingArticle,
+    error: fetchArticleError,
+  } = useGetArticleDetails(selectedArticleId, user_id);
+  
+  // Debug selectedArticleId changes
+  useEffect(() => {
+    console.log("selectedArticleId changed to:", selectedArticleId);
+    console.log("user_id:", user_id);
+  }, [selectedArticleId, user_id]);
+  
   // Fetch collections from API
   const { data: collectionsData, isLoading, error } = useGetCollections();
-
+  
+  // Search articles
+  const {
+    data: searchResults,
+    isLoading: isSearchLoading,
+    error: searchError,
+  } = useSearchArticles({
+    query: debouncedSearchQuery,
+    page: 1,
+    limit: 10,
+  });
+ 
   // State for selected collection ID
   const [selectedCollectionId, setSelectedCollectionId] = useState<
     string | null
   >(null);
 
-  // State for selected article ID - use prop if provided, otherwise use state
-  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
-    propSelectedArticleId || null
-  );
 
   // State for parent collection ID to track navigation
   const [parentCollectionId, setParentCollectionId] = useState<string | null>(
@@ -81,21 +126,48 @@ export const Help = ({
     error: detailsError,
   } = useGetCollectionDetails(selectedCollectionId);
 
-  // Fetch article details when an article is selected
-  const {
-    data: articleDetailsData,
-    isLoading: isLoadingArticle,
-    error: articleError,
-  } = useGetArticleDetails(selectedArticleId, user_id);
 
   console.log(collectionDetailsData);
 
-  // Handle prop changes for selectedArticleId
+  // Handle search query changes
   useEffect(() => {
-    if (propSelectedArticleId && propSelectedArticleId !== selectedArticleId) {
-      setSelectedArticleId(propSelectedArticleId);
+    setIsSearching(debouncedSearchQuery.length > 0);
+  }, [debouncedSearchQuery]);
+
+  // Update context with fetched article data
+  useEffect(() => {
+    if (fetchedArticleDetailsData) {
+      console.log("Fetched article details data:", fetchedArticleDetailsData);
+      setArticleDetailsData(fetchedArticleDetailsData);
     }
-  }, [propSelectedArticleId, selectedArticleId]);
+  }, [fetchedArticleDetailsData, setArticleDetailsData]);
+  
+  useEffect(() => {
+    console.log("isFetchingArticle:", isFetchingArticle);
+    setLoadingArticle(isFetchingArticle);
+  }, [isFetchingArticle, setLoadingArticle]);
+  
+  useEffect(() => {
+    setArticleError(fetchArticleError);
+  }, [fetchArticleError, setArticleError]);
+
+  // Update pageState when articleDetailsData changes
+  useEffect(() => {
+    if (articleDetailsData?.data?.article && selectedArticleId) {
+      const article = articleDetailsData.data.article;
+      setPageState(prev => ({
+        ...prev,
+        selectedArticle: {
+          id: article.id,
+          title: article.title,
+          description: article.excerpt || "",
+          content: article.content || "",
+          author: articleDetailsData.data.author?.name || "Anonymous",
+          related_articles: article.related_articles || [],
+        },
+      }));
+    }
+  }, [articleDetailsData, selectedArticleId]);
 
   // Auto-show article when selectedArticleId is provided and article data is loaded
   useEffect(() => {
@@ -191,7 +263,7 @@ export const Help = ({
           selectedArticle: null,
         });
         setSelectedCollectionId(null);
-        setSelectedArticleId(propSelectedArticleId || null);
+        // selectedArticleId is managed by context
         setParentCollectionId(null);
         setArticleNavigationStack([]); // Clear navigation stack
         onShowBackButton(false);
@@ -207,7 +279,7 @@ export const Help = ({
         selectedArticle: null,
       });
       setSelectedCollectionId(null);
-      setSelectedArticleId(null);
+      // selectedArticleId is managed by context
       setParentCollectionId(null);
       setArticleNavigationStack([]); // Clear navigation stack
       onShowBackButton(false);
@@ -251,12 +323,14 @@ export const Help = ({
 
   const handle_article_click = useCallback(
     (article: THelpArticle) => {
-      setSelectedArticleId(article.id);
-      setPageState({
+      // Use context to open article details
+      openArticleDetails(article);
+      setPageState(prev => ({
+        ...prev,
         currentView: "article",
-        selectedCollection: pageState.selectedCollection,
+        selectedCollection: prev.selectedCollection,
         selectedArticle: article,
-      });
+      }));
 
       // Don't add to navigation stack when coming from collection
       // Navigation stack is only for related article navigation
@@ -266,7 +340,7 @@ export const Help = ({
       // Reset scroll when navigating to article
       resetAllScrollWithDelay(100);
     },
-    [pageState.selectedCollection, onShowDetails, resetAllScrollWithDelay]
+    [onShowDetails, resetAllScrollWithDelay, openArticleDetails]
   );
 
   // Handle related article navigation
@@ -277,8 +351,16 @@ export const Help = ({
         setArticleNavigationStack((prev) => [...prev, selectedArticleId]);
       }
 
-      // Directly set the new article ID without clearing first
-      setSelectedArticleId(articleId);
+      // Use context to open article details
+      const article: THelpArticle = {
+        id: articleId,
+        title: "Loading...",
+        description: "",
+        content: "",
+        author: "Anonymous",
+        related_articles: [],
+      };
+      openArticleDetails(article);
       setPageState({
         currentView: "article",
         selectedCollection: pageState.selectedCollection,
@@ -289,6 +371,55 @@ export const Help = ({
       resetAllScrollWithDelay(100);
     },
     [selectedArticleId, pageState.selectedCollection, resetAllScrollWithDelay]
+  );
+
+  // Search handlers
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchQuery("");
+    setIsSearching(false);
+  }, []);
+
+  // Handle article click from search results
+  const handle_article_click_from_search = useCallback(
+    (articleId: string) => {
+      // Use context to open article details
+      const article: THelpArticle = {
+        id: articleId,
+        title: "Loading...",
+        description: "",
+        content: "",
+        author: "Anonymous",
+        related_articles: [],
+      };
+      openArticleDetails(article);
+      setCameFromSearch(true); // Mark that we came from search
+      setPageState(prev => ({
+        ...prev,
+        currentView: "article",
+        selectedCollection: null,
+        selectedArticle: {
+          id: articleId,
+          title: "Loading...",
+          description: "",
+          content: "",
+          author: "Anonymous",
+          related_articles: [],
+        },
+      }));
+
+      // Show back button when navigating from search
+      onShowBackButton(true);
+      onShowDetails?.(true);
+      onAutoMaximize?.();
+
+      // Reset scroll when navigating to article
+      resetAllScrollWithDelay(100);
+    },
+    [onShowBackButton, onShowDetails, onAutoMaximize, resetAllScrollWithDelay, openArticleDetails]
   );
 
   const handle_back_to_list = (parentId?: string) => {
@@ -328,7 +459,16 @@ export const Help = ({
         articleNavigationStack[articleNavigationStack.length - 1];
       setArticleNavigationStack((prev) => prev.slice(0, -1)); // Remove the last article
 
-      setSelectedArticleId(previousArticleId);
+      // Use context to open previous article
+      const previousArticle: THelpArticle = {
+        id: previousArticleId,
+        title: "Loading...",
+        description: "",
+        content: "",
+        author: "Anonymous",
+        related_articles: [],
+      };
+      openArticleDetails(previousArticle);
       setPageState({
         currentView: "article",
         selectedCollection: pageState.selectedCollection,
@@ -339,7 +479,7 @@ export const Help = ({
       resetAllScrollWithDelay(100);
     } else {
       // No previous articles in stack, go back to collection
-      setSelectedArticleId(null);
+      // selectedArticleId is managed by context
       setPageState({
         currentView: "collection",
         selectedCollection: pageState.selectedCollection,
@@ -404,7 +544,14 @@ export const Help = ({
             transition={{ duration: 0.3 }}
           >
             <ArticleDetails
-              initialArticle={pageState.selectedArticle}
+              initialArticle={pageState.selectedArticle || {
+                id: selectedArticleId || "",
+                title: "Loading...",
+                description: "",
+                content: "",
+                author: "Anonymous",
+                related_articles: [],
+              }}
               articleDetailsData={articleDetailsData}
               isLoading={isLoadingArticle}
               error={articleError}
@@ -454,15 +601,32 @@ export const Help = ({
               transition={{ duration: 0.4, delay: 0.1 }}
               className="mt-4 w-full px-5"
             >
-              <SearchBar />
+              <SearchBar 
+                searchQuery={searchQuery}
+                onSearchChange={handleSearchChange}
+                onClearSearch={handleClearSearch}
+                isSearching={isSearching}
+              />
             </motion.div>
 
-            <motion.div
-              className="mb-4 px-5"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-            >
+            {/* Show search results when searching, otherwise show collections */}
+            {isSearching ? (
+              <SearchResults
+                searchResults={searchResults?.data?.articles || []}
+                isLoading={isSearchLoading}
+                error={searchError}
+                searchQuery={searchQuery}
+                onArticleClick={handle_article_click_from_search}
+                onClearSearch={handleClearSearch}
+              />
+            ) : (
+              <>
+                <motion.div
+                  className="mb-4 px-5"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                >
               <p className="text-muted-foreground text-sm">
                 {isLoading
                   ? "Loading..."
@@ -518,6 +682,8 @@ export const Help = ({
                   )
                 )}
               </motion.div>
+            )}
+              </>
             )}
           </motion.div>
         )}

@@ -21,7 +21,7 @@ type TCreateUserResponse = {
 export const useCreateUser = () => {
   return useMutation<TCreateUserResponse, Error, TCreateUserRequest>({
     mutationFn: async (data: TCreateUserRequest) => {
-      const response = await fetch(`${env.backendUrl}/user/create-user`, {
+      const response = await fetch(`${env.backendUrl}/api/v1/user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

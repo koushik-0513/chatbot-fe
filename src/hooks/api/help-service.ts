@@ -51,7 +51,7 @@ export const useGetCollections = (params: TGetCollectionsParams = {}) => {
   return useQuery<THelpCollectionsResponse, Error>({
     queryKey: ["help-collections", page, limit],
     queryFn: async () => {
-      const response = await fetch(`${env.backendUrl}/help/collections`, {
+      const response = await fetch(`${env.backendUrl}/api/v1/collection`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export const useGetCollectionDetails = (collection_id: string | null) => {
       }
 
       const response = await fetch(
-        `${env.backendUrl}/help/collections/${collection_id}`,
+        `${env.backendUrl}/api/v1/collection/${collection_id}`,
         {
           method: "GET",
           headers: {
@@ -117,7 +117,7 @@ export const useGetArticleDetails = (
       }
 
       const response = await fetch(
-        `${env.backendUrl}/help/articles/${article_id}?user_id=${user_id}`,
+        `${env.backendUrl}/api/v1/article/${article_id}?user_id=${user_id}`,
         {
           method: "GET",
           headers: {
@@ -148,7 +148,7 @@ export const useGetHelp = (collection_id: string, params: TGetHelpParams) => {
     queryKey: ["help", collection_id, page, limit],
     queryFn: async () => {
       const response = await fetch(
-        `${env.backendUrl}/help/collections/${collection_id}`,
+        `${env.backendUrl}/api/v1/collection/${collection_id}`,
         {
           method: "GET",
           headers: {
@@ -179,7 +179,7 @@ export const useGetHelpById = (help_id: string | null) => {
         throw new Error("Help ID is required");
       }
 
-      const response = await fetch(`${env.backendUrl}/help/${help_id}`, {
+      const response = await fetch(`${env.backendUrl}/api/v1/${help_id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -203,7 +203,7 @@ export const useGetTopArticles = () => {
   return useQuery<TTopArticlesResponse, Error>({
     queryKey: ["help-top-articles"],
     queryFn: async () => {
-      const response = await fetch(`${env.backendUrl}/help/articles/top`, {
+      const response = await fetch(`${env.backendUrl}/api/v1/article/top`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

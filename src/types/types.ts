@@ -7,6 +7,10 @@ export type THelpArticle = {
   content?: string;
   lastUpdated?: string;
   tableOfContents?: string[];
+  related_articles?: Array<{
+    id: string;
+    title: string;
+  }>;
 };
 
 export type THelpCollection = {
@@ -163,5 +167,30 @@ export type TChatHistoryResponse = {
     limit: number;
     total_pages: number;
     total_conversations: number;
+  };
+};
+
+export type TArticleSearchResult = {
+  id: string;
+  title: string;
+  matched_snippet?: string;
+  slug?: string;
+  collection_id?: string;
+  read_time?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type TArticleSearchResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    articles: TArticleSearchResult[];
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    total_pages: number;
+    total_articles: number;
   };
 };
