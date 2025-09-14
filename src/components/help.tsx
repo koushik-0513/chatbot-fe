@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { useScrollContext } from "@/contexts/scroll-context";
 import { useArticleNavigation } from "@/contexts/article-navigation-context";
+import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { useUserId } from "@/hooks/use-user-id";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useUserId } from "@/hooks/use-user-id";
 
+import { useSearchArticles } from "../hooks/api/article-search-service";
 import {
   useGetArticleDetails,
   useGetCollectionDetails,
   useGetCollections,
 } from "../hooks/api/help-service";
-import { useSearchArticles } from "../hooks/api/article-search-service";
 import { THelpArticle, THelpCollection, THelpPageState } from "../types/types";
 import { ArticleCard } from "./sub-components/help-related/article-cards";
 import { ArticleDetails } from "./sub-components/help-related/article-details";
@@ -54,18 +54,19 @@ export const Help = ({
   });
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const { user_id } = useUserId();
-  
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [cameFromSearch, setCameFromSearch] = useState(false);
-  
+
   // Debounce search query with 500ms delay
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
-  
+
   // Use article navigation context
   const {
     selectedArticleId,
+    selectedArticle,
     articleDetailsData,
     isLoadingArticle,
     articleError,
@@ -74,23 +75,39 @@ export const Help = ({
     setLoadingArticle,
     setArticleError,
   } = useArticleNavigation();
-  
+
+  // Set selectedArticleId when propSelectedArticleId changes (from home page navigation)
+  useEffect(() => {
+    if (propSelectedArticleId && propSelectedArticleId !== selectedArticleId) {
+      // Create a minimal article object for navigation
+      const article = {
+        id: propSelectedArticleId,
+        title: "Loading...",
+        description: "",
+        content: "",
+        author: "Anonymous",
+        related_articles: [],
+      };
+      openArticleDetails(article);
+    }
+  }, [propSelectedArticleId, selectedArticleId, openArticleDetails]);
+
   // Fetch article details when an article is selected
   const {
     data: fetchedArticleDetailsData,
     isLoading: isFetchingArticle,
     error: fetchArticleError,
   } = useGetArticleDetails(selectedArticleId, user_id);
-  
+
   // Debug selectedArticleId changes
   useEffect(() => {
     console.log("selectedArticleId changed to:", selectedArticleId);
     console.log("user_id:", user_id);
   }, [selectedArticleId, user_id]);
-  
+
   // Fetch collections from API
   const { data: collectionsData, isLoading, error } = useGetCollections();
-  
+
   // Search articles
   const {
     data: searchResults,
@@ -101,12 +118,11 @@ export const Help = ({
     page: 1,
     limit: 10,
   });
- 
+
   // State for selected collection ID
   const [selectedCollectionId, setSelectedCollectionId] = useState<
     string | null
   >(null);
-
 
   // State for parent collection ID to track navigation
   const [parentCollectionId, setParentCollectionId] = useState<string | null>(
@@ -126,7 +142,6 @@ export const Help = ({
     error: detailsError,
   } = useGetCollectionDetails(selectedCollectionId);
 
-
   console.log(collectionDetailsData);
 
   // Handle search query changes
@@ -141,12 +156,12 @@ export const Help = ({
       setArticleDetailsData(fetchedArticleDetailsData);
     }
   }, [fetchedArticleDetailsData, setArticleDetailsData]);
-  
+
   useEffect(() => {
     console.log("isFetchingArticle:", isFetchingArticle);
     setLoadingArticle(isFetchingArticle);
   }, [isFetchingArticle, setLoadingArticle]);
-  
+
   useEffect(() => {
     setArticleError(fetchArticleError);
   }, [fetchArticleError, setArticleError]);
@@ -155,7 +170,7 @@ export const Help = ({
   useEffect(() => {
     if (articleDetailsData?.data?.article && selectedArticleId) {
       const article = articleDetailsData.data.article;
-      setPageState(prev => ({
+      setPageState((prev) => ({
         ...prev,
         selectedArticle: {
           id: article.id,
@@ -325,7 +340,7 @@ export const Help = ({
     (article: THelpArticle) => {
       // Use context to open article details
       openArticleDetails(article);
-      setPageState(prev => ({
+      setPageState((prev) => ({
         ...prev,
         currentView: "article",
         selectedCollection: prev.selectedCollection,
@@ -397,7 +412,7 @@ export const Help = ({
       };
       openArticleDetails(article);
       setCameFromSearch(true); // Mark that we came from search
-      setPageState(prev => ({
+      setPageState((prev) => ({
         ...prev,
         currentView: "article",
         selectedCollection: null,
@@ -419,7 +434,13 @@ export const Help = ({
       // Reset scroll when navigating to article
       resetAllScrollWithDelay(100);
     },
-    [onShowBackButton, onShowDetails, onAutoMaximize, resetAllScrollWithDelay, openArticleDetails]
+    [
+      onShowBackButton,
+      onShowDetails,
+      onAutoMaximize,
+      resetAllScrollWithDelay,
+      openArticleDetails,
+    ]
   );
 
   const handle_back_to_list = (parentId?: string) => {
@@ -544,14 +565,16 @@ export const Help = ({
             transition={{ duration: 0.3 }}
           >
             <ArticleDetails
-              initialArticle={pageState.selectedArticle || {
-                id: selectedArticleId || "",
-                title: "Loading...",
-                description: "",
-                content: "",
-                author: "Anonymous",
-                related_articles: [],
-              }}
+              initialArticle={
+                pageState.selectedArticle || {
+                  id: selectedArticleId || "",
+                  title: "Loading...",
+                  description: "",
+                  content: "",
+                  author: "Anonymous",
+                  related_articles: [],
+                }
+              }
               articleDetailsData={articleDetailsData}
               isLoading={isLoadingArticle}
               error={articleError}
@@ -601,7 +624,7 @@ export const Help = ({
               transition={{ duration: 0.4, delay: 0.1 }}
               className="mt-4 w-full px-5"
             >
-              <SearchBar 
+              <SearchBar
                 searchQuery={searchQuery}
                 onSearchChange={handleSearchChange}
                 onClearSearch={handleClearSearch}
@@ -627,62 +650,65 @@ export const Help = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.2 }}
                 >
-              <p className="text-muted-foreground text-sm">
-                {isLoading
-                  ? "Loading..."
-                  : error
-                    ? "Error loading collections"
-                    : `${collectionsData?.pagination.total_collections || 0} collections`}
-              </p>
-            </motion.div>
+                  <p className="text-muted-foreground text-sm">
+                    {isLoading
+                      ? "Loading..."
+                      : error
+                        ? "Error loading collections"
+                        : `${collectionsData?.pagination.total_collections || 0} collections`}
+                  </p>
+                </motion.div>
 
-            {isLoading ? (
-              <motion.div
-                className="flex items-center justify-center py-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                <div className="text-muted-foreground text-sm">
-                  Loading collections...
-                </div>
-              </motion.div>
-            ) : error ? (
-              <motion.div
-                className="flex items-center justify-center py-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                <div className="text-destructive text-sm">
-                  Failed to load collections
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                className="flex w-full flex-col"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                {collectionsData?.data.map(
-                  (collection: THelpCollection, index: number) => (
-                    <motion.div
-                      key={collection.id}
-                      className="w-full"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
-                    >
-                      <ArticleCard
-                        collection={collection}
-                        onClick={handle_collection_click}
-                      />
-                    </motion.div>
-                  )
+                {isLoading ? (
+                  <motion.div
+                    className="flex items-center justify-center py-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.3 }}
+                  >
+                    <div className="text-muted-foreground text-sm">
+                      Loading collections...
+                    </div>
+                  </motion.div>
+                ) : error ? (
+                  <motion.div
+                    className="flex items-center justify-center py-8"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.3 }}
+                  >
+                    <div className="text-destructive text-sm">
+                      Failed to load collections
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    className="flex w-full flex-col"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.3 }}
+                  >
+                    {collectionsData?.data.map(
+                      (collection: THelpCollection, index: number) => (
+                        <motion.div
+                          key={collection.id}
+                          className="w-full"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.4,
+                            delay: 0.4 + index * 0.1,
+                          }}
+                        >
+                          <ArticleCard
+                            collection={collection}
+                            onClick={handle_collection_click}
+                          />
+                        </motion.div>
+                      )
+                    )}
+                  </motion.div>
                 )}
-              </motion.div>
-            )}
               </>
             )}
           </motion.div>

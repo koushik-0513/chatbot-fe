@@ -2,10 +2,9 @@
 
 import { useCallback } from "react";
 
+import { TArticleSearchResult } from "@/types/types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
-
-import { TArticleSearchResult } from "@/types/types";
 
 interface TSearchResultsProps {
   searchResults: TArticleSearchResult[];
@@ -14,7 +13,6 @@ interface TSearchResultsProps {
   searchQuery: string;
   onArticleClick: (articleId: string) => void;
   onClearSearch: () => void;
-
 }
 
 export const SearchResults = ({
@@ -25,12 +23,13 @@ export const SearchResults = ({
   onArticleClick,
   onClearSearch,
 }: TSearchResultsProps) => {
-
   // Handle article click
-  const handleArticleClick = useCallback((article: TArticleSearchResult) => {
-    onArticleClick(article.id);
-  }, [onArticleClick]);
-
+  const handleArticleClick = useCallback(
+    (article: TArticleSearchResult) => {
+      onArticleClick(article.id);
+    },
+    [onArticleClick]
+  );
 
   if (isLoading) {
     return (
@@ -46,7 +45,9 @@ export const SearchResults = ({
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <p className="text-muted-foreground mt-4 text-sm">Searching articles...</p>
+          <p className="text-muted-foreground mt-4 text-sm">
+            Searching articles...
+          </p>
         </div>
       </motion.div>
     );
@@ -61,10 +62,12 @@ export const SearchResults = ({
         transition={{ duration: 0.3 }}
       >
         <div className="text-center">
-          <p className="text-destructive text-sm">Failed to search articles. Please try again.</p>
+          <p className="text-destructive text-sm">
+            Failed to search articles. Please try again.
+          </p>
           <button
             onClick={onClearSearch}
-            className="text-primary hover:underline mt-2 text-sm"
+            className="text-primary mt-2 text-sm hover:underline"
           >
             Clear search
           </button>
@@ -85,10 +88,12 @@ export const SearchResults = ({
         transition={{ duration: 0.3 }}
       >
         <div className="text-center">
-          <p className="text-muted-foreground text-sm">No articles found for "{searchQuery}"</p>
+          <p className="text-muted-foreground text-sm">
+            No articles found for "{searchQuery}"
+          </p>
           <button
             onClick={onClearSearch}
-            className="text-primary hover:underline mt-2 text-sm"
+            className="text-primary mt-2 text-sm hover:underline"
           >
             Clear search
           </button>
@@ -104,7 +109,6 @@ export const SearchResults = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-
       {/* Search Results List */}
       <motion.div
         className="space-y-3 px-3"
@@ -122,19 +126,19 @@ export const SearchResults = ({
             onClick={() => handleArticleClick(article)}
             whileHover={{ x: 4 }}
           >
-            <div className="flex items-center justify-between mx-3">
-              <div className="flex-1 min-w-0">
-                <h4 className="text-foreground group-hover:text-primary text-base font-medium transition-colors line-clamp-2">
+            <div className="mx-3 flex items-center justify-between">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-foreground group-hover:text-primary line-clamp-2 text-base font-medium transition-colors">
                   {article.title}
                 </h4>
                 {article.matched_snippet && (
-                  <p className="text-muted-foreground text-sm mt-2 line-clamp-2">
+                  <p className="text-muted-foreground mt-2 line-clamp-2 text-sm">
                     {article.matched_snippet}
                   </p>
                 )}
               </div>
               <div>
-              <ChevronRight className="text-muted-foreground size-6" />
+                <ChevronRight className="text-muted-foreground size-6" />
               </div>
             </div>
           </motion.div>

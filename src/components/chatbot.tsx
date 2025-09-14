@@ -59,6 +59,7 @@ export const Chatbot = ({
   );
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
   const [navigatedFromHomepage, setNavigatedFromHomepage] = useState(false);
+  const [postData, setPostData] = useState<any>(null);
   const isMaximized =
     externalIsMaximized !== undefined
       ? externalIsMaximized

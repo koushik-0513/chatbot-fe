@@ -2,8 +2,8 @@
 
 import { Search, X } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface SearchBarProps {
   searchQuery: string;
@@ -12,7 +12,12 @@ interface SearchBarProps {
   isSearching: boolean;
 }
 
-export const SearchBar = ({ searchQuery, onSearchChange, onClearSearch, isSearching }: SearchBarProps) => {
+export const SearchBar = ({
+  searchQuery,
+  onSearchChange,
+  onClearSearch,
+  isSearching,
+}: SearchBarProps) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onSearchChange(e.target.value);
   };
@@ -35,7 +40,7 @@ export const SearchBar = ({ searchQuery, onSearchChange, onClearSearch, isSearch
           variant="ghost"
           size="sm"
           onClick={handleClearClick}
-          className="absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-muted"
+          className="hover:bg-muted absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0"
         >
           <X className="h-4 w-4" />
         </Button>
