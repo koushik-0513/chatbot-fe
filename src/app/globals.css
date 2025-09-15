@@ -59,8 +59,8 @@
   --card-foreground: #fafafa;
   --popover-foreground: #fafafa;
   --primary-foreground: #fafafa;
-  --secondary-foreground: #fafafa80;
-  --muted-foreground: #fafafa99;
+  --secondary-foreground: #fafafa;
+  --muted-foreground: #fafafa;
   --accent-foreground: #a86dff;
   --sidebar-foreground: #fafafa;
 
@@ -104,8 +104,8 @@
   --card-foreground: #fafafa;
   --popover-foreground: #fafafa;
   --primary-foreground: #fafafa;
-  --secondary-foreground: #fafafa80;
-  --muted-foreground: #fafafa99;
+  --secondary-foreground: #fafafa;
+  --muted-foreground: #fafafa;
   --accent-foreground: #a86dff;
   --sidebar-foreground: #fafafa;
 
@@ -147,7 +147,7 @@
 
   /* Homepage specific gradient background */
   .homepage-gradient {
-    background: linear-gradient(#a770f986 20%, #ceb1f9 100%) !important;
+    background: linear-gradient(#a770f9, #ceb1f9) !important;
     background-attachment: fixed;
   }
 }

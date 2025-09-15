@@ -54,7 +54,7 @@ export const Home = ({ onNavigateToHelp, onClose }: THomepageProps) => {
       {onClose && (
         <motion.button
           onClick={onClose}
-          className="absolute top-2 right-1 z-10 cursor-pointer transition-colors"
+          className="fixed top-45 right-11 z-50 cursor-pointer transition-colors"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}

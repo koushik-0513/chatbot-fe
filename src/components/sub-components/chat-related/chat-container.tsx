@@ -1,85 +1,233 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useScrollContext } from "@/contexts/scroll-context";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Mic,
-  MoreVertical,
-  Paperclip,
-  Send,
-  Smile,
-  X,
-} from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ObjectId } from "bson";
+import { ArrowDown, ArrowLeft, Paperclip, Send, Smile, X } from "lucide-react";
 
-import {
-  useChatHistoryById,
-  useSendMessage,
-} from "../../../hooks/api/chat-service";
+import { Input } from "@/components/ui/input";
+
+import { getConversationById, sendMessage } from "@/hooks/api/chat-service";
+
 import { useUserId } from "../../../hooks/use-user-id";
 import { TChatMessage } from "../../../types/types";
 import { EmojiPicker } from "./emoji-picker";
 
 type TChatContainerProps = {
-  chatId: number;
+  chatId: string | null;
   chatTitle: string;
   onBack: () => void;
+  onClose?: () => void;
 };
 
 export const ChatContainer = ({
   chatId,
   chatTitle,
   onBack,
+  onClose,
 }: TChatContainerProps) => {
-  console.log(
-    "ChatContainer rendered with chatId:",
-    chatId,
-    "chatTitle:",
-    chatTitle
-  );
-
   const { user_id } = useUserId();
   const {
     data: chatHistoryResponse,
     isLoading,
     error,
-  } = useChatHistoryById(chatId);
-  const sendMessageMutation = useSendMessage();
+  } = useQuery({
+    queryKey: ["conversation", chatId],
+    queryFn: () => getConversationById(chatId),
+    enabled: true,
+  });
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const messagesRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   const [newMessage, setNewMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   // Reset scroll when component mounts or chatId changes
   useEffect(() => {
     resetAllScrollWithDelay(100);
-    if (messagesRef.current) {
-      messagesRef.current.scrollTop = 0;
-    }
   }, [chatId, resetAllScrollWithDelay]);
 
-  // Get messages from API or use empty array as fallback
-  const messages = chatHistoryResponse?.data || [];
+  // Get messages from API or use empty array as fallback and normalize
+  const conversationData: any = chatHistoryResponse?.data;
+  const rawMessages: any[] = Array.isArray(conversationData)
+    ? conversationData
+    : conversationData?.messages || [];
+  const normalizedMessages = rawMessages.map((m: any, index: number) => {
+    const id = m._id || m.id || `${index}`;
+    const text = m.text || m.content || m.message || "";
+    const role = m.role || m.sender || (m.isUser ? "user" : "assistant");
+    const isUser =
+      role === "user" || m.is_user === true || m.isUser === true || false;
+    const timestamp =
+      m.timestamp ||
+      m.created_at ||
+      m.createdAt ||
+      conversationData?.updatedAt ||
+      "";
+    return { id, text, isUser, timestamp };
+  });
+
+  const [displayMessages, setDisplayMessages] = useState(normalizedMessages);
+
+  const smoothScrollToBottom = () => {
+    const bottomEl = bottomRef.current;
+    if (!bottomEl) return;
+    bottomEl.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
+
+  // Auto-scroll to bottom when messages update (if near bottom)
+  useEffect(() => {
+    if (isAtBottom) {
+      requestAnimationFrame(() => smoothScrollToBottom());
+    }
+  }, [displayMessages, isAtBottom]);
+
+  // Auto-scroll to bottom on initial load/open of a conversation
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      smoothScrollToBottom();
+      setIsAtBottom(true);
+    });
+  }, [chatHistoryResponse]);
+
+  const handleScrollPosition = () => {
+    const el = messagesRef.current;
+    if (!el) return;
+    const threshold = 50;
+    const atBottom =
+      el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+    setIsAtBottom(atBottom);
+  };
+
+  const scrollToBottom = (smooth: boolean) => {
+    const el = bottomRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
+    setIsAtBottom(true);
+  };
+
+  // Sync local messages when server messages change (e.g., on refetch)
+  useEffect(() => {
+    setDisplayMessages(normalizedMessages);
+  }, [chatHistoryResponse]);
+
+  const pendingUpdateTimer = useRef<number | null>(null);
+  const latestAssistantTextRef = useRef<string>("");
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() && user_id) {
-      try {
-        await sendMessageMutation.mutateAsync({
-          conversationId: chatId,
-          message: newMessage,
-          user_id,
-        });
-        setNewMessage("");
-      } catch (error) {
-        console.error("Failed to send message:", error);
+    if (!newMessage.trim() || !user_id) return;
+
+    const userMsgId = new ObjectId().toHexString();
+    const assistantMsgId = new ObjectId().toHexString();
+
+    // Optimistically append user's message
+    const optimisticUser = {
+      id: userMsgId,
+      text: newMessage,
+      isUser: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Seed assistant placeholder
+    const optimisticAssistant = {
+      id: assistantMsgId,
+      text: "",
+      isUser: false,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Force stick-to-bottom when sending
+    setIsAtBottom(true);
+
+    // Local UI state: append to end of normalized messages
+    setDisplayMessages((prev) => [
+      ...prev,
+      optimisticUser,
+      optimisticAssistant,
+    ]);
+
+    try {
+      const response = await sendMessage(
+        chatId,
+        newMessage,
+        user_id,
+        userMsgId
+      );
+      setNewMessage("");
+
+      if (!response.body) return;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let assistantText = "";
+
+      const processChunk = (chunk: string) => {
+        buffer += chunk;
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Save last partial line
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          const ssePrefix = "data: ";
+          if (!trimmed.startsWith(ssePrefix)) continue;
+          const jsonPart = trimmed.slice(ssePrefix.length);
+          try {
+            const evt = JSON.parse(jsonPart);
+            const delta =
+              evt.delta || evt.textDelta || evt.token || evt.content || "";
+            if (typeof delta === "string" && delta) {
+              assistantText += delta;
+              latestAssistantTextRef.current = assistantText;
+              if (pendingUpdateTimer.current == null) {
+                pendingUpdateTimer.current = window.setTimeout(() => {
+                  setDisplayMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === assistantMsgId
+                        ? { ...m, text: latestAssistantTextRef.current }
+                        : m
+                    )
+                  );
+                  pendingUpdateTimer.current = null;
+                  if (isAtBottom) scrollToBottom(true);
+                }, 60);
+              }
+            }
+          } catch {}
+        }
+      };
+
+      // Continuously read stream
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const text = decoder.decode(value, { stream: true });
+        processChunk(text);
+        await new Promise((r) => setTimeout(r, 40));
       }
+
+      // Final flush after stream ends
+      if (latestAssistantTextRef.current) {
+        setDisplayMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantMsgId
+              ? { ...m, text: latestAssistantTextRef.current }
+              : m
+          )
+        );
+      }
+
+      // After stream completes, you might refetch conversation
+      queryClient.invalidateQueries({ queryKey: ["conversation", chatId] });
+    } catch (error) {
+      console.error("Failed to send/stream message:", error);
     }
   };
 
   const handleBack = () => {
-    // Reset scroll before going back
     resetAllScrollWithDelay(100);
     onBack();
   };
@@ -107,283 +255,176 @@ export const ChatContainer = ({
   // Loading state
   if (isLoading) {
     return (
-      <motion.div
-        className="flex h-full flex-col items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
+      <div className="flex h-full flex-col items-center justify-center">
         <div className="text-muted-foreground">Loading chat...</div>
-      </motion.div>
+      </div>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <motion.div
-        className="flex h-full flex-col items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
+      <div className="flex h-full flex-col items-center justify-center">
         <div className="text-destructive">Failed to load chat</div>
         <div className="text-muted-foreground mt-2 text-sm">
           {error.message}
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
-    <motion.div
-      className="flex h-full flex-col"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <div className="relative flex h-full flex-col">
       {/* Chat Header */}
-      <motion.div
-        className="border-border bg-background flex items-center justify-between border-b p-4"
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-      >
+      <div className="border-border bg-background flex items-center justify-between border-b p-2">
         <div className="flex items-center gap-3">
-          <motion.button
+          <button
             onClick={handleBack}
             className="hover:bg-muted rounded-full p-1 transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
           >
             <ArrowLeft className="text-muted-foreground h-5 w-5" />
-          </motion.button>
-          <motion.div
-            className="bg-primary flex h-8 w-8 items-center justify-center rounded-full"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3, delay: 0.2, type: "spring" }}
-          >
+          </button>
+          <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-full">
             <div className="bg-primary-foreground h-4 w-4 rounded-full"></div>
-          </motion.div>
-          <motion.span
-            className="text-foreground font-bold"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            {chatTitle}
-          </motion.span>
+          </div>
+          <span className="text-foreground font-bold">{chatTitle}</span>
         </div>
         <div className="flex items-center gap-2">
-          <motion.button
+          <button
+            onClick={onClose}
             className="hover:bg-muted rounded-full p-1 transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            <MoreVertical className="text-muted-foreground h-5 w-5" />
-          </motion.button>
-          <motion.button
-            className="hover:bg-muted rounded-full p-1 transition-colors"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            title="Close chat"
           >
             <X className="text-muted-foreground h-5 w-5" />
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Messages Area */}
-      <motion.div
+      <div
         ref={messagesRef}
-        className="flex-1 space-y-3 overflow-y-auto p-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
+        className="flex-1 space-y-1 overflow-y-auto p-2"
+        onScroll={handleScrollPosition}
       >
-        <AnimatePresence>
-          {messages.map((message, index) => (
-            <motion.div
+        {displayMessages.length === 0 ? (
+          <div className="flex justify-start">
+            <div className="bg-card text-card-foreground border-border max-w-xs rounded-lg border p-1.5">
+              <p className="text-foreground text-sm">
+                👋 Hello! How can I help you today?
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">Just now</p>
+            </div>
+          </div>
+        ) : (
+          displayMessages.map((message: any) => (
+            <div
               key={message.id}
               className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.9 }}
-              transition={{
-                duration: 0.3,
-                delay: index * 0.1,
-                type: "spring",
-                stiffness: 300,
-              }}
-              layout
             >
-              <motion.div
+              <div
                 className={`max-w-xs rounded-lg p-3 ${
                   message.isUser
                     ? "bg-primary text-primary-foreground"
                     : "bg-card text-card-foreground border-border border"
                 }`}
-                initial={{
-                  opacity: 0,
-                  x: message.isUser ? 20 : -20,
-                  scale: 0.9,
-                }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                  scale: 1,
-                }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.1,
-                  type: "spring",
-                  stiffness: 300,
-                }}
-                whileHover={{ scale: 1.02 }}
-                layout
               >
-                <motion.p
-                  className="text-foreground text-sm"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2, delay: 0.1 + index * 0.1 }}
-                >
-                  {message.text}
-                </motion.p>
-                <motion.p
+                <p className="text-foreground text-sm">{message.text}</p>
+                <p
                   className={`mt-1 text-xs ${
                     message.isUser
                       ? "text-primary-foreground/70"
                       : "text-muted-foreground"
                   }`}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2, delay: 0.2 + index * 0.1 }}
                 >
                   {message.timestamp}
-                </motion.p>
-              </motion.div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
+                </p>
+              </div>
+            </div>
+          ))
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Fixed scroll-to-bottom button */}
+      {!isAtBottom && (
+        <button
+          onClick={() => scrollToBottom(true)}
+          className="bg-primary text-primary-foreground fixed right-10 bottom-40 rounded-full px-2 py-2 shadow hover:opacity-90"
+          title="Scroll to bottom"
+        >
+          <ArrowDown className="h-4 w-4" />
+        </button>
+      )}
 
       {/* Message Input */}
-      <motion.div
-        className="border-border bg-background relative border-t p-4"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-      >
-        {/* Selected files display */}
-        <AnimatePresence>
-          {selectedFiles.length > 0 && (
-            <motion.div
-              className="mb-2 flex flex-wrap gap-2"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {selectedFiles.map((file, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.2 }}
-                  whileHover={{ scale: 1.05 }}
+      <div className="border-border bg-background relative border-t p-2">
+        {selectedFiles.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {selectedFiles.map((file, index) => (
+              <div
+                key={index}
+                className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
+              >
+                <span className="text-muted-foreground">{file.name}</span>
+                <button
+                  onClick={() =>
+                    setSelectedFiles((prev) =>
+                      prev.filter((_, i) => i !== index)
+                    )
+                  }
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  <span className="text-muted-foreground">{file.name}</span>
-                  <motion.button
-                    onClick={() =>
-                      setSelectedFiles((prev) =>
-                        prev.filter((_, i) => i !== index)
-                      )
-                    }
-                    className="text-muted-foreground hover:text-foreground"
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.8 }}
-                  >
-                    ×
-                  </motion.button>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <div className="flex items-center gap-1">
-            <motion.button
+            <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="hover:bg-muted rounded-full p-2 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              className="hover:bg-muted rounded-full p-1.5 transition-colors"
             >
-              <Smile className="text-muted-foreground h-4 w-4" />
-            </motion.button>
-            <motion.label
-              className="hover:bg-muted cursor-pointer rounded-full p-2 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <Paperclip className="text-muted-foreground h-4 w-4" />
-              <input
+              <Smile className="text-muted-foreground h-3.5 w-3.5" />
+            </button>
+            <label className="hover:bg-muted cursor-pointer rounded-full p-1.5 transition-colors">
+              <Paperclip className="text-muted-foreground h-3.5 w-3.5" />
+              <Input
                 type="file"
                 multiple
                 onChange={handleFileSelect}
                 className="hidden"
               />
-            </motion.label>
-            <motion.button
-              className="hover:bg-muted rounded-full p-2 transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <Mic className="text-muted-foreground h-4 w-4" />
-            </motion.button>
+            </label>
           </div>
-          <motion.input
+          <input
             type="text"
             placeholder="Message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="border-input bg-background text-foreground focus:ring-ring flex-1 rounded-full border p-3 text-sm focus:ring-2 focus:outline-none"
-            whileFocus={{ scale: 1.02 }}
+            onKeyDown={handleKeyPress}
+            className="border-input bg-background text-foreground focus:ring-ring flex-1 rounded-full border p-2 text-sm focus:ring-2 focus:outline-none"
           />
-          <motion.button
+          <button
             onClick={handleSendMessage}
-            disabled={
-              sendMessageMutation.isPending || !newMessage.trim() || !user_id
-            }
-            className="bg-secondary hover:bg-muted/80 rounded-full p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            whileHover={{ scale: sendMessageMutation.isPending ? 1 : 1.1 }}
-            whileTap={{ scale: sendMessageMutation.isPending ? 1 : 0.9 }}
+            disabled={!newMessage.trim() || !user_id}
+            className="bg-secondary hover:bg-muted/80 rounded-full p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Send className="text-secondary-foreground h-4 w-4" />
-          </motion.button>
+            <Send className="text-secondary-foreground h-3.5 w-3.5" />
+          </button>
         </div>
 
-        {/* Emoji Picker */}
-        <AnimatePresence>
-          {showEmojiPicker && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              transition={{ duration: 0.2 }}
-            >
-              <EmojiPicker
-                onEmojiSelect={handleEmojiSelect}
-                onClose={() => setShowEmojiPicker(false)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </motion.div>
+        {showEmojiPicker && (
+          <div>
+            <EmojiPicker
+              onEmojiSelect={handleEmojiSelect}
+              onClose={() => setShowEmojiPicker(false)}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

@@ -81,7 +81,7 @@ export const useGetNewsById = (
 
       return response.json();
     },
-    enabled: !!news_id,
+    enabled: !!news_id && !!user_id,
     retry: 2,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });

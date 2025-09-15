@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useAutoMaximize } from "../hooks/use-auto-maximize";
 import { Help } from "./help";
 import { Home } from "./home";
 import { Message } from "./message";
@@ -51,7 +52,7 @@ export const Chatbot = ({
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
   const [backButtonTrigger, setBackButtonTrigger] = useState(0);
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [pageKey, setPageKey] = useState(Date.now());
   const [internalIsMaximized, setInternalIsMaximized] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
@@ -60,6 +61,7 @@ export const Chatbot = ({
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
   const [navigatedFromHomepage, setNavigatedFromHomepage] = useState(false);
   const [postData, setPostData] = useState<any>(null);
+  const [showActiveChat, setShowActiveChat] = useState(false);
   const isMaximized =
     externalIsMaximized !== undefined
       ? externalIsMaximized
@@ -125,6 +127,7 @@ export const Chatbot = ({
   const handleBackToHistory = () => {
     setSelectedChatId(null);
     setShowChatHistory(true);
+    setShowActiveChat(false); // Hide the active chat view
 
     // Reset scroll when going back to chat history
     resetAllScrollWithDelay(100);
@@ -135,11 +138,18 @@ export const Chatbot = ({
     handlePageChange("homepage");
   };
 
-  const handleChatSelected = (chatId: number) => {
+  const handleNewChat = () => {
+    setSelectedChatId(null);
+    setShowChatHistory(false);
+  };
+
+  const handleChatSelected = (chatId: string | null) => {
     console.log("handleChatSelected called with chatId:", chatId);
     console.log("Setting selectedChatId to:", chatId);
     setSelectedChatId(chatId);
     setShowChatHistory(false);
+    // Mark as new chat if it's a newly created one
+    // You might want to pass this as a parameter from Message component
     console.log("Chat selection state updated");
   };
 
@@ -178,15 +188,12 @@ export const Chatbot = ({
     resetAllScrollWithDelay(100);
   };
 
-  // Handle auto-maximize for details views
-  const handleAutoMaximize = useCallback(() => {
-    const newMaximized = true;
-    if (externalIsMaximized !== undefined) {
-      onMaximizeChange?.(newMaximized);
-    } else {
-      setInternalIsMaximized(newMaximized);
-    }
-  }, [externalIsMaximized, onMaximizeChange]);
+  // Use centralized auto-maximize hook
+  const { triggerAutoMaximize, shouldAutoMaximize } = useAutoMaximize({
+    onMaximizeChange,
+    externalIsMaximized,
+    setInternalIsMaximized,
+  });
 
   // Check if we're on a details page where maximize should be shown
   const shouldShowMaximizeButton = () => {
@@ -265,7 +272,7 @@ export const Chatbot = ({
     showBack?: boolean;
   }) => (
     <motion.div
-      className="border-border bg-card flex items-center rounded-t-lg border-b p-4"
+      className="relaborder-border bg-card flex items-center rounded-t-lg border-b p-4"
       layout
     >
       {showBack && (
@@ -323,11 +330,11 @@ export const Chatbot = ({
     activePage
   );
 
-  if (selectedChatId && activePage === "message") {
+  if (activePage === "message" && showActiveChat) {
     console.log("Rendering ChatContainer with selectedChatId:", selectedChatId);
     return (
       <motion.div
-        className="border-border bg-background flex h-[600px] w-96 flex-col rounded-lg border shadow-2xl"
+        className="border-border bg-background flex h-[450px] w-72 flex-col rounded-lg border shadow-2xl"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{
@@ -341,6 +348,7 @@ export const Chatbot = ({
           chatId={selectedChatId}
           chatTitle="Chat"
           onBack={handleBackToHistory}
+          onClose={onClose}
         />
       </motion.div>
     );
@@ -351,15 +359,15 @@ export const Chatbot = ({
     <motion.div
       className={`border-border flex flex-col border shadow-2xl ${
         isMaximized
-          ? "h-[calc(90vh-2rem)] w-[calc(40vw-3rem)] rounded-lg"
-          : "h-[600px] w-96 rounded-lg"
+          ? "h-[calc(90vh-3rem)] w-[calc(40vw-3rem)] rounded-lg"
+          : "h-[800px] w-100 rounded-lg"
       } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{
         opacity: 1,
         scale: 1,
-        height: isMaximized ? "calc(90vh - 2rem)" : "600px",
-        width: isMaximized ? "calc(40vw - 3rem)" : "384px",
+        height: isMaximized ? "calc(95vh - 3rem)" : "700px",
+        width: isMaximized ? "calc(40vw - 3rem)" : "400px",
       }}
       transition={{
         duration: 0.8,
@@ -410,6 +418,7 @@ export const Chatbot = ({
               />
             </motion.div>
           )}
+
           {activePage === "message" && (
             <motion.div
               key="message"
@@ -423,9 +432,11 @@ export const Chatbot = ({
                 showChatHistory={showChatHistory}
                 onChatSelected={handleChatSelected}
                 onBackToHistory={handleBackToHistory}
+                setShowActiveChat={setShowActiveChat}
               />
             </motion.div>
           )}
+
           {activePage === "help" && (
             <motion.div
               key={`help-${pageKey}`}
@@ -441,7 +452,7 @@ export const Chatbot = ({
                 onShowDetails={setShowDetails}
                 onBackFromDetails={handleBackFromDetails}
                 onMinimizeOnly={handleMinimizeOnly}
-                onAutoMaximize={handleAutoMaximize}
+                onAutoMaximize={triggerAutoMaximize}
                 selectedArticleId={selectedArticleId}
                 onTitleChange={setDynamicTitle}
                 onNavigateToHome={handleNavigateToHome}
@@ -449,6 +460,7 @@ export const Chatbot = ({
               />
             </motion.div>
           )}
+
           {activePage === "news" && (
             <motion.div
               key={`news-${pageKey}`}
@@ -464,7 +476,7 @@ export const Chatbot = ({
                 activePage={activePage}
                 onShowDetails={setShowDetails}
                 onBackFromDetails={handleBackFromDetails}
-                onAutoMaximize={handleAutoMaximize}
+                onAutoMaximize={triggerAutoMaximize}
               />
             </motion.div>
           )}
