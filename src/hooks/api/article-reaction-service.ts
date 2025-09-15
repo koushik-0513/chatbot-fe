@@ -31,7 +31,7 @@ export const useSubmitArticleReaction = () => {
   >({
     mutationFn: async ({ articleId, reaction, userId }) => {
       const response = await fetch(
-        `${env.backendUrl}/help/articles/${articleId}/reaction`,
+        `${env.backendUrl}/api/v1/article/${articleId}/reaction?user_id=${userId}`,
         {
           method: "POST",
           headers: {
@@ -39,7 +39,6 @@ export const useSubmitArticleReaction = () => {
           },
           body: JSON.stringify({
             reaction: reaction,
-            user_id: userId,
           }),
         }
       );

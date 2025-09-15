@@ -133,7 +133,7 @@ export const useGetArticleDetails = (
       const data = await response.json();
       return data;
     },
-    enabled: !!article_id,
+    enabled: !!article_id && !!user_id,
     retry: 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

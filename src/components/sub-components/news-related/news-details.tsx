@@ -62,12 +62,8 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
     }
   }, [resetAllScrollWithDelay]);
 
-  // Auto-maximize when component mounts
-  useEffect(() => {
-    if (onAutoMaximize) {
-      onAutoMaximize();
-    }
-  }, [onAutoMaximize]);
+  // Auto-maximize is handled by the parent component
+  // No need to call onAutoMaximize here to avoid duplicate calls
 
   // Update selected reaction when news data changes
   useEffect(() => {

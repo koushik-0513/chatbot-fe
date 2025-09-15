@@ -33,7 +33,7 @@ export type THelpPageState = {
 };
 
 export type TChatMessage = {
-  id: number;
+  id: string;
   text: string;
   isUser: boolean;
   timestamp: string;
@@ -141,10 +141,8 @@ export type THelpArticleDetailResponse = {
 };
 
 export type TChatHistoryItem = {
-  id?: number;
-  conversation_id?: number;
-  _id?: number;
-  conversationId?: number;
+  id?: string;
+  conversation_id?: string;
   title?: string;
   name?: string;
   timestamp?: string;

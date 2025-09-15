@@ -67,6 +67,8 @@ export const News = ({
     setSelectedNewsId(news.id.toString());
     onShowBackButton(true);
     onShowDetails?.(true);
+    // Ensure the widget is maximized when opening a news item
+    onAutoMaximize?.();
 
     // Reset scroll when navigating to news details
     resetAllScrollWithDelay(100);

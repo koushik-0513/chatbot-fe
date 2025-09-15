@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
 type TChatHistoryProps = {
-  id: number;
+  id: string;
   title: string;
   timestamp: string;
   day: string;
-  onClick: (id: number) => void;
+  onClick: (id: string) => void;
 };
 
 export const ChatHistory = ({

@@ -4,6 +4,7 @@ import { useArticleNavigation } from "@/contexts/article-navigation-context";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useAutoMaximize } from "@/hooks/use-auto-maximize";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useUserId } from "@/hooks/use-user-id";
 
@@ -54,6 +55,13 @@ export const Help = ({
   });
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const { user_id } = useUserId();
+
+  // Use centralized auto-maximize hook
+  const { triggerAutoMaximize, shouldAutoMaximize } = useAutoMaximize({
+    onMaximizeChange: undefined, // Help component doesn't directly manage maximize state
+    externalIsMaximized: undefined,
+    setInternalIsMaximized: undefined,
+  });
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -200,7 +208,17 @@ export const Help = ({
         },
       });
       onShowDetails?.(true);
-      onAutoMaximize?.();
+
+      // Use centralized auto-maximize logic
+      if (
+        shouldAutoMaximize({
+          navigatedFromHomepage,
+          cameFromSearch,
+          isDetailsView: true,
+        })
+      ) {
+        onAutoMaximize?.();
+      }
 
       // If navigated from homepage, immediately set the article title
       if (navigatedFromHomepage && article.title) {
@@ -213,7 +231,9 @@ export const Help = ({
     onShowDetails,
     onAutoMaximize,
     navigatedFromHomepage,
+    cameFromSearch,
     onTitleChange,
+    shouldAutoMaximize,
   ]);
 
   // Get the current title based on the view
@@ -282,6 +302,8 @@ export const Help = ({
         setParentCollectionId(null);
         setArticleNavigationStack([]); // Clear navigation stack
         onShowBackButton(false);
+        // Ensure navbar is visible when entering help from other tabs
+        onShowDetails?.(false);
       }
 
       // Force scroll reset for this component
@@ -351,6 +373,8 @@ export const Help = ({
       // Navigation stack is only for related article navigation
 
       onShowDetails?.(true);
+      // Auto-maximize when opening from a collection
+      onAutoMaximize?.();
 
       // Reset scroll when navigating to article
       resetAllScrollWithDelay(100);
@@ -396,6 +420,7 @@ export const Help = ({
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
     setIsSearching(false);
+    setCameFromSearch(false); // Reset search navigation state
   }, []);
 
   // Handle article click from search results
@@ -429,7 +454,16 @@ export const Help = ({
       // Show back button when navigating from search
       onShowBackButton(true);
       onShowDetails?.(true);
-      onAutoMaximize?.();
+
+      // Use centralized auto-maximize logic
+      if (
+        shouldAutoMaximize({
+          cameFromSearch: true,
+          isDetailsView: true,
+        })
+      ) {
+        onAutoMaximize?.();
+      }
 
       // Reset scroll when navigating to article
       resetAllScrollWithDelay(100);
@@ -440,10 +474,33 @@ export const Help = ({
       onAutoMaximize,
       resetAllScrollWithDelay,
       openArticleDetails,
+      shouldAutoMaximize,
     ]
   );
 
   const handle_back_to_list = (parentId?: string) => {
+    // Check if we came from search results
+    if (cameFromSearch) {
+      // Go back to search results (list view with search active)
+      setCameFromSearch(false);
+      setPageState({
+        currentView: "list",
+        selectedCollection: null,
+        selectedArticle: null,
+      });
+      // Clear navigation stack when going back to search
+      setArticleNavigationStack([]);
+      // Keep search query active
+      setIsSearching(true);
+      onShowBackButton(false);
+      onShowDetails?.(false);
+      onBackFromDetails?.(); // Call the callback to auto-minimize
+
+      // Reset scroll when going back to search
+      resetAllScrollWithDelay(100);
+      return;
+    }
+
     if (parentCollectionId) {
       // If we have a parent collection, navigate back to it
       setSelectedCollectionId(parentCollectionId);
@@ -473,6 +530,29 @@ export const Help = ({
   };
 
   const handle_back_to_collection = useCallback(() => {
+    // Check if we came from search results
+    if (cameFromSearch) {
+      // Go back to search results (list view with search active)
+      setCameFromSearch(false);
+      setPageState({
+        currentView: "list",
+        selectedCollection: null,
+        selectedArticle: null,
+      });
+      // Clear navigation stack when going back to search
+      setArticleNavigationStack([]);
+      // Don't hide navbar for search view
+      onShowDetails?.(false);
+      // Call onMinimizeOnly to trigger minimize without affecting back button state
+      onMinimizeOnly?.();
+      // Keep search query active
+      setIsSearching(true);
+
+      // Reset scroll when going back to search
+      resetAllScrollWithDelay(100);
+      return;
+    }
+
     // Check if we have articles in the navigation stack (related article navigation)
     if (articleNavigationStack.length > 0) {
       // Go back to the previous article in the stack
@@ -517,6 +597,7 @@ export const Help = ({
       resetAllScrollWithDelay(100);
     }
   }, [
+    cameFromSearch,
     articleNavigationStack,
     pageState.selectedCollection,
     onShowDetails,
