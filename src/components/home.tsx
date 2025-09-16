@@ -10,10 +10,17 @@ import { SearchComponent } from "./sub-components/home-related/search-component"
 
 interface THomepageProps {
   onNavigateToHelp?: (articleId?: string) => void;
+  onOpenChat?: (conversationId: string | null, title?: string) => void;
+  onAskQuestion?: () => void;
   onClose?: () => void;
 }
 
-export const Home = ({ onNavigateToHelp, onClose }: THomepageProps) => {
+export const Home = ({
+  onNavigateToHelp,
+  onOpenChat,
+  onAskQuestion,
+  onClose,
+}: THomepageProps) => {
   // Fetch top articles
   const {
     data: topArticlesData,
@@ -45,7 +52,7 @@ export const Home = ({ onNavigateToHelp, onClose }: THomepageProps) => {
 
   return (
     <motion.div
-      className="dark relative space-y-4 pt-50"
+      className="dark space-y-4 pt-50"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -70,7 +77,7 @@ export const Home = ({ onNavigateToHelp, onClose }: THomepageProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <AskQuestion />
+        <AskQuestion onAsk={onAskQuestion} />
       </motion.div>
 
       <motion.div
@@ -78,7 +85,7 @@ export const Home = ({ onNavigateToHelp, onClose }: THomepageProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
       >
-        <ResentMessage />
+        <ResentMessage onOpenChat={onOpenChat} />
       </motion.div>
 
       {/* Loading state */}

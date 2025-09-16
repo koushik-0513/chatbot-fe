@@ -67,7 +67,9 @@ export const Chatbot = ({
       ? externalIsMaximized
       : internalIsMaximized;
   const [showDetails, setShowDetails] = useState(false);
+  const [title, setTitle] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const prevMaximizedRef = useRef<boolean | null>(null);
   const { resetAllScroll, resetScrollToElement, resetAllScrollWithDelay } =
     useScrollContext();
 
@@ -131,6 +133,17 @@ export const Chatbot = ({
 
     // Reset scroll when going back to chat history
     resetAllScrollWithDelay(100);
+
+    // Restore previous maximize state if it was changed for active chat
+    if (prevMaximizedRef.current !== null) {
+      const restore = prevMaximizedRef.current;
+      if (externalIsMaximized !== undefined) {
+        onMaximizeChange?.(restore);
+      } else {
+        setInternalIsMaximized(restore);
+      }
+      prevMaximizedRef.current = null;
+    }
   };
 
   const handleNavigateToHome = () => {
@@ -151,6 +164,16 @@ export const Chatbot = ({
     // Mark as new chat if it's a newly created one
     // You might want to pass this as a parameter from Message component
     console.log("Chat selection state updated");
+
+    // Auto-maximize when selecting a chat from history
+    prevMaximizedRef.current = isMaximized;
+    if (externalIsMaximized !== undefined) {
+      onMaximizeChange?.(true);
+    } else {
+      setInternalIsMaximized(true);
+    }
+
+    resetAllScrollWithDelay(100);
   };
 
   const handleBackClick = () => {
@@ -334,9 +357,14 @@ export const Chatbot = ({
     console.log("Rendering ChatContainer with selectedChatId:", selectedChatId);
     return (
       <motion.div
-        className="border-border bg-background flex h-[450px] w-72 flex-col rounded-lg border shadow-2xl"
+        className={`border-border bg-background flex flex-col rounded-lg border shadow-2xl`}
         initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          height: isMaximized ? "calc(95vh - 3rem)" : "700px",
+          width: isMaximized ? "calc(40vw - 3rem)" : "400px",
+        }}
         transition={{
           duration: 0.6,
           type: "spring",
@@ -346,7 +374,7 @@ export const Chatbot = ({
       >
         <ChatContainer
           chatId={selectedChatId}
-          chatTitle="Chat"
+          chatTitle={title ?? ""}
           onBack={handleBackToHistory}
           onClose={onClose}
         />
@@ -359,7 +387,7 @@ export const Chatbot = ({
     <motion.div
       className={`border-border flex flex-col border shadow-2xl ${
         isMaximized
-          ? "h-[calc(90vh-3rem)] w-[calc(40vw-3rem)] rounded-lg"
+          ? "h-[calc(95vh-3rem)] w-[calc(40vw-3rem)] rounded-lg"
           : "h-[800px] w-100 rounded-lg"
       } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
@@ -414,6 +442,30 @@ export const Chatbot = ({
                 onNavigateToHelp={(articleId) =>
                   handlePageChange("help", articleId)
                 }
+                onOpenChat={(conversationId, chatTitle) => {
+                  // Navigate to chat view and open the selected conversation
+                  setActivePage("message");
+                  setShowChatHistory(false);
+                  setSelectedChatId(conversationId);
+                  setShowActiveChat(true);
+                  setTitle(chatTitle || "Untitled Chat");
+                  resetAllScrollWithDelay(100);
+
+                  // Auto-maximize when entering active chat, remember previous state
+                  prevMaximizedRef.current = isMaximized;
+                  if (externalIsMaximized !== undefined) {
+                    onMaximizeChange?.(true);
+                  } else {
+                    setInternalIsMaximized(true);
+                  }
+                }}
+                onAskQuestion={() => {
+                  // Go to chat history view for starting a new chat
+                  handlePageChange("message");
+                  setSelectedChatId(null);
+                  setShowChatHistory(true);
+                  setShowActiveChat(false);
+                }}
                 onClose={onClose}
               />
             </motion.div>
@@ -433,6 +485,7 @@ export const Chatbot = ({
                 onChatSelected={handleChatSelected}
                 onBackToHistory={handleBackToHistory}
                 setShowActiveChat={setShowActiveChat}
+                title={setTitle}
               />
             </motion.div>
           )}
