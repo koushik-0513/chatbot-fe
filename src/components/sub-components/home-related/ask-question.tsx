@@ -1,15 +1,13 @@
-import Link from "next/link";
-
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const AskQuestion = () => {
+export const AskQuestion = ({ onAsk }: { onAsk?: () => void }) => {
   return (
     <div>
-      <Card>
-        <CardHeader>
-          <Link href="/ask-question">
-            <CardTitle className="">Ask Question</CardTitle>
-          </Link>
+      <Card className="cursor-pointer">
+        <CardHeader className="cursor-pointer">
+          <button onClick={onAsk} className="w-full cursor-pointer text-left">
+            <CardTitle>Ask Question</CardTitle>
+          </button>
         </CardHeader>
       </Card>
     </div>

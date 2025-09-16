@@ -1,12 +1,89 @@
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useMemo } from "react";
 
-export const ResentMessage = () => {
+import { formatChatTime, formatDayOrDate } from "@/utils/datetime";
+import { useQuery } from "@tanstack/react-query";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import {
+  useGetChatHistory,
+  useGetConversationById,
+} from "@/hooks/api/chat-service";
+import { useUserId } from "@/hooks/use-user-id";
+
+type Props = {
+  onOpenChat?: (conversationId: string | null, title?: string) => void;
+};
+
+export const ResentMessage = ({ onOpenChat }: Props) => {
+  const { user_id } = useUserId();
+
+  const { data: history, isLoading: isHistoryLoading } = useGetChatHistory(
+    user_id || "",
+    1,
+    1
+  );
+
+  const recent = history?.data?.[0];
+  const conversationId = useMemo(() => {
+    return (
+      recent?._id ||
+      recent?.id ||
+      recent?.conversation_id ||
+      recent?.conversationId ||
+      null
+    );
+  }, [recent]);
+
+  const title = recent?.title || recent?.name || "Recent Chat";
+  const tsRaw =
+    recent?.updated_at ||
+    recent?.updatedAt ||
+    recent?.timestamp ||
+    recent?.created_at ||
+    recent?.createdAt ||
+    "";
+  const day = formatDayOrDate(tsRaw);
+  const time = formatChatTime(tsRaw);
+
+  const { data: conv } = useGetConversationById(conversationId);
+
+  const messages: any[] = Array.isArray(conv?.data)
+    ? conv?.data
+    : conv?.data?.messages || [];
+  const last = messages[messages.length - 1];
+  const preview =
+    last?.text ||
+    last?.content ||
+    last?.message ||
+    "Tap to continue your last chat";
+
+  const handleOpen = () => {
+    if (onOpenChat) onOpenChat(conversationId, title);
+  };
+
   return (
     <div>
-      <Card>
+      <Card onClick={handleOpen} className="cursor-pointer">
         <CardHeader>
-          <CardTitle>Resent Message</CardTitle>
+          <CardTitle>Recent Message</CardTitle>
         </CardHeader>
+        <CardContent className="-mt-6">
+          {isHistoryLoading ? (
+            <div className="text-muted-foreground text-sm">Loading…</div>
+          ) : conversationId ? (
+            <div>
+              <div className="text-foreground my-2 line-clamp-2 text-sm">
+                {preview}
+              </div>
+              <div className="text-muted-foreground mb-2 text-xs">
+                {day} • {time}
+              </div>
+            </div>
+          ) : (
+            <div className="text-muted-foreground text-sm">No recent chat</div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

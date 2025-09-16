@@ -1,8 +1,10 @@
+import { formatChatTime, formatDayOrDate } from "@/utils/datetime";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { motion } from "framer-motion";
+import { MessageCircleQuestionMark } from "lucide-react";
 
-import { getChatHistory } from "../hooks/api/chat-service";
+import { useGetChatHistory } from "../hooks/api/chat-service";
 import { useUserId } from "../hooks/use-user-id";
 import { ChatHistory } from "./sub-components/chat-related/chat-history";
 
@@ -12,11 +14,13 @@ interface TMessageProps {
   onBackToHistory: () => void;
   onResetSelectedChat?: () => void;
   setShowActiveChat: (show: boolean) => void;
+  title: (title: string) => void;
 }
 
 export const Message = ({
   onChatSelected,
   setShowActiveChat,
+  title,
 }: TMessageProps) => {
   const { user_id } = useUserId();
 
@@ -25,26 +29,14 @@ export const Message = ({
     data: chatHistoryResponse,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["chatHistory", user_id],
-    queryFn: () => getChatHistory(user_id || "", 1, 5),
-    enabled: !!user_id,
-    retry: (failureCount, error) => {
-      // Don't retry on 404 errors (no conversations found)
-      if (error instanceof Error && error.message.includes("404")) {
-        return false;
-      }
-      // Retry up to 2 times for other errors
-      return failureCount < 2;
-    },
-    retryDelay: 1000,
-  });
+  } = useGetChatHistory(user_id || "", 1, 5);
 
-  const handleChatClick = (chatId: string) => {
+  const handleChatClick = (chatId: string, chatTitle: string) => {
     console.log("Chat clicked with ID:", chatId);
     console.log("Calling onChatSelected with:", chatId);
     onChatSelected(chatId);
     setShowActiveChat(true);
+    title(chatTitle || "Untitled Chat");
   };
 
   const handleNewChat = async () => {
@@ -57,6 +49,8 @@ export const Message = ({
     const newConversationId = new ObjectId().toHexString();
     onChatSelected(newConversationId);
     setShowActiveChat(true);
+    // Set title to undefined/empty until backend provides one
+    title("");
     // createNewChatMutation.mutate({ user_id: user_id });
   };
 
@@ -92,18 +86,23 @@ export const Message = ({
   }
 
   // Extract the data array from the response
-  const chatHistoryData = chatHistoryResponse?.data || [];
-
-  console.log("Chat history response:", chatHistoryResponse);
-  console.log("Chat history data:", chatHistoryData);
-  console.log("First chat item:", chatHistoryData[0]);
-  console.log("User ID:", user_id);
-  console.log("Is loading:", isLoading);
-  console.log("Error:", error);
+  const chatHistoryDataRaw = chatHistoryResponse?.data || [];
+  const chatHistoryData = [...chatHistoryDataRaw].sort((a: any, b: any) => {
+    const getTs = (x: any) =>
+      new Date(
+        x.updated_at ||
+          x.updatedAt ||
+          x.timestamp ||
+          x.created_at ||
+          x.createdAt ||
+          0
+      ).getTime();
+    return getTs(b) - getTs(a);
+  });
 
   return (
     <motion.div
-      className="flex h-full flex-col"
+      className="flex h-full flex-col justify-between space-y-50"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
@@ -120,6 +119,16 @@ export const Message = ({
 
             console.log("Processing chat item:", chat, "Extracted ID:", chatId);
 
+            const rawTs =
+              chat.updated_at ||
+              chat.updatedAt ||
+              chat.timestamp ||
+              chat.created_at ||
+              chat.createdAt ||
+              "";
+            const prettyDay = formatDayOrDate(rawTs) || "";
+            const prettyTime = formatChatTime(rawTs) || "";
+
             return (
               <motion.div
                 key={chatId || index}
@@ -129,12 +138,12 @@ export const Message = ({
               >
                 <ChatHistory
                   id={chatId}
-                  title={chat.title || chat.name || "Untitled Chat"}
-                  timestamp={
-                    chat.timestamp || chat.created_at || "Unknown time"
+                  title={chat.title || chat.name}
+                  timestamp={prettyTime}
+                  day={prettyDay}
+                  onClick={(id: string) =>
+                    handleChatClick(id, chat.title || chat.name)
                   }
-                  day={chat.day || "Unknown day"}
-                  onClick={handleChatClick}
                 />
               </motion.div>
             );
@@ -146,46 +155,35 @@ export const Message = ({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="text-muted-foreground mb-4">
-              No chat history found
-            </div>
-
-            {/* New Chat Button - only show when no chat history */}
-            <motion.button
-              onClick={handleNewChat}
-              disabled={!user_id}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-6 py-3 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              Start New Chat
-            </motion.button>
+            <div className="text-muted-foreground">No chat history found</div>
           </motion.div>
         )}
       </div>
 
-      {/* New Chat Button - only show when there is chat history */}
-      {chatHistoryData.length > 0 && (
-        <motion.div
-          className="mt-auto flex items-center justify-center p-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-        >
-          <motion.button
-            onClick={handleNewChat}
-            disabled={!user_id}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-3 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+      {/* New Chat Button - show when there's no history or less than 5 chats */}
+      <div>
+        {chatHistoryData.length < 5 && (
+          <motion.div
+            className="mt-auto flex items-center justify-center p-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
           >
-            New Chat
-          </motion.button>
-        </motion.div>
-      )}
+            <motion.button
+              onClick={handleNewChat}
+              disabled={!user_id}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+            >
+              <span className="flex items-center gap-2">
+                New Chat
+                <MessageCircleQuestionMark className="h-4 w-4" />
+              </span>
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 };

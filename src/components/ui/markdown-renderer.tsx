@@ -5,11 +5,13 @@ import remarkGfm from "remark-gfm";
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  invert?: boolean; // Use inverted colors (e.g., on dark or colored bubbles)
 }
 
 export const MarkdownRenderer = ({
   content,
   className = "",
+  invert = false,
 }: MarkdownRendererProps) => {
   // Check if custom classes are provided for small text
   const isSmallText =
@@ -133,20 +135,24 @@ export const MarkdownRenderer = ({
               </pre>
             );
           },
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              className={
-                isSmallText
-                  ? "text-muted-foreground hover:text-muted-foreground/80 text-xs underline"
-                  : "text-primary hover:text-primary/80 underline"
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const base = isSmallText ? "text-xs underline" : "underline";
+            const color = invert
+              ? "text-primary-foreground hover:opacity-90"
+              : isSmallText
+                ? "text-muted-foreground hover:text-muted-foreground/80"
+                : "text-primary hover:text-primary/80";
+            return (
+              <a
+                href={href}
+                className={`${base} ${color}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {children}
+              </a>
+            );
+          },
           strong: ({ children }) => (
             <strong
               className={
