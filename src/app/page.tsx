@@ -104,11 +104,9 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Chatbot toggle button positioned at bottom right */}
-      {isChatbotopen ? (
-        <motion.button
+      <motion.button
           onClick={() => setIsChatbotOpen(!isChatbotopen)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 rounded-lg px-4 py-3 font-medium transition-colors"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 rounded-lg px-4 py-3 font-medium transition-colors cursor-pointer"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{
@@ -120,26 +118,8 @@ export default function Home() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <ChevronDown />
+          {isChatbotopen ? <ChevronDown /> : <Bot />}
         </motion.button>
-      ) : (
-        <motion.button
-          onClick={() => setIsChatbotOpen(!isChatbotopen)}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 rounded-lg px-4 py-3 font-medium transition-colors"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{
-            duration: 0.4,
-            delay: 0.8,
-            type: "spring",
-            stiffness: 200,
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Bot />
-        </motion.button>
-      )}
 
       {/* Chatbot positioned at bottom right */}
       <AnimatePresence>
@@ -150,7 +130,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+            transition={{ duration: 0.5, stiffness: 100 }}
           >
             <Chatbot
               user_id={user_id}

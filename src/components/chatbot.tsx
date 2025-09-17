@@ -284,7 +284,7 @@ export const Chatbot = ({
       {showBack && (
         <button
           onClick={handleBackClick}
-          className="hover:bg-muted mr-3 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+          className="hover:bg-muted mr-3 flex h-8 w-8 items-center justify-center rounded-full transition-colors cursor-pointer"
         >
           <ArrowLeft className="text-muted-foreground h-5 w-5" />
         </button>
@@ -309,7 +309,7 @@ export const Chatbot = ({
                 setInternalIsMaximized(newMaximized);
               }
             }}
-            className="hover:bg-muted rounded-full p-1 transition-colors"
+            className="hover:bg-muted rounded-full p-1 transition-colors cursor-pointer"
           >
             {isMaximized ? (
               <Minimize2 className="text-muted-foreground h-4 w-4" />
@@ -320,7 +320,7 @@ export const Chatbot = ({
         )}
         <button
           onClick={onClose}
-          className="hover:bg-muted rounded-full p-1 transition-colors"
+          className="hover:bg-muted rounded-full p-1 transition-colors cursor-pointer"
         >
           <X className="text-muted-foreground h-5 w-5" />
         </button>
@@ -382,8 +382,8 @@ export const Chatbot = ({
       }}
       transition={{
         duration: 0.8,
-        type: "spring",
         stiffness: 200,
+        type: "spring",
         damping: 25,
         mass: 1.2,
       }}
