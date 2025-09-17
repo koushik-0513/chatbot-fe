@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useScrollContext } from "@/contexts/scroll-context";
-import { formatChatTime } from "@/utils/datetime";
+import { TChatMessage } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { ArrowDown, ArrowLeft, Paperclip, Send, Smile, X } from "lucide-react";
@@ -37,7 +37,7 @@ export const ChatContainer = ({
     isLoading,
     error,
   } = useGetConversationById(chatId);
-  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+  const { resetAllScrollWithDelay } = useScrollContext();
   const messagesRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -57,56 +57,87 @@ export const ChatContainer = ({
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [autoStick, setAutoStick] = useState(true); // auto-scroll unless user scrolled up
 
+  // Typing animation state for assistant streaming
+  const typingIntervalRef = useRef<number | null>(null);
+  const charQueueRef = useRef<string[]>([]);
+  const assistantMessageIdRef = useRef<string | null>(null);
+  const streamDoneRef = useRef(false);
+  const currentTypedTextRef = useRef<string>("");
+
+  // Persist/restore typing state in sessionStorage so we can resume smoothly
+  const typingStateKey = (cid: string | null) =>
+    `typing_state:${cid ?? "null"}`;
+  const persistTypingState = () => {
+    try {
+      const state = {
+        assistantMessageId: assistantMessageIdRef.current,
+        typedText: currentTypedTextRef.current,
+        remaining: charQueueRef.current.join(""),
+        streamDone: streamDoneRef.current,
+      };
+      sessionStorage.setItem(typingStateKey(chatId), JSON.stringify(state));
+    } catch {}
+  };
+  const loadTypingState = () => {
+    try {
+      const raw = sessionStorage.getItem(typingStateKey(chatId));
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+  const clearTypingState = () => {
+    try {
+      sessionStorage.removeItem(typingStateKey(chatId));
+    } catch {}
+  };
+
+  const startTypingLoop = () => {
+    if (typingIntervalRef.current != null) return;
+    typingIntervalRef.current = window.setInterval(() => {
+      const next = charQueueRef.current.splice(0, 3).join("");
+      if (next) {
+        const msgId = assistantMessageIdRef.current;
+        if (!msgId) return;
+        currentTypedTextRef.current =
+          (currentTypedTextRef.current || "") + next;
+        setDisplayMessages((prev) =>
+          prev.map((m) =>
+            m._id === msgId ? { ...m, message: currentTypedTextRef.current } : m
+          )
+        );
+        if (autoStick) scrollToBottom(true);
+        // Persist typing progress for resume on navigation
+        persistTypingState();
+      } else if (streamDoneRef.current) {
+        if (typingIntervalRef.current != null) {
+          window.clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+          // Finalize and clear persisted state
+          clearTypingState();
+        }
+      }
+    }, 18);
+  };
+
   // Reset scroll when component mounts or chatId changes
   useEffect(() => {
     resetAllScrollWithDelay(100);
   }, [chatId, resetAllScrollWithDelay]);
 
-  // Get messages from API or use empty array as fallback and normalize
-  const conversationData: any = chatHistoryResponse?.data;
-  const rawMessages: any[] = Array.isArray(conversationData)
-    ? conversationData
-    : conversationData?.messages || [];
-
-  type DisplayMessage = {
-    id: string;
-    text: string;
-    isUser: boolean;
-    timestamp: string;
-    attachmentUrl?: string;
-    attachmentName?: string;
-  };
-
-  const normalizedMessages: DisplayMessage[] = rawMessages.map(
-    (m: any, index: number) => {
-      const id = m._id || m.id || `${index}`;
-      const text = m.text || m.content || m.message || "";
-      const role = m.role || m.sender || (m.isUser ? "user" : "assistant");
-      const isUser =
-        role === "user" || m.is_user === true || m.isUser === true || false;
-      const timestamp =
-        m.timestamp ||
-        m.created_at ||
-        m.createdAt ||
-        conversationData?.updatedAt ||
-        "";
-      const attachmentUrl =
-        m.attachment?.url || m.file_url || m.fileUrl || m.url || undefined;
-      const attachmentName =
-        m.attachment?.name || m.file_name || m.filename || m.name || undefined;
-      return { id, text, isUser, timestamp, attachmentUrl, attachmentName };
-    }
-  );
+  // Get messages directly from API response
+  const conversationData = chatHistoryResponse?.data;
+  const messages: TChatMessage[] = conversationData?.messages || [];
 
   const [displayMessages, setDisplayMessages] =
-    useState<DisplayMessage[]>(normalizedMessages);
+    useState<TChatMessage[]>(messages);
   const effectiveTitle = (() => {
     const explicit = chatTitle && chatTitle.trim();
     if (explicit) return explicit;
-    const apiTitle = conversationData?.title || conversationData?.name;
+    const apiTitle = conversationData?.title;
     if (apiTitle) return apiTitle;
     // For brand new chats (no messages yet), keep header empty until backend sets a title
-    const hasMessages = normalizedMessages.length > 0;
+    const hasMessages = messages.length > 0;
     return hasMessages ? "Untitled Chat" : "";
   })();
 
@@ -140,15 +171,15 @@ export const ChatContainer = ({
       if (currentTypedTextRef.current || charQueueRef.current.length > 0) {
         setDisplayMessages((prev) =>
           prev.map((m) =>
-            m.id === saved.assistantMessageId
-              ? { ...m, text: currentTypedTextRef.current }
+            m._id === saved.assistantMessageId
+              ? { ...m, message: currentTypedTextRef.current }
               : m
           )
         );
         startTypingLoop();
       }
     }
-  }, [chatHistoryResponse]);
+  }, [chatHistoryResponse, loadTypingState, startTypingLoop]);
 
   const handleScrollPosition = () => {
     const el = messagesRef.current;
@@ -170,8 +201,8 @@ export const ChatContainer = ({
 
   // Sync local messages when server messages change (e.g., on refetch)
   useEffect(() => {
-    setDisplayMessages(normalizedMessages);
-  }, [chatHistoryResponse]);
+    setDisplayMessages(messages);
+  }, [messages]);
 
   // Cleanup typing interval on unmount
   useEffect(() => {
@@ -183,69 +214,7 @@ export const ChatContainer = ({
         typingIntervalRef.current = null;
       }
     };
-  }, []);
-
-  // Typing animation state for assistant streaming
-  const typingIntervalRef = useRef<number | null>(null);
-  const charQueueRef = useRef<string[]>([]);
-  const assistantMessageIdRef = useRef<string | null>(null);
-  const streamDoneRef = useRef(false);
-  const currentTypedTextRef = useRef<string>("");
-  const startTypingLoop = () => {
-    if (typingIntervalRef.current != null) return;
-    typingIntervalRef.current = window.setInterval(() => {
-      const next = charQueueRef.current.splice(0, 3).join("");
-      if (next) {
-        const msgId = assistantMessageIdRef.current;
-        if (!msgId) return;
-        currentTypedTextRef.current =
-          (currentTypedTextRef.current || "") + next;
-        setDisplayMessages((prev) =>
-          prev.map((m) =>
-            m.id === msgId ? { ...m, text: currentTypedTextRef.current } : m
-          )
-        );
-        if (autoStick) scrollToBottom(true);
-        // Persist typing progress for resume on navigation
-        persistTypingState();
-      } else if (streamDoneRef.current) {
-        if (typingIntervalRef.current != null) {
-          window.clearInterval(typingIntervalRef.current);
-          typingIntervalRef.current = null;
-          // Finalize and clear persisted state
-          clearTypingState();
-        }
-      }
-    }, 18);
-  };
-
-  // Persist/restore typing state in sessionStorage so we can resume smoothly
-  const typingStateKey = (cid: string | null) =>
-    `typing_state:${cid ?? "null"}`;
-  const persistTypingState = () => {
-    try {
-      const state = {
-        assistantMessageId: assistantMessageIdRef.current,
-        typedText: currentTypedTextRef.current,
-        remaining: charQueueRef.current.join(""),
-        streamDone: streamDoneRef.current,
-      };
-      sessionStorage.setItem(typingStateKey(chatId), JSON.stringify(state));
-    } catch {}
-  };
-  const loadTypingState = () => {
-    try {
-      const raw = sessionStorage.getItem(typingStateKey(chatId));
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-  const clearTypingState = () => {
-    try {
-      sessionStorage.removeItem(typingStateKey(chatId));
-    } catch {}
-  };
+  }, [persistTypingState]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user_id) return;
@@ -254,19 +223,21 @@ export const ChatContainer = ({
     const assistantMsgId = new ObjectId().toHexString();
 
     // Optimistically append user's message
-    const optimisticUser = {
-      id: userMsgId,
-      text: newMessage,
-      isUser: true,
-      timestamp: new Date().toISOString(),
+    const optimisticUser: TChatMessage = {
+      _id: userMsgId,
+      message: newMessage,
+      sender: "user",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     // Seed assistant placeholder
-    const optimisticAssistant = {
-      id: assistantMsgId,
-      text: "",
-      isUser: false,
-      timestamp: new Date().toISOString(),
+    const optimisticAssistant: TChatMessage = {
+      _id: assistantMsgId,
+      message: "",
+      sender: "assistant",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     // Force stick-to-bottom when sending
@@ -415,14 +386,15 @@ export const ChatContainer = ({
         .then((res) => {
           if (res.ok) {
             // Try to extract a file URL/name from response
-            const data: any = res.data ?? {};
+            const data: Record<string, unknown> =
+              (res.data as Record<string, unknown>) ?? {};
             const fileUrl: string | undefined =
-              data.url ||
-              data.file_url ||
-              data.location ||
-              data.path ||
-              data.file?.url ||
-              data.data?.url;
+              (data.url as string) ||
+              (data.file_url as string) ||
+              (data.location as string) ||
+              (data.path as string) ||
+              ((data.file as Record<string, unknown>)?.url as string) ||
+              ((data.data as Record<string, unknown>)?.url as string);
             const fileName: string = file.name;
 
             // Append a user message representing the uploaded file
@@ -430,12 +402,11 @@ export const ChatContainer = ({
             setDisplayMessages((prev) => [
               ...prev,
               {
-                id: uploadMsgId,
-                text: fileUrl ? "Uploaded a file" : `Uploaded: ${fileName}`,
-                isUser: true,
-                timestamp: new Date().toISOString(),
-                attachmentUrl: fileUrl,
-                attachmentName: fileName,
+                _id: uploadMsgId,
+                message: fileUrl ? "Uploaded a file" : `Uploaded: ${fileName}`,
+                sender: "user",
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
               },
             ]);
 
@@ -555,72 +526,43 @@ export const ChatContainer = ({
           </div>
         ) : (
           displayMessages.map((message) => {
+            const isUser = message.sender === "user";
             const isAssistantStreaming =
-              !message.isUser &&
-              message.id === assistantMessageIdRef.current &&
+              !isUser &&
+              message._id === assistantMessageIdRef.current &&
               (!streamDoneRef.current || charQueueRef.current.length > 0);
             return (
               <div
-                key={message.id}
-                className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}
+                key={message._id}
+                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`mb-2 max-w-xs rounded-lg p-2 ${
-                    message.isUser
+                    isUser
                       ? "bg-primary text-primary-foreground"
                       : "bg-card text-card-foreground border-border border"
                   }`}
                 >
-                  {!message.isUser &&
-                  !message.text &&
-                  !message.attachmentUrl ? (
+                  {!isUser && !message.message ? (
                     <div className="flex items-center gap-1 py-1">
                       <span className="sr-only">Assistant is typing</span>
                       <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.2s]"></span>
                       <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.1s]"></span>
                       <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full"></span>
                     </div>
-                  ) : message.attachmentUrl ? (
-                    <div className="text-sm">
-                      {message.text && (
-                        <MarkdownRenderer
-                          content={message.text}
-                          className={`${
-                            message.isUser
-                              ? "text-primary-foreground"
-                              : "text-foreground"
-                          } prose-p:text-xs prose-p:mb-0.5 prose-headings:text-xs prose-headings:font-normal prose-code:text-xs`}
-                          invert={message.isUser}
-                        />
-                      )}
-                      <a
-                        href={message.attachmentUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`${
-                          message.isUser
-                            ? "text-primary-foreground underline"
-                            : "text-foreground underline"
-                        } break-all`}
-                      >
-                        {message.attachmentName || message.attachmentUrl}
-                      </a>
-                    </div>
                   ) : (
                     <MarkdownRenderer
-                      content={message.text}
+                      content={message.message}
                       className={`${
-                        message.isUser
-                          ? "text-primary-foreground"
-                          : "text-foreground"
+                        isUser ? "text-primary-foreground" : "text-foreground"
                       } prose-p:text-xs prose-p:mb-0.5 prose-headings:text-xs prose-headings:font-normal prose-code:text-xs`}
-                      invert={message.isUser}
+                      invert={isUser}
                     />
                   )}
                   {!isAssistantStreaming && (
                     <p
                       className={`mt-1 text-xs ${
-                        message.isUser
+                        isUser
                           ? "text-primary-foreground/70"
                           : "text-muted-foreground"
                       }`}

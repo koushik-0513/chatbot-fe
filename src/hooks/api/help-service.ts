@@ -2,47 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 
 import env from "../../config/env";
 import {
-  THelp,
+  TGetCollectionsParams,
+  TGetHelpParams,
   THelpArticleDetailResponse,
   THelpCollectionDetailResponse,
   THelpCollectionsResponse,
+  THelpDetailResponse,
+  THelpResponse,
+  TTopArticlesResponse,
 } from "../../types/types";
-
-export type THelpResponse = {
-  message: string;
-  data: THelp[];
-  total: number;
-  page: number;
-  limit: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-};
-
-export type THelpDetailResponse = {
-  message: string;
-  data: THelp;
-};
-
-export type TGetHelpParams = {
-  page?: number;
-  limit?: number;
-};
-
-export type TGetCollectionsParams = {
-  page?: number;
-  limit?: number;
-};
-
-export type TTopArticlesResponse = {
-  message: string;
-  data: {
-    articles: Array<{
-      id: string;
-      title: string;
-    }>;
-    total_count: number;
-  };
-};
 
 // Get all collections query
 export const useGetCollections = (params: TGetCollectionsParams = {}) => {

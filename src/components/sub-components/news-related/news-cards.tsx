@@ -1,13 +1,7 @@
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { TNews } from "../../../types/types";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
@@ -40,7 +34,7 @@ export const NewsCard = ({
         <div>
           <CardContent className="p-0">
             <img
-              src={news.imageUrl || news.image}
+              src={news.image}
               alt={news.title}
               className="h-48 w-full object-cover"
             />

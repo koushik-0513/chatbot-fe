@@ -19,15 +19,23 @@ interface TNewsDetailsProps {
   onAutoMaximize?: () => void;
 }
 
-export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
-  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+// Type guard to safely convert string to TNewsReaction
+const isValidNewsReaction = (reaction: string): TNewsReaction | null => {
+  if (!reaction) return null;
+  return NEWS_REACTIONS.includes(reaction as TNewsReaction)
+    ? (reaction as TNewsReaction)
+    : null;
+};
+
+export const NewsDetails = ({ news }: TNewsDetailsProps) => {
+  const { resetAllScrollWithDelay } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const { user_id } = useUserId();
 
   // Reaction state - initialize from news data if available
   const [selectedReaction, setSelectedReaction] =
     useState<TNewsReaction | null>(() => {
-      return (news as any)?.reaction?.reaction || null;
+      return isValidNewsReaction(news?.reaction?.reaction);
     });
 
   // News reaction mutation
@@ -67,8 +75,8 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
 
   // Update selected reaction when news data changes
   useEffect(() => {
-    const existingReaction = (news as any)?.reaction?.reaction;
-    setSelectedReaction(existingReaction || null);
+    const existingReaction = isValidNewsReaction(news?.reaction?.reaction);
+    setSelectedReaction(existingReaction);
   }, [news]);
 
   // Function to calculate relative time
@@ -105,19 +113,6 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
     }
   };
 
-  const format_date = (date_string: string | undefined): string => {
-    if (!date_string) return "Recently";
-    try {
-      return new Date(date_string).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return "Recently";
-    }
-  };
-
   const get_author_name = (): string => {
     if (news.author && typeof news.author === "object" && news.author.name) {
       return news.author.name;
@@ -134,9 +129,9 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
     if (
       news.author &&
       typeof news.author === "object" &&
-      news.author.profileImage
+      news.author.profile_image
     ) {
-      return news.author.profileImage;
+      return news.author.profile_image;
     }
     return null;
   };
@@ -186,10 +181,10 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
       animate="visible"
     >
       {/* Main Image - Full Width */}
-      {(news.imageUrl || news.image) && (
+      {news.image_url && (
         <div className="-mx-4 -my-4 mb-6 w-[calc(100%+2rem)]">
           <img
-            src={news.imageUrl || news.image}
+            src={news.image_url}
             alt={news.title}
             className="h-auto w-full object-cover"
           />
@@ -249,7 +244,7 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
                 {get_author_name()}
               </p>
               <p className="text-muted-foreground text-xs">
-                {get_relative_time(news.publishedAt)}
+                {get_relative_time(news.published_at)}
               </p>
             </motion.div>
           </div>
@@ -264,41 +259,6 @@ export const NewsDetails = ({ news, onAutoMaximize }: TNewsDetailsProps) => {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <MarkdownRenderer content={news.content} />
-          </motion.div>
-        )}
-
-        {/* Bullet Points */}
-        {news.bulletPoints && news.bulletPoints.length > 0 && (
-          <motion.div
-            className="bg-muted rounded-lg p-6"
-            variants={item_variants}
-            whileHover={{ scale: 1.01 }}
-          >
-            <motion.h3
-              className="text-card-foreground mb-4 text-xl font-semibold"
-              variants={item_variants}
-            >
-              Key Points
-            </motion.h3>
-            <motion.ul className="space-y-3" variants={item_variants}>
-              {news.bulletPoints.map((point, index) => (
-                <motion.li
-                  key={index}
-                  className="flex items-start gap-3"
-                  variants={item_variants}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <motion.span
-                    className="text-primary mt-1 font-bold"
-                    variants={scale_variants}
-                    transition={{ delay: index * 0.05 + 0.1 }}
-                  >
-                    •
-                  </motion.span>
-                  <span className="text-foreground">{point}</span>
-                </motion.li>
-              ))}
-            </motion.ul>
           </motion.div>
         )}
 

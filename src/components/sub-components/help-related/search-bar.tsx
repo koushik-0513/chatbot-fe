@@ -5,12 +5,12 @@ import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-interface SearchBarProps {
+type SearchBarProps = {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onClearSearch: () => void;
   isSearching: boolean;
-}
+};
 
 export const SearchBar = ({
   searchQuery,

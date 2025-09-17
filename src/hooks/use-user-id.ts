@@ -16,6 +16,7 @@ export const useUserId = () => {
   const createUserMutation = useCreateUser();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const initialize_user = async () => {
       try {
         // Get or generate user ID
@@ -81,7 +82,7 @@ export const useUserId = () => {
     };
 
     initialize_user();
-  }, []);
+  }, []); // Remove createUserMutation from dependencies
 
   return {
     user_id,

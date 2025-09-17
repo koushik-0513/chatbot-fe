@@ -9,7 +9,7 @@ import {
   THelpCollectionDetailResponse,
 } from "../../../types/types";
 
-interface TCollectionDetailsProps {
+type TCollectionDetailsProps = {
   collectionDetailsData: THelpCollectionDetailResponse | undefined;
   isLoading: boolean;
   error: Error | null;
@@ -18,7 +18,7 @@ interface TCollectionDetailsProps {
     collection: THelpCollection,
     parentId: string
   ) => void;
-}
+};
 
 export const CollectionDetails = ({
   collectionDetailsData,
@@ -163,7 +163,7 @@ export const CollectionDetails = ({
                         transition={{ delay: index * 0.1 }}
                       >
                         <Image
-                          src={author.profile_image}
+                          src={author.profile_image || ""}
                           alt={author.name}
                           width={20}
                           height={20}

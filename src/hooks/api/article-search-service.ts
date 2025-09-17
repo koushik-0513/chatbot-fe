@@ -1,13 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
 import env from "../../config/env";
-import { TArticleSearchResponse } from "../../types/types";
-
-export type TArticleSearchParams = {
-  query: string;
-  page?: number;
-  limit?: number;
-};
+import {
+  TArticleSearchParams,
+  TArticleSearchResponse,
+} from "../../types/types";
 
 // Search articles query
 export const useSearchArticles = (params: TArticleSearchParams) => {

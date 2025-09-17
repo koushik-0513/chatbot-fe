@@ -1,5 +1,5 @@
+import { TChatHistoryItem } from "@/types/types";
 import { formatChatTime, formatDayOrDate } from "@/utils/datetime";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { motion } from "framer-motion";
 import { MessageCircleQuestionMark } from "lucide-react";
@@ -86,19 +86,14 @@ export const Message = ({
   }
 
   // Extract the data array from the response
-  const chatHistoryDataRaw = chatHistoryResponse?.data || [];
-  const chatHistoryData = [...chatHistoryDataRaw].sort((a: any, b: any) => {
-    const getTs = (x: any) =>
-      new Date(
-        x.updated_at ||
-          x.updatedAt ||
-          x.timestamp ||
-          x.created_at ||
-          x.createdAt ||
-          0
-      ).getTime();
-    return getTs(b) - getTs(a);
-  });
+  const chatHistoryDataRaw: TChatHistoryItem[] = (chatHistoryResponse?.data ||
+    []) as TChatHistoryItem[];
+  const chatHistoryData = [...chatHistoryDataRaw].sort(
+    (a: TChatHistoryItem, b: TChatHistoryItem) => {
+      const getTs = (x: TChatHistoryItem) => new Date(x.updatedAt).getTime();
+      return getTs(b) - getTs(a);
+    }
+  );
 
   return (
     <motion.div
@@ -109,25 +104,17 @@ export const Message = ({
     >
       <div className="space-y-0">
         {chatHistoryData.length > 0 ? (
-          chatHistoryData.map((chat: any, index: number) => {
+          chatHistoryData.map((chat: TChatHistoryItem, index: number) => {
             // Handle different possible ID field names
-            const chatId =
-              chat._id ||
-              chat.id ||
-              chat.conversation_id ||
-              chat.conversationId;
+            const chatId = chat._id;
 
             console.log("Processing chat item:", chat, "Extracted ID:", chatId);
 
-            const rawTs =
-              chat.updated_at ||
-              chat.updatedAt ||
-              chat.timestamp ||
-              chat.created_at ||
-              chat.createdAt ||
-              "";
+            const rawTs = chat.updatedAt;
             const prettyDay = formatDayOrDate(rawTs) || "";
             const prettyTime = formatChatTime(rawTs) || "";
+
+            const safeTitle = (chat.title || "Untitled Chat").toString();
 
             return (
               <motion.div
@@ -137,13 +124,11 @@ export const Message = ({
                 transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
               >
                 <ChatHistory
-                  id={chatId}
-                  title={chat.title || chat.name}
+                  id={chatId || String(index)}
+                  title={safeTitle}
                   timestamp={prettyTime}
                   day={prettyDay}
-                  onClick={(id: string) =>
-                    handleChatClick(id, chat.title || chat.name)
-                  }
+                  onClick={(id: string) => handleChatClick(id, safeTitle)}
                 />
               </motion.div>
             );

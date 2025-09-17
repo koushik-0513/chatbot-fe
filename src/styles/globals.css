@@ -1,8 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* stylelint-disable-next-line at-rule-no-unknown */
 @custom-variant dark (&:is(.dark *));
 
+/* stylelint-disable-next-line at-rule-no-unknown */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -33,6 +35,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-tertiary: var(--tertiary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -67,6 +70,7 @@
   /* Primary/Secondary Colors */
   --primary: #a86dff;
   --secondary: #6337fa;
+  --tertiary: #5d15c8;
   --destructive: #ff6b6b;
 
   /* Border Colors */
@@ -95,7 +99,7 @@
   --background: #a86dff;
   --card: #000000;
   --popover: #000000;
-  --muted: #709beba2;
+  --muted: #7f4eb1b0;
   --accent: #c5c2d4;
   --sidebar: #060709;
 
@@ -112,6 +116,7 @@
   /* Dark Mode Primary/Secondary */
   --primary: #a86dff;
   --secondary: #6337fa;
+  --tertiary: #6607c4;
   --destructive: #ff6b6b;
 
   /* Dark Mode Border Colors */
@@ -137,9 +142,11 @@
 
 @layer base {
   * {
+    /* stylelint-disable-next-line at-rule-no-unknown */
     @apply border-border outline-ring/50;
   }
   body {
+    /* stylelint-disable-next-line at-rule-no-unknown */
     @apply text-foreground;
     background: linear-gradient(180deg, #060709 0%, #000000 50%, #060709 100%);
     min-height: 100vh;
@@ -147,7 +154,60 @@
 
   /* Homepage specific gradient background */
   .homepage-gradient {
-    background: linear-gradient(#a770f9, #ceb1f9) !important;
+    background: linear-gradient(#cdb2f4, #653e9f) !important;
     background-attachment: fixed;
+  }
+
+  /* Emoji Picker Element Styling */
+  emoji-picker {
+    --border-radius: 0.625rem;
+    --border-color: var(--border);
+    --background-color: var(--card);
+    --text-color: var(--foreground);
+    --category-emoji-padding: 8px;
+    --emoji-size: 20px;
+    --emoji-padding: 4px;
+    --category-icon-size: 16px;
+    --search-background-color: var(--input);
+    --search-border-color: var(--border);
+    --search-text-color: var(--foreground);
+    --search-placeholder-color: var(--muted-foreground);
+    --preview-background-color: var(--muted);
+    --preview-text-color: var(--foreground);
+    --category-background-color: var(--card);
+    --category-text-color: var(--muted-foreground);
+    --category-text-color-hover: var(--foreground);
+    --category-text-color-active: var(--primary);
+    --emoji-background-color-hover: var(--muted);
+    --emoji-background-color-active: var(--primary);
+    --emoji-background-color-active-opacity: 0.2;
+  }
+
+  .emoji-picker-custom {
+    border: 1px solid var(--border) !important;
+    border-radius: 0.625rem !important;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  /* Hide scrollbars for the entire chatbot */
+  .scroll-container {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    display: none; /* WebKit */
+  }
+
+  /* Hide scrollbars for chat messages area */
+  .overflow-y-auto {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+  }
+
+  .overflow-y-auto::-webkit-scrollbar {
+    display: none; /* WebKit */
   }
 }

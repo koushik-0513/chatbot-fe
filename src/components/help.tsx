@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { useAutoMaximize } from "@/hooks/use-auto-maximize";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useNavigationStack } from "@/hooks/use-navigation-stack";
 import { useUserId } from "@/hooks/use-user-id";
 
 import { useSearchArticles } from "../hooks/api/article-search-service";
@@ -48,6 +49,7 @@ export const Help = ({
   onNavigateToHome,
   navigatedFromHomepage = false,
 }: THelppageProps) => {
+  const { shouldAutoMaximize } = useAutoMaximize({});
   const [pageState, setPageState] = useState<THelpPageState>({
     currentView: "list",
     selectedCollection: null,
@@ -55,13 +57,6 @@ export const Help = ({
   });
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const { user_id } = useUserId();
-
-  // Use centralized auto-maximize hook
-  const { triggerAutoMaximize, shouldAutoMaximize } = useAutoMaximize({
-    onMaximizeChange: undefined, // Help component doesn't directly manage maximize state
-    externalIsMaximized: undefined,
-    setInternalIsMaximized: undefined,
-  });
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +69,6 @@ export const Help = ({
   // Use article navigation context
   const {
     selectedArticleId,
-    selectedArticle,
     articleDetailsData,
     isLoadingArticle,
     articleError,
@@ -107,12 +101,6 @@ export const Help = ({
     error: fetchArticleError,
   } = useGetArticleDetails(selectedArticleId, user_id);
 
-  // Debug selectedArticleId changes
-  useEffect(() => {
-    console.log("selectedArticleId changed to:", selectedArticleId);
-    console.log("user_id:", user_id);
-  }, [selectedArticleId, user_id]);
-
   // Fetch collections from API
   const { data: collectionsData, isLoading, error } = useGetCollections();
 
@@ -138,10 +126,8 @@ export const Help = ({
   );
   const [showTitle, setShowTitle] = useState(false);
 
-  // State for article navigation history - store only IDs for efficiency
-  const [articleNavigationStack, setArticleNavigationStack] = useState<
-    string[]
-  >([]);
+  // Centralized navigation stack management
+  const navigationStack = useNavigationStack({ maxSize: 20 });
 
   // Fetch collection details when a collection is selected
   const {
@@ -300,7 +286,7 @@ export const Help = ({
         setSelectedCollectionId(null);
         // selectedArticleId is managed by context
         setParentCollectionId(null);
-        setArticleNavigationStack([]); // Clear navigation stack
+        navigationStack.clear(); // Clear navigation stack
         onShowBackButton(false);
         // Ensure navbar is visible when entering help from other tabs
         onShowDetails?.(false);
@@ -318,7 +304,7 @@ export const Help = ({
       setSelectedCollectionId(null);
       // selectedArticleId is managed by context
       setParentCollectionId(null);
-      setArticleNavigationStack([]); // Clear navigation stack
+      navigationStack.clear(); // Clear navigation stack
       onShowBackButton(false);
     }
   }, [
@@ -385,9 +371,13 @@ export const Help = ({
   // Handle related article navigation
   const handle_related_article_click = useCallback(
     (articleId: string) => {
-      // Add current article ID to navigation stack before navigating to related article
+      // Add current article to navigation stack before navigating to related article
       if (selectedArticleId) {
-        setArticleNavigationStack((prev) => [...prev, selectedArticleId]);
+        navigationStack.push({
+          id: selectedArticleId,
+          type: "article",
+          data: { collectionId: pageState.selectedCollection?.id },
+        });
       }
 
       // Use context to open article details
@@ -409,7 +399,13 @@ export const Help = ({
       // Reset scroll position for new article
       resetAllScrollWithDelay(100);
     },
-    [selectedArticleId, pageState.selectedCollection, resetAllScrollWithDelay]
+    [
+      selectedArticleId,
+      pageState.selectedCollection,
+      resetAllScrollWithDelay,
+      navigationStack,
+      openArticleDetails,
+    ]
   );
 
   // Search handlers
@@ -478,7 +474,7 @@ export const Help = ({
     ]
   );
 
-  const handle_back_to_list = (parentId?: string) => {
+  const handle_back_to_list = () => {
     // Check if we came from search results
     if (cameFromSearch) {
       // Go back to search results (list view with search active)
@@ -489,7 +485,7 @@ export const Help = ({
         selectedArticle: null,
       });
       // Clear navigation stack when going back to search
-      setArticleNavigationStack([]);
+      navigationStack.clear();
       // Keep search query active
       setIsSearching(true);
       onShowBackButton(false);
@@ -519,7 +515,7 @@ export const Help = ({
         selectedCollection: null,
         selectedArticle: null,
       });
-      setArticleNavigationStack([]); // Clear navigation stack
+      navigationStack.clear(); // Clear navigation stack
       onShowBackButton(false);
       onShowDetails?.(false);
       onBackFromDetails?.(); // Call the callback to auto-minimize
@@ -540,7 +536,7 @@ export const Help = ({
         selectedArticle: null,
       });
       // Clear navigation stack when going back to search
-      setArticleNavigationStack([]);
+      navigationStack.clear();
       // Don't hide navbar for search view
       onShowDetails?.(false);
       // Call onMinimizeOnly to trigger minimize without affecting back button state
@@ -554,55 +550,56 @@ export const Help = ({
     }
 
     // Check if we have articles in the navigation stack (related article navigation)
-    if (articleNavigationStack.length > 0) {
+    if (navigationStack.hasItems) {
       // Go back to the previous article in the stack
-      const previousArticleId =
-        articleNavigationStack[articleNavigationStack.length - 1];
-      setArticleNavigationStack((prev) => prev.slice(0, -1)); // Remove the last article
+      const previousItem = navigationStack.navigateBack();
 
-      // Use context to open previous article
-      const previousArticle: THelpArticle = {
-        id: previousArticleId,
-        title: "Loading...",
-        description: "",
-        content: "",
-        author: "Anonymous",
-        related_articles: [],
-      };
-      openArticleDetails(previousArticle);
-      setPageState({
-        currentView: "article",
-        selectedCollection: pageState.selectedCollection,
-        selectedArticle: null, // Will be populated by the useEffect when article loads
-      });
+      if (previousItem && previousItem.type === "article") {
+        // Use context to open previous article
+        const previousArticle: THelpArticle = {
+          id: previousItem.id,
+          title: "Loading...",
+          description: "",
+          content: "",
+          author: "Anonymous",
+          related_articles: [],
+        };
+        openArticleDetails(previousArticle);
+        setPageState({
+          currentView: "article",
+          selectedCollection: pageState.selectedCollection,
+          selectedArticle: null, // Will be populated by the useEffect when article loads
+        });
 
-      // Reset scroll when going back to previous article
-      resetAllScrollWithDelay(100);
-    } else {
-      // No previous articles in stack, go back to collection
-      // selectedArticleId is managed by context
-      setPageState({
-        currentView: "collection",
-        selectedCollection: pageState.selectedCollection,
-        selectedArticle: null,
-      });
-      // Clear navigation stack when going back to collection
-      setArticleNavigationStack([]);
-      // Don't hide navbar for collection view
-      onShowDetails?.(false);
-      // Call onMinimizeOnly to trigger minimize without affecting back button state
-      onMinimizeOnly?.();
-
-      // Reset scroll when going back to collection
-      resetAllScrollWithDelay(100);
+        // Reset scroll when going back to previous article
+        resetAllScrollWithDelay(100);
+        return;
+      }
     }
+
+    // No previous articles in stack, go back to collection
+    setPageState({
+      currentView: "collection",
+      selectedCollection: pageState.selectedCollection,
+      selectedArticle: null,
+    });
+    // Clear navigation stack when going back to collection
+    navigationStack.clear();
+    // Don't hide navbar for collection view
+    onShowDetails?.(false);
+    // Call onMinimizeOnly to trigger minimize without affecting back button state
+    onMinimizeOnly?.();
+
+    // Reset scroll when going back to collection
+    resetAllScrollWithDelay(100);
   }, [
     cameFromSearch,
-    articleNavigationStack,
+    navigationStack,
     pageState.selectedCollection,
     onShowDetails,
     onMinimizeOnly,
     resetAllScrollWithDelay,
+    openArticleDetails,
   ]);
 
   // Custom back handler for when coming from home page
@@ -626,7 +623,7 @@ export const Help = ({
       selectedCollection: collection,
       selectedArticle: null,
     });
-    setArticleNavigationStack([]); // Clear navigation stack when navigating to child collection
+    navigationStack.clear(); // Clear navigation stack when navigating to child collection
     // Ensure back button is visible for collection view
     onShowBackButton(true);
     // Don't hide navbar for collection view
@@ -646,26 +643,7 @@ export const Help = ({
             transition={{ duration: 0.3 }}
           >
             <ArticleDetails
-              initialArticle={
-                pageState.selectedArticle || {
-                  id: selectedArticleId || "",
-                  title: "Loading...",
-                  description: "",
-                  content: "",
-                  author: "Anonymous",
-                  related_articles: [],
-                }
-              }
               articleDetailsData={articleDetailsData}
-              isLoading={isLoadingArticle}
-              error={articleError}
-              onBack={
-                navigatedFromHomepage
-                  ? handle_back_from_home
-                  : handle_back_to_collection
-              }
-              onAutoMaximize={onAutoMaximize}
-              navigatedFromHomepage={navigatedFromHomepage}
               onRelatedArticleClick={handle_related_article_click}
             />
           </motion.div>

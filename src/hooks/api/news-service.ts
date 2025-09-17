@@ -1,27 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 
 import env from "../../config/env";
-import { TNews } from "../../types/types";
-
-export type TNewsResponse = {
-  message: string;
-  data: TNews[];
-  total: number;
-  page: number;
-  limit: number;
-  hasNextPage: boolean;
-  hasPrevPage: boolean;
-};
-
-export type TNewsDetailResponse = {
-  message: string;
-  data: TNews;
-};
-
-export type TGetNewsParams = {
-  page?: number;
-  limit?: number;
-};
+import {
+  TGetNewsParams,
+  TNewsDetailResponse,
+  TNewsResponse,
+} from "../../types/types";
 
 // Get all news query
 export const useGetNews = (params: TGetNewsParams) => {

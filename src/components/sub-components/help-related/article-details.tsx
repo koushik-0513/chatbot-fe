@@ -1,14 +1,11 @@
-// For GitHub Flavored Markdown support
 import { useEffect, useRef, useState } from "react";
-
-import Image from "next/image";
 
 import { useScrollContext } from "@/contexts/scroll-context";
 import { motion } from "framer-motion";
 
 import { useSubmitArticleReaction } from "../../../hooks/api/article-reaction-service";
 import { useUserId } from "../../../hooks/use-user-id";
-import { THelpArticle, THelpArticleDetailResponse } from "../../../types/types";
+import { THelpArticleDetailResponse } from "../../../types/types";
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
@@ -17,35 +14,33 @@ import {
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 interface TArticleDetailsProps {
-  initialArticle: THelpArticle;
   articleDetailsData: THelpArticleDetailResponse | undefined;
-  isLoading: boolean;
-  error: Error | null;
-  onBack: () => void;
-  onAutoMaximize?: () => void;
-  navigatedFromHomepage?: boolean;
   onRelatedArticleClick?: (articleId: string) => void;
 }
 
+// Type guard to safely convert string to TArticleReaction
+const isValidArticleReaction = (
+  reaction: string | undefined
+): TArticleReaction | null => {
+  if (!reaction) return null;
+  return ARTICLE_REACTIONS.includes(reaction as TArticleReaction)
+    ? (reaction as TArticleReaction)
+    : null;
+};
+
 export const ArticleDetails = ({
-  initialArticle,
   articleDetailsData,
-  isLoading,
-  error,
-  onBack,
-  onAutoMaximize,
-  navigatedFromHomepage = false,
   onRelatedArticleClick,
 }: TArticleDetailsProps) => {
-  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
+  const { resetAllScrollWithDelay } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const { user_id } = useUserId();
 
   // Reaction state - initialize from article data if available
   const [selectedReaction, setSelectedReaction] =
     useState<TArticleReaction | null>(() => {
-      return (
-        (articleDetailsData as any)?.data?.article?.reaction?.reaction || null
+      return isValidArticleReaction(
+        articleDetailsData?.data?.article?.reaction?.reaction
       );
     });
 
@@ -63,7 +58,7 @@ export const ArticleDetails = ({
 
     try {
       await submitReactionMutation.mutateAsync({
-        articleId: article.id,
+        articleId: articleDetailsData?.data?.article?.id || "",
         reaction: reaction,
         userId: user_id,
       });
@@ -75,12 +70,7 @@ export const ArticleDetails = ({
 
   // Handle related article click
   const handleRelatedArticleClick = (articleId: string) => {
-    if (onRelatedArticleClick) {
-      onRelatedArticleClick(articleId);
-    } else {
-      // Fallback: just log if no handler provided
-      console.log("Navigate to related article:", articleId);
-    }
+    onRelatedArticleClick?.(articleId);
   };
 
   // Reset scroll when component mounts
@@ -96,37 +86,71 @@ export const ArticleDetails = ({
 
   // Update selected reaction when article data changes
   useEffect(() => {
-    const existingReaction = (articleDetailsData as any)?.data?.article
-      ?.reaction?.reaction;
-    setSelectedReaction(existingReaction || null);
+    const existingReaction = isValidArticleReaction(
+      articleDetailsData?.data?.article?.reaction?.reaction
+    );
+    setSelectedReaction(existingReaction);
   }, [articleDetailsData]);
 
   // Function to calculate relative time
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const get_relative_time = (dateString: string | undefined): string => {
+    if (!dateString) return "Recently";
 
-    const intervals = [
-      { label: "year", seconds: 31536000 },
-      { label: "month", seconds: 2592000 },
-      { label: "week", seconds: 604800 },
-      { label: "day", seconds: 86400 },
-      { label: "hour", seconds: 3600 },
-      { label: "minute", seconds: 60 },
-      { label: "second", seconds: 1 },
-    ];
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    for (const interval of intervals) {
-      const count = Math.floor(diffInSeconds / interval.seconds);
-      if (count >= 1) {
-        return count === 1
-          ? `${count} ${interval.label} ago`
-          : `${count} ${interval.label}s ago`;
+      const intervals = [
+        { label: "year", seconds: 31536000 },
+        { label: "month", seconds: 2592000 },
+        { label: "week", seconds: 604800 },
+        { label: "day", seconds: 86400 },
+        { label: "hour", seconds: 3600 },
+        { label: "minute", seconds: 60 },
+        { label: "second", seconds: 1 },
+      ];
+
+      for (const interval of intervals) {
+        const count = Math.floor(diffInSeconds / interval.seconds);
+        if (count >= 1) {
+          return count === 1
+            ? `${count} ${interval.label} ago`
+            : `${count} ${interval.label}s ago`;
+        }
       }
-    }
 
-    return "just now";
+      return "just now";
+    } catch {
+      return "Recently";
+    }
+  };
+
+  const get_author_name = (): string => {
+    if (
+      articleDetailsData?.data?.author &&
+      typeof articleDetailsData.data.author === "object" &&
+      articleDetailsData.data.author.name
+    ) {
+      return articleDetailsData.data.author.name;
+    }
+    return "Anonymous";
+  };
+
+  const get_author_initial = (): string => {
+    const name = get_author_name();
+    return name.charAt(0).toUpperCase();
+  };
+
+  const get_author_image = (): string | null => {
+    if (
+      articleDetailsData?.data?.author &&
+      typeof articleDetailsData.data.author === "object" &&
+      articleDetailsData.data.author.profile_image
+    ) {
+      return articleDetailsData.data.author.profile_image;
+    }
+    return null;
   };
 
   // Animation variants for better performance
@@ -166,257 +190,192 @@ export const ArticleDetails = ({
     },
   };
 
-  // Use API data if available, otherwise fall back to initial article data
-  const article = articleDetailsData?.data.article || {
-    id: initialArticle.id,
-    title: initialArticle.title,
-    content: initialArticle.content || "",
-    excerpt: initialArticle.description || "",
-    read_time: 5, // Default read time
-    tags: [],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    related_articles: [],
-  };
+  if (!articleDetailsData?.data?.article) {
+    return (
+      <motion.div
+        className="flex h-full flex-col items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-muted-foreground">Article not found</div>
+      </motion.div>
+    );
+  }
 
-  const author = articleDetailsData?.data.author || {
-    id: "default",
-    name: initialArticle.author || "Anonymous",
-    role: "Author",
-    profile_image: "",
-    bio: "",
-    email: "",
-    social_links: {},
-  };
-
-  const co_authors = articleDetailsData?.data.co_authors || [];
-
-  // Function to determine if content is HTML or Markdown
-  const isHTML = (str: string) => {
-    const htmlRegex = /<[a-z][\s\S]*>/i;
-    return htmlRegex.test(str);
-  };
+  const article = articleDetailsData.data.article;
 
   return (
     <motion.div
-      className="space-y-6 p-4"
+      className="flex flex-col p-4"
       variants={container_variants}
       initial="hidden"
       animate="visible"
     >
-      {/* Article title */}
-      <motion.div variants={item_variants}>
-        <div className="flex items-center gap-2">
-          <h1 className="text-card-foreground mb-3 text-2xl font-bold">
-            {article.title}
-          </h1>
-          {isLoading && (
-            <motion.div
-              className="border-primary h-4 w-4 rounded-full border-2 border-t-transparent"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            />
-          )}
-        </div>
-        {article.excerpt && (
-          <p className="text-muted-foreground leading-relaxed">
-            {article.excerpt}
-          </p>
-        )}
-      </motion.div>
-
-      {/* Author information */}
-      <motion.div className="space-y-3" variants={item_variants}>
-        <div className="flex items-center gap-3">
-          <motion.div
-            className="bg-primary/20 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full"
-            variants={scale_variants}
-          >
-            {author.profile_image && author.profile_image.trim() !== "" ? (
-              <Image
-                src={author.profile_image}
-                alt={author.name}
-                width={40}
-                height={40}
-                className="rounded-full"
-              />
-            ) : (
-              <div className="bg-primary/30 text-primary flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold">
-                {author.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-          </motion.div>
-          <motion.div variants={item_variants}>
-            <p className="text-muted-foreground text-sm">
-              Written by {author.name}
-            </p>
-            <p className="text-muted-foreground text-xs">
-              {getRelativeTime(article.created_at)}
-            </p>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Article content */}
-      <motion.div
-        className="prose prose-sm max-w-none"
-        variants={item_variants}
-      >
-        {article.content ? (
-          <>
-            {/* Using MarkdownRenderer */}
-            {!isHTML(article.content) ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <MarkdownRenderer content={article.content} />
-              </motion.div>
-            ) : (
-              // If content is already HTML, render it as before
-              <motion.div
-                className="article-content text-accent"
-                dangerouslySetInnerHTML={{ __html: article.content }}
-                style={{
-                  lineHeight: "1.6",
-                }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              />
-            )}
-          </>
-        ) : (
-          <motion.div className="space-y-4" variants={item_variants}>
-            <p className="leading-relaxed text-gray-700">
-              {article.excerpt || "No content available for this article."}
-            </p>
-            {isLoading && (
-              <motion.div
-                className="text-muted-foreground flex items-center gap-2 text-sm"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <motion.div
-                  className="border-primary h-3 w-3 rounded-full border border-t-transparent"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-                Loading full content...
-              </motion.div>
-            )}
-          </motion.div>
-        )}
-      </motion.div>
-
-      {/* Tips Section */}
-      <motion.div
-        className="border-primary/20 bg-primary/5 rounded-lg border-t-2 border-b-2 p-4"
-        variants={item_variants}
-      >
-        <div className="mb-2 flex items-center gap-2">
-          <span className="text-2xl">💡</span>
-          <h3 className="text-lg font-semibold">Tip</h3>
-        </div>
-        <div className="space-y-1 text-center">
-          <p>
-            <span className="font-semibold">Need more help?</span> Get support
-            from our{" "}
-            <a href="#" className="text-primary hover:underline">
-              Community Forum
-            </a>
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Find answers and get help from Intercom Support and Community
-            Experts
-          </p>
-        </div>
-      </motion.div>
-
-      {/* Related Articles Section */}
-      {article.related_articles && article.related_articles.length > 0 && (
-        <motion.div className="space-y-3" variants={item_variants}>
-          <h3 className="text-card-foreground text-lg font-semibold">
-            Related Articles
-          </h3>
-          <div className="space-y-2">
-            {article.related_articles.map((relatedArticle, index) => (
-              <motion.div
-                key={relatedArticle.id}
-                className="group border-border bg-card hover:border-primary/50 cursor-pointer rounded-lg border p-3 transition-all hover:shadow-sm"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                onClick={() => handleRelatedArticleClick(relatedArticle.id)}
-                whileHover={{ x: 4 }}
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-foreground group-hover:text-primary text-sm font-medium transition-colors">
-                    {relatedArticle.title}
-                  </p>
-                  <motion.svg
-                    className="text-muted-foreground group-hover:text-primary h-4 w-4 transition-colors"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    initial={{ x: 0 }}
-                    whileHover={{ x: 2 }}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </motion.svg>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Reactions Section */}
-      <motion.div
-        className="flex flex-col items-center justify-center text-center"
-        variants={item_variants}
-      >
-        <motion.h3
-          className="text-card-foreground text-md mb-4 font-semibold"
+      {/* Content Container */}
+      <div className="space-y-6">
+        {/* Article Title */}
+        <motion.h1
+          className="text-card-foreground text-xl leading-tight font-bold"
           variants={item_variants}
         >
-          How helpful was this article?
-        </motion.h3>
-        <motion.div className="flex gap-3" variants={item_variants}>
-          {ARTICLE_REACTIONS.map((reaction, index) => {
-            const isSelected = selectedReaction === reaction;
-            const isSubmitting = submitReactionMutation.isPending;
+          {article.title}
+        </motion.h1>
 
-            return (
-              <motion.button
-                key={reaction}
-                onClick={() => handleReactionSubmit(reaction)}
-                disabled={isSubmitting}
-                className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                  isSelected
-                    ? "border-primary bg-primary/10 scale-110"
-                    : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
-                } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
+        {/* Author and Metadata */}
+        <motion.div
+          className="flex items-center justify-between"
+          variants={item_variants}
+        >
+          <div className="flex items-center gap-3">
+            {get_author_image() ? (
+              <motion.img
+                src={get_author_image()!}
+                alt={get_author_name()}
+                className="h-10 w-10 rounded-full object-cover"
                 variants={scale_variants}
-                whileHover={!isSubmitting ? { scale: 1.1 } : {}}
-                whileTap={!isSubmitting ? { scale: 0.95 } : {}}
-                transition={{ delay: index * 0.05 }}
+              />
+            ) : (
+              <motion.div
+                className="bg-muted flex h-10 w-10 items-center justify-center rounded-full"
+                variants={scale_variants}
               >
-                <span className="text-xl">
-                  {ARTICLE_REACTION_EMOJI_MAP[reaction]}
+                <span className="text-primary text-sm font-medium">
+                  {get_author_initial()}
                 </span>
-              </motion.button>
-            );
-          })}
+              </motion.div>
+            )}
+            <motion.div
+              className="flex flex-row items-center gap-2"
+              variants={item_variants}
+            >
+              <p className="text-card-foreground text-sm font-medium">
+                {get_author_name()}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {get_relative_time(article.updated_at)}
+              </p>
+            </motion.div>
+          </div>
         </motion.div>
-      </motion.div>
+
+        {/* Content */}
+        {article.content && (
+          <motion.div
+            variants={item_variants}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <MarkdownRenderer content={article.content} />
+          </motion.div>
+        )}
+
+        <motion.div
+          className="border-primary/20 bg-primary/5 rounded-lg border-t-2 border-b-2 p-4"
+          variants={item_variants}
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-2xl">💡</span>
+            <h3 className="text-lg font-semibold">Tip</h3>
+          </div>
+          <div className="space-y-1 text-center">
+            <p>
+              <span className="font-semibold">Need more help?</span> Get support
+              from our{" "}
+              <a href="#" className="text-primary hover:underline">
+                Community Forum
+              </a>
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Find answers and get help from Intercom Support and Community
+              Experts
+            </p>
+          </div>
+        </motion.div>
+
+        {article.related_articles && article.related_articles.length > 0 && (
+          <motion.div className="space-y-3" variants={item_variants}>
+            <h3 className="text-card-foreground text-lg font-semibold">
+              Related Articles
+            </h3>
+            <div className="space-y-2">
+              {article.related_articles.map((relatedArticle, index) => (
+                <motion.div
+                  key={relatedArticle.id}
+                  className="group border-border bg-card hover:border-primary/50 cursor-pointer rounded-lg border p-3 transition-all hover:shadow-sm"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  onClick={() => handleRelatedArticleClick(relatedArticle.id)}
+                  whileHover={{ x: 4 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-foreground group-hover:text-primary text-sm font-medium transition-colors">
+                      {relatedArticle.title}
+                    </p>
+                    <motion.svg
+                      className="text-muted-foreground group-hover:text-primary h-4 w-4 transition-colors"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      initial={{ x: 0 }}
+                      whileHover={{ x: 2 }}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </motion.svg>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Reactions Section */}
+        <motion.div
+          className="flex flex-col items-center justify-center text-center"
+          variants={item_variants}
+        >
+          <motion.h3
+            className="text-card-foreground text-md mb-4 font-semibold"
+            variants={item_variants}
+          >
+            How helpful was this article?
+          </motion.h3>
+          <motion.div className="flex gap-3" variants={item_variants}>
+            {ARTICLE_REACTIONS.map((reaction, index) => {
+              const isSelected = selectedReaction === reaction;
+              const isSubmitting = submitReactionMutation.isPending;
+
+              return (
+                <motion.button
+                  key={reaction}
+                  onClick={() => handleReactionSubmit(reaction)}
+                  disabled={isSubmitting}
+                  className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                    isSelected
+                      ? "border-primary bg-primary/10 scale-110"
+                      : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                  } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
+                  variants={scale_variants}
+                  whileHover={!isSubmitting ? { scale: 1.1 } : {}}
+                  whileTap={!isSubmitting ? { scale: 0.95 } : {}}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <span className="text-xl">
+                    {ARTICLE_REACTION_EMOJI_MAP[reaction]}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </motion.div>
+        </motion.div>
+      </div>
     </motion.div>
   );
 };

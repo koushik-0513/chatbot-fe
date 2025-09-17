@@ -1,26 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 
 import env from "../../config/env";
+import { TArticleReactionResponse } from "../../types/types";
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
   TArticleReaction,
 } from "../../utils/article-reaction-utils";
-
-export type TArticleReactionRequest = {
-  reaction: string;
-  user_id: string;
-};
-
-export type TArticleReactionResponse = {
-  success: boolean;
-  message: string;
-  data?: {
-    reaction: string;
-    user_id: string;
-    article_id: string;
-  };
-};
 
 // Submit article reaction
 export const useSubmitArticleReaction = () => {

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { useNavigationStack } from "@/hooks/use-navigation-stack";
 import { useUserId } from "@/hooks/use-user-id";
 
 import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
@@ -30,6 +31,7 @@ export const News = ({
   const [selectedNewsId, setSelectedNewsId] = useState<string | null>(null);
   const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
   const { user_id } = useUserId();
+  const navigationStack = useNavigationStack({ maxSize: 10 });
   const {
     data: news_data,
     isLoading,
@@ -43,9 +45,11 @@ export const News = ({
 
   // Reset internal navigation state when component mounts or when switching away from news
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     if (activePage === "news") {
       setSelectedNewsId(null);
       onShowBackButton(false);
+      navigationStack.clear(); // Clear navigation stack
 
       // Force scroll reset for this component
       resetAllScrollWithDelay(100);
@@ -53,8 +57,9 @@ export const News = ({
       // Reset state when switching away from news
       setSelectedNewsId(null);
       onShowBackButton(false);
+      navigationStack.clear(); // Clear navigation stack
     }
-  }, [activePage, resetAllScroll, resetAllScrollWithDelay]);
+  }, [activePage, resetAllScroll, resetAllScrollWithDelay]); // Remove navigationStack from dependencies
 
   // Handle back button trigger from navbar
   useEffect(() => {
@@ -64,17 +69,41 @@ export const News = ({
   }, [backButtonTrigger]);
 
   const handle_news_click = (news: TNews) => {
+    // Add current news to stack if we're viewing a news item
+    if (selectedNewsId) {
+      navigationStack.push({
+        id: selectedNewsId,
+        type: "article", // Using article type for news items
+        data: { newsId: selectedNewsId },
+      });
+    }
+
     setSelectedNewsId(news.id.toString());
     onShowBackButton(true);
     onShowDetails?.(true);
     // Ensure the widget is maximized when opening a news item
     onAutoMaximize?.();
-
     // Reset scroll when navigating to news details
     resetAllScrollWithDelay(100);
   };
 
   const handle_back_click = () => {
+    // Check if we have items in the navigation stack
+    if (navigationStack.hasItems) {
+      // Go back to the previous news item in the stack
+      const previousItem = navigationStack.navigateBack();
+
+      if (previousItem && previousItem.type === "article") {
+        setSelectedNewsId(previousItem.id);
+        onShowBackButton(true);
+        onShowDetails?.(true);
+        onAutoMaximize?.();
+        resetAllScrollWithDelay(100);
+        return;
+      }
+    }
+
+    // No previous items in stack, go back to news list
     setSelectedNewsId(null);
     onShowBackButton(false);
     onShowDetails?.(false);

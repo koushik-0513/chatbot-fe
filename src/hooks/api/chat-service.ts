@@ -1,4 +1,8 @@
 import env from "@/config/env";
+import {
+  TChatHistoryAPIResponse,
+  TConversationAPIResponse,
+} from "@/types/types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 // Chat history
@@ -7,7 +11,7 @@ export const useGetChatHistory = (
   page: number = 1,
   limit: number = 5
 ) => {
-  return useQuery({
+  return useQuery<TChatHistoryAPIResponse>({
     queryKey: ["chatHistory", user_id, page, limit],
     enabled: !!user_id,
     retry: 2,
@@ -41,25 +45,17 @@ export const useGetChatHistory = (
   });
 };
 
-// Single conversation by ID
+// Single conversation by ID - FIXED VERSION
 export const useGetConversationById = (conversationId: string | null) => {
-  return useQuery({
+  return useQuery<TConversationAPIResponse>({
     queryKey: ["conversation", conversationId],
-    enabled: true,
+    enabled: !!conversationId, // Only run when conversationId exists
     staleTime: 60_000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true, // Allow refetch when conversationId changes
     queryFn: async () => {
-      if (conversationId === null) {
-        return {
-          data: [],
-          pagination: {
-            page: 1,
-            limit: 50,
-            total_messages: 0,
-            total_pages: 0,
-          },
-        };
+      if (!conversationId) {
+        throw new Error("Conversation ID is required");
       }
 
       const response = await fetch(

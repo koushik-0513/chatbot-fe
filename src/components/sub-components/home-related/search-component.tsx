@@ -33,7 +33,7 @@ export const SearchComponent = ({
     }
   };
 
-  const handleArticleClick = (article: any) => {
+  const handleArticleClick = (article: { id: string }) => {
     // Navigate to help page with article ID
     onNavigateToHelp?.(article.id);
   };
@@ -63,7 +63,7 @@ export const SearchComponent = ({
         />
         <Button
           onClick={handleSearch}
-          className="absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 rounded-md p-0"
+          className="absolute top-1/2 right-1 h-8 w-8 -translate-y-1/2 rounded-md p-0"
           size="sm"
         >
           <Search className="h-4 w-4" />
@@ -92,7 +92,7 @@ export const SearchComponent = ({
             <motion.button
               key={article.id}
               onClick={() => handleArticleClick(article)}
-              className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-3 text-left transition-colors"
+              className="hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between rounded-md p-3 text-left transition-colors"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}

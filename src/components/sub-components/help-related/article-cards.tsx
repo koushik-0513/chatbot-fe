@@ -2,10 +2,10 @@ import { ChevronRight } from "lucide-react";
 
 import { THelpCollection } from "../../../types/types";
 
-interface TArticleCardProps {
+type TArticleCardProps = {
   collection: THelpCollection;
   onClick: (collection: THelpCollection) => void;
-}
+};
 
 export const ArticleCard = ({ collection, onClick }: TArticleCardProps) => {
   const handle_click = () => {

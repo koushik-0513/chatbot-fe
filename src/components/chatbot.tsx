@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
@@ -16,26 +16,14 @@ import {
 } from "lucide-react";
 
 import { useAutoMaximize } from "../hooks/use-auto-maximize";
+import { TChatbotProps, TNavigationItem } from "../types/types";
 import { Help } from "./help";
 import { Home } from "./home";
 import { Message } from "./message";
 import { News } from "./news";
 import { ChatContainer } from "./sub-components/chat-related/chat-container";
 
-type TChatbotProps = {
-  user_id: string;
-  onClose?: () => void;
-  isMaximized?: boolean;
-  onMaximizeChange?: (isMaximized: boolean) => void;
-};
-
-type NavigationItem = {
-  id: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-};
-
-const navigationItems: NavigationItem[] = [
+const navigationItems: TNavigationItem[] = [
   { id: "homepage", icon: House, label: "Home" },
   { id: "message", icon: MessageSquareText, label: "Chat" },
   { id: "help", icon: CircleQuestionMark, label: "Help" },
@@ -43,7 +31,6 @@ const navigationItems: NavigationItem[] = [
 ];
 
 export const Chatbot = ({
-  user_id,
   onClose,
   isMaximized: externalIsMaximized,
   onMaximizeChange,
@@ -60,18 +47,19 @@ export const Chatbot = ({
   );
   const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
   const [navigatedFromHomepage, setNavigatedFromHomepage] = useState(false);
-  const [postData, setPostData] = useState<any>(null);
   const [showActiveChat, setShowActiveChat] = useState(false);
-  const isMaximized =
-    externalIsMaximized !== undefined
-      ? externalIsMaximized
-      : internalIsMaximized;
+
   const [showDetails, setShowDetails] = useState(false);
   const [title, setTitle] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const prevMaximizedRef = useRef<boolean | null>(null);
   const { resetAllScroll, resetScrollToElement, resetAllScrollWithDelay } =
     useScrollContext();
+
+  const isMaximized =
+    externalIsMaximized !== undefined
+      ? externalIsMaximized
+      : internalIsMaximized;
 
   // Reset scroll position when active page changes
   useEffect(() => {
@@ -151,11 +139,6 @@ export const Chatbot = ({
     handlePageChange("homepage");
   };
 
-  const handleNewChat = () => {
-    setSelectedChatId(null);
-    setShowChatHistory(false);
-  };
-
   const handleChatSelected = (chatId: string | null) => {
     console.log("handleChatSelected called with chatId:", chatId);
     console.log("Setting selectedChatId to:", chatId);
@@ -212,7 +195,7 @@ export const Chatbot = ({
   };
 
   // Use centralized auto-maximize hook
-  const { triggerAutoMaximize, shouldAutoMaximize } = useAutoMaximize({
+  const { triggerAutoMaximize } = useAutoMaximize({
     onMaximizeChange,
     externalIsMaximized,
     setInternalIsMaximized,
@@ -268,7 +251,7 @@ export const Chatbot = ({
           <button
             key={item.id}
             onClick={() => handlePageChange(item.id)}
-            className={`flex flex-1 flex-col items-center gap-1 rounded-md p-2 transition-colors ${
+            className={`flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-md p-2 transition-colors ${
               isActive
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"

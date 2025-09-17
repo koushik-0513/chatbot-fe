@@ -8,12 +8,12 @@ import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
 import { SearchComponent } from "./sub-components/home-related/search-component";
 
-interface THomepageProps {
+type THomepageProps = {
   onNavigateToHelp?: (articleId?: string) => void;
   onOpenChat?: (conversationId: string | null, title?: string) => void;
   onAskQuestion?: () => void;
   onClose?: () => void;
-}
+};
 
 export const Home = ({
   onNavigateToHelp,
@@ -41,7 +41,7 @@ export const Home = ({
     posts_data?.data
       ?.map((post, index) => ({
         ...post,
-        id: post.id ? String(post.id) : `post-${index}`,
+        id: post._id ? String(post._id) : `post-${index}`,
       }))
       .filter(
         (post) => post.id && post.id !== "undefined" && post.id !== "null"
@@ -52,11 +52,17 @@ export const Home = ({
 
   return (
     <motion.div
-      className="dark space-y-4 pt-50"
+      className="dark space-y-4 pt-40"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      <div className="text-foreground p-2">
+        <h2 className="text-tertiary text-2xl font-bold">Hello</h2>
+        <h3 className="text-tertiary text-2xl font-bold">
+          How can I help you today?
+        </h3>
+      </div>
       {/* Close button */}
       {onClose && (
         <motion.button
@@ -64,7 +70,7 @@ export const Home = ({
           className="fixed top-45 right-11 z-50 cursor-pointer transition-colors"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           aria-label="Close"
@@ -139,8 +145,8 @@ export const Home = ({
                   id={post.id}
                   title={post.title}
                   description={post.description}
-                  imageurl={post.imageUrl}
-                  link={post.linkUrl}
+                  imageurl={post.image_url}
+                  link={post.link_url}
                 />
               </motion.div>
             ))}

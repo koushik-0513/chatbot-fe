@@ -1,7 +1,7 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
+import { TConversation, TConversationMessage } from "@/types/types";
 import { formatChatTime, formatDayOrDate } from "@/utils/datetime";
-import { useQuery } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -48,9 +48,13 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
 
   const { data: conv } = useGetConversationById(conversationId);
 
-  const messages: any[] = Array.isArray(conv?.data)
-    ? conv?.data
-    : conv?.data?.messages || [];
+  const convData = conv?.data as
+    | TConversation
+    | TConversationMessage[]
+    | undefined;
+  const messages: TConversationMessage[] = Array.isArray(convData)
+    ? convData
+    : convData?.messages || [];
   const last = messages[messages.length - 1];
   const preview =
     last?.text ||

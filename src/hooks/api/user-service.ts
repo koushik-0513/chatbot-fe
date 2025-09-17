@@ -1,21 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 
 import env from "../../config/env";
+import { TCreateUserRequest, TCreateUserResponse } from "../../types/types";
 import { setUserCreatedOnBackend } from "../../utils/user-id";
-
-type TCreateUserRequest = {
-  user_id: string;
-  preferences?: {
-    theme?: string;
-    language?: string;
-  };
-};
-
-type TCreateUserResponse = {
-  success: boolean;
-  message: string;
-  user_id?: string;
-};
 
 // Create user mutation
 export const useCreateUser = () => {

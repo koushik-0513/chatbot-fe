@@ -6,14 +6,14 @@ import { TArticleSearchResult } from "@/types/types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-interface TSearchResultsProps {
+type TSearchResultsProps = {
   searchResults: TArticleSearchResult[];
   isLoading: boolean;
   error: Error | null;
   searchQuery: string;
   onArticleClick: (articleId: string) => void;
   onClearSearch: () => void;
-}
+};
 
 export const SearchResults = ({
   searchResults,
@@ -89,7 +89,7 @@ export const SearchResults = ({
       >
         <div className="text-center">
           <p className="text-muted-foreground text-sm">
-            No articles found for "{searchQuery}"
+            No articles found for &quot;{searchQuery}&quot;
           </p>
           <button
             onClick={onClearSearch}

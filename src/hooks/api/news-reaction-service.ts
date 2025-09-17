@@ -1,26 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 
 import env from "../../config/env";
+import { TNewsReactionResponse } from "../../types/types";
 import {
   NEWS_REACTIONS,
   REACTION_EMOJI_MAP,
   TNewsReaction,
 } from "../../utils/news-reaction-utils";
-
-export type TNewsReactionRequest = {
-  reaction: string;
-  user_id: string;
-};
-
-export type TNewsReactionResponse = {
-  success: boolean;
-  message: string;
-  data?: {
-    reaction: string;
-    user_id: string;
-    news_id: string;
-  };
-};
 
 // Submit news reaction
 export const useSubmitNewsReaction = () => {

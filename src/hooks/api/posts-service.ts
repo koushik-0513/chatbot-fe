@@ -1,33 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import env from "../../config/env";
-
-export type TPost = {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  linkUrl: string;
-  created_at: string;
-  updated_at?: string;
-  author?: string;
-  tags?: string[];
-  content?: string;
-};
-
-export type TPostsResponse = {
-  data: TPost[];
-  total_posts: number;
-  current_page: number;
-  total_pages: number;
-  has_next_page: boolean;
-  has_prev_page: boolean;
-};
-
-export type TGetPostsParams = {
-  page?: number;
-  limit?: number;
-};
+import { TGetPostsParams, TPostsResponse } from "../../types/types";
 
 // Get posts query
 export const useGetPosts = (params: TGetPostsParams) => {

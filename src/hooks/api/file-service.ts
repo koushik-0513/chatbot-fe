@@ -1,28 +1,22 @@
 import env from "@/config/env";
+import { TUploadOptions } from "@/types/types";
 
 export type UploadStatus = "uploading" | "success" | "error";
 
-export type UploadResult<T = any> = {
+export type UploadResult<T = unknown> = {
   ok: boolean;
   status: number;
   data?: T;
   error?: string;
 };
 
-type UploadOptions = {
-  file: File;
-  userId: string;
-  onProgress?: (percent: number) => void;
-  signal?: AbortSignal;
-};
-
 // Uploads a file using XMLHttpRequest to support upload progress events
-export function uploadFile<T = any>({
+export function uploadFile<T = unknown>({
   file,
   userId,
   onProgress,
   signal,
-}: UploadOptions): Promise<UploadResult<T>> {
+}: TUploadOptions): Promise<UploadResult<T>> {
   return new Promise((resolve, reject) => {
     try {
       const url = `${env.backendUrl}/api/v1/file/upload?user_id=${userId}`;
@@ -58,7 +52,7 @@ export function uploadFile<T = any>({
               error: json?.message || text || "Upload failed",
             });
           }
-        } catch (e) {
+        } catch {
           if (status >= 200 && status < 300) {
             resolve({ ok: true, status, data: undefined as unknown as T });
           } else {
