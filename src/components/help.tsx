@@ -552,7 +552,7 @@ export const Help = ({
     // Check if we have articles in the navigation stack (related article navigation)
     if (navigationStack.hasItems) {
       // Go back to the previous article in the stack
-      const previousItem = navigationStack.navigateBack();
+      const previousItem = navigationStack.pop();
 
       if (previousItem && previousItem.type === "article") {
         // Use context to open previous article

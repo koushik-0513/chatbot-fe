@@ -1,10 +1,10 @@
 export type THelpArticle = {
   id: string;
   title: string;
-  description?: string;
-  author?: string;
+  description: string;
+  author: string;
   readTime?: string;
-  content?: string;
+  content: string;
   lastUpdated?: string;
   tableOfContents?: string[];
   related_articles?: Array<{
@@ -17,13 +17,13 @@ export type THelpCollection = {
   id: string;
   title: string;
   description: string;
-  profile_image?: string;
+  profile_image: string;
   slug: string;
   icon: string;
   article_count: number;
-  articles?: THelpArticle[];
-  author?: string;
-  authorCount?: number;
+  articles: THelpArticle[];
+  author: string;
+  authorCount: number;
 };
 
 export type THelpPageState = {
@@ -33,8 +33,8 @@ export type THelpPageState = {
 };
 
 export type TAttachment = {
-  url?: string;
-  name?: string;
+  url: string;
+  name: string;
 };
 
 // Chat message type (matches the exact API response structure)
@@ -47,7 +47,7 @@ export type TChatMessage = {
 };
 
 // Display message type for UI components
-export type TDisplayMessage = TChatMessage & { isNew?: boolean };
+export type TDisplayMessage = TChatMessage & { isNew: boolean };
 
 // Chat history item - matches actual API response
 export type TChatHistoryItem = {
@@ -197,11 +197,6 @@ export type TAuthor = {
     linkedin?: string;
     twitter?: string;
   };
-  socialLinks?: {
-    // News API format
-    linkedin?: string;
-    twitter?: string;
-  };
 };
 
 // Alias for backward compatibility
@@ -267,11 +262,11 @@ export type TArticleSearchResult = {
   id: string;
   title: string;
   matched_snippet?: string;
-  slug?: string;
-  collection_id?: string;
-  read_time?: number;
-  created_at?: string;
-  updated_at?: string;
+  slug: string;
+  collection_id: string;
+  read_time: number;
+  created_at: string;
+  updated_at: string;
 };
 
 export type TArticleSearchResponse = {
@@ -300,8 +295,8 @@ export type TNewsResponse = {
 };
 
 export type TGetNewsParams = {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 };
 
 // News reaction types
@@ -333,13 +328,13 @@ export type THelpDetailResponse = {
 };
 
 export type TGetHelpParams = {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 };
 
 export type TGetCollectionsParams = {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 };
 
 export type TTopArticlesResponse = {
@@ -398,15 +393,15 @@ export type TPostsResponse = {
 };
 
 export type TGetPostsParams = {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 };
 
 // Article search types
 export type TArticleSearchParams = {
   query: string;
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 };
 
 // User service types
@@ -422,7 +417,7 @@ export type TCreateUserRequest = {
 export type TCreateUserResponse = {
   success: boolean;
   message: string;
-  user_id?: string;
+  user_id: string;
 };
 
 // File service types
@@ -440,130 +435,15 @@ export type TUploadOptions = {
 // Chatbot component types
 export type TChatbotProps = {
   user_id: string;
-  onClose?: () => void;
+  onClose: () => void;
   isMaximized?: boolean;
   onMaximizeChange?: (isMaximized: boolean) => void;
 };
 
 export type TNavigationItem = {
   id: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className: string }>;
   label: string;
-};
-
-// Chat container types
-export type TChatContainerProps = {
-  chatId: string | null;
-  chatTitle: string;
-  onBack: () => void;
-  onClose?: () => void;
-};
-
-// Chat history types
-export type TChatHistoryProps = {
-  id: string;
-  title: string;
-  timestamp: string;
-  onClick: (id: string, title: string) => void;
-};
-
-// Help component types
-export type THelpPageProps = {
-  onShowBackButton: (show: boolean) => void;
-  backButtonTrigger: number;
-  activePage: string;
-  onShowDetails: (show: boolean) => void;
-  onBackFromDetails: () => void;
-  onMinimizeOnly: () => void;
-  onAutoMaximize: () => void;
-  selectedArticleId?: string | null;
-  onTitleChange?: (title: string) => void;
-  onNavigateToHome?: () => void;
-  navigatedFromHomepage?: boolean;
-};
-
-// News component types
-export type TNewsProps = {
-  onShowBackButton: (show: boolean) => void;
-  backButtonTrigger: number;
-  activePage: string;
-  onShowDetails: (show: boolean) => void;
-  onBackFromDetails: () => void;
-  onAutoMaximize: () => void;
-};
-
-// Article card types
-export type TArticleCardProps = {
-  collection: THelpCollection;
-  onClick: (collection: THelpCollection) => void;
-};
-
-// Collection details types
-export type TCollectionDetailsProps = {
-  collectionDetailsData: THelpCollectionDetailResponse | undefined;
-  isLoading: boolean;
-  error: Error | null;
-};
-
-// Search bar types
-export type TSearchBarProps = {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onClearSearch: () => void;
-};
-
-// Search results types
-export type TSearchResultsProps = {
-  searchResults: TArticleSearchResult[];
-  isLoading: boolean;
-  error: Error | null;
-};
-
-// Blog card types
-export type TBlogCardProps = {
-  id: string;
-  title: string;
-  description?: string;
-  author?: string;
-  readTime?: string;
-  publishedAt?: string;
-  imageUrl?: string;
-  tags?: string[];
-  onClick?: () => void;
-};
-
-// News card types
-export type TNewsCardProps = {
-  news: TNews;
-  onClick: (news: TNews) => void;
-  maxTagsToShow?: number;
-};
-
-// Recent message types
-export type TRecentMessageProps = {
-  onOpenChat?: (conversationId: string | null, title?: string) => void;
-};
-
-// Emoji picker types
-export type TEmojiPickerProps = {
-  onEmojiSelect: (emoji: string) => void;
-  onClose: () => void;
-};
-
-// ============================================================================
-// CONTEXT TYPES
-// ============================================================================
-
-// Scroll context types
-export type TScrollContextType = {
-  resetAllScroll: () => void;
-  resetAllScrollWithDelay: (delay: number) => void;
-  resetScrollToElement: (elementRef: React.RefObject<HTMLElement>) => void;
-  registerScrollElement: (
-    id: string,
-    elementRef: React.RefObject<HTMLElement>
-  ) => void;
-  unregisterScrollElement: (id: string) => void;
 };
 
 // Environment types

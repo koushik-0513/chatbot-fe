@@ -8,14 +8,14 @@ import { useGetChatHistory } from "../hooks/api/chat-service";
 import { useUserId } from "../hooks/use-user-id";
 import { ChatHistory } from "./sub-components/chat-related/chat-history";
 
-interface TMessageProps {
+type TMessageProps = {
   showChatHistory: boolean;
   onChatSelected: (chatId: string | null) => void;
   onBackToHistory: () => void;
   onResetSelectedChat?: () => void;
   setShowActiveChat: (show: boolean) => void;
   title: (title: string) => void;
-}
+};
 
 export const Message = ({
   onChatSelected,
@@ -32,8 +32,6 @@ export const Message = ({
   } = useGetChatHistory(user_id || "", 1, 5);
 
   const handleChatClick = (chatId: string, chatTitle: string) => {
-    console.log("Chat clicked with ID:", chatId);
-    console.log("Calling onChatSelected with:", chatId);
     onChatSelected(chatId);
     setShowActiveChat(true);
     title(chatTitle || "Untitled Chat");
@@ -44,7 +42,6 @@ export const Message = ({
       console.error("User ID is required to create a new chat");
       return;
     }
-    console.log("Creating new chat for user:", user_id);
     // Generate a new conversation id for the first message
     const newConversationId = new ObjectId().toHexString();
     onChatSelected(newConversationId);

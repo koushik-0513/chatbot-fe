@@ -96,6 +96,7 @@ export const Chatbot = ({
     setShowDetails(false); // Reset details state when changing pages
     setSelectedArticleId(articleId || null); // Set article ID if provided
     setDynamicTitle(null); // Reset dynamic title when changing pages
+
     const newMaximized = false;
     if (externalIsMaximized !== undefined) {
       onMaximizeChange?.(newMaximized);
@@ -140,13 +141,8 @@ export const Chatbot = ({
   };
 
   const handleChatSelected = (chatId: string | null) => {
-    console.log("handleChatSelected called with chatId:", chatId);
-    console.log("Setting selectedChatId to:", chatId);
     setSelectedChatId(chatId);
     setShowChatHistory(false);
-    // Mark as new chat if it's a newly created one
-    // You might want to pass this as a parameter from Message component
-    console.log("Chat selection state updated");
 
     // Auto-maximize when selecting a chat from history
     prevMaximizedRef.current = isMaximized;
@@ -284,7 +280,7 @@ export const Chatbot = ({
       {showBack && (
         <button
           onClick={handleBackClick}
-          className="hover:bg-muted mr-3 flex h-8 w-8 items-center justify-center rounded-full transition-colors cursor-pointer"
+          className="hover:bg-muted mr-3 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors"
         >
           <ArrowLeft className="text-muted-foreground h-5 w-5" />
         </button>
@@ -309,7 +305,7 @@ export const Chatbot = ({
                 setInternalIsMaximized(newMaximized);
               }
             }}
-            className="hover:bg-muted rounded-full p-1 transition-colors cursor-pointer"
+            className="hover:bg-muted cursor-pointer rounded-full p-1 transition-colors"
           >
             {isMaximized ? (
               <Minimize2 className="text-muted-foreground h-4 w-4" />
@@ -320,7 +316,7 @@ export const Chatbot = ({
         )}
         <button
           onClick={onClose}
-          className="hover:bg-muted rounded-full p-1 transition-colors cursor-pointer"
+          className="hover:bg-muted cursor-pointer rounded-full p-1 transition-colors"
         >
           <X className="text-muted-foreground h-5 w-5" />
         </button>
@@ -328,16 +324,7 @@ export const Chatbot = ({
     </motion.div>
   );
 
-  // If a chat is selected, show the full ChatContainer
-  console.log(
-    "Current state - selectedChatId:",
-    selectedChatId,
-    "activePage:",
-    activePage
-  );
-
   if (activePage === "message" && showActiveChat) {
-    console.log("Rendering ChatContainer with selectedChatId:", selectedChatId);
     return (
       <motion.div
         className={`border-border bg-background flex flex-col rounded-lg border shadow-2xl`}
@@ -491,7 +478,6 @@ export const Chatbot = ({
                 onAutoMaximize={triggerAutoMaximize}
                 selectedArticleId={selectedArticleId}
                 onTitleChange={setDynamicTitle}
-                onNavigateToHome={handleNavigateToHome}
                 navigatedFromHomepage={navigatedFromHomepage}
               />
             </motion.div>

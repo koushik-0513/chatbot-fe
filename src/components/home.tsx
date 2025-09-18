@@ -39,13 +39,10 @@ export const Home = ({
 
   const display_posts =
     posts_data?.data
-      ?.map((post, index) => ({
+      ?.map((post) => ({
         ...post,
-        id: post._id ? String(post._id) : `post-${index}`,
-      }))
-      .filter(
-        (post) => post.id && post.id !== "undefined" && post.id !== "null"
-      ) || [];
+        id: post._id,
+      })) || [];
 
   const isLoading = isLoadingArticles || isLoadingPosts;
   const hasError = articlesError || postsError;
@@ -55,7 +52,7 @@ export const Home = ({
       className="dark space-y-4 pt-40"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.27 }}
     >
       <div className="text-foreground p-2">
         <h2 className="text-tertiary text-2xl font-bold">Hello</h2>
