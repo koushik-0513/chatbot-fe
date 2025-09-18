@@ -602,15 +602,6 @@ export const Help = ({
     openArticleDetails,
   ]);
 
-  // Custom back handler for when coming from home page
-  const handle_back_from_home = () => {
-    if (onNavigateToHome) {
-      onNavigateToHome();
-    } else {
-      // Fallback to normal back behavior
-      handle_back_to_collection();
-    }
-  };
 
   const handle_child_collection_click = (
     collection: THelpCollection,
