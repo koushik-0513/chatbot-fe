@@ -18,10 +18,12 @@ import { api } from "@/lib/api";
 // Help Types
 type TGetCollectionDetailsQParams = {
   collection_id: string;
+  user_id: string;
 };
 
 type TGetArticleDetailsQParams = {
   article_id: string;
+  user_id: string;
 };
 
 type TGetHelpQParams = {
@@ -44,16 +46,22 @@ const getCollections = (
 
 const getCollectionDetails = ({
   collection_id,
+  user_id,
   ...params
 }: TGetCollectionDetailsQParams): TApiPromise<THelpCollectionDetailResponse> => {
-  return api.get(`/collection/${collection_id}`, { params });
+  return api.get(`/collection/${collection_id}`, { 
+    params: { user_id, ...params } 
+  });
 };
 
 const getArticleDetails = ({
   article_id,
+  user_id,
   ...params
 }: TGetArticleDetailsQParams): TApiPromise<THelpArticleDetailResponse> => {
-  return api.get(`/article/${article_id}`, { params });
+  return api.get(`/article/${article_id}`, { 
+    params: { user_id, ...params } 
+  });
 };
 
 const getHelp = ({
@@ -64,13 +72,6 @@ const getHelp = ({
   return api.get(`/collection/${collection_id}`, {
     params: { page, limit },
   });
-};
-
-const getHelpById = ({
-  help_id,
-  ...params
-}: TGetHelpByIdQParams): TApiPromise<THelpDetailResponse> => {
-  return api.get(`/help/${help_id}`, { params });
 };
 
 const getTopArticles = (): TApiPromise<TTopArticlesResponse> => {
@@ -130,21 +131,6 @@ export const useGetHelp = (
     queryKey: ["useGetHelp", params],
     queryFn: () => getHelp(params),
     enabled: !!params.collection_id,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    ...options,
-  });
-};
-
-export const useGetHelpById = (
-  params: TGetHelpByIdQParams,
-  options?: TQueryOpts<THelpDetailResponse>
-) => {
-  return useQuery({
-    queryKey: ["useGetHelpById", params],
-    queryFn: () => getHelpById(params),
-    enabled: !!params.help_id,
     retry: 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,

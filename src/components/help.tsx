@@ -102,8 +102,11 @@ export const Help = ({
     isLoading: isFetchingArticle,
     error: fetchArticleError,
   } = useGetArticleDetails(
-    { article_id: selectedArticleId || "" },
-    { enabled: !!selectedArticleId }
+    { 
+      article_id: selectedArticleId || "",
+      user_id: user_id || ""
+    },
+    { enabled: !!selectedArticleId && !!user_id }
   );
 
   // Fetch collections from API
@@ -145,8 +148,11 @@ export const Help = ({
     isLoading: isLoadingDetails,
     error: detailsError,
   } = useGetCollectionDetails(
-    { collection_id: selectedCollectionId || "" },
-    { enabled: !!selectedCollectionId }
+    { 
+      collection_id: selectedCollectionId || "",
+      user_id: user_id || ""
+    },
+    { enabled: !!selectedCollectionId && !!user_id }
   );
 
   console.log(collectionDetailsData);
