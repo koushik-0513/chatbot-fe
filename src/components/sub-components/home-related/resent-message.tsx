@@ -26,23 +26,11 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
 
   const recent = history?.data?.[0];
   const conversationId = useMemo(() => {
-    return (
-      recent?._id ||
-      recent?.id ||
-      recent?.conversation_id ||
-      recent?.conversationId ||
-      null
-    );
+    return recent?._id || null;
   }, [recent]);
 
-  const title = recent?.title || recent?.name || "Recent Chat";
-  const tsRaw =
-    recent?.updated_at ||
-    recent?.updatedAt ||
-    recent?.timestamp ||
-    recent?.created_at ||
-    recent?.createdAt ||
-    "";
+  const title = recent?.title || "Recent Chat";
+  const tsRaw = recent?.updatedAt || "";
   const day = formatDayOrDate(tsRaw);
   const time = formatChatTime(tsRaw);
 
@@ -56,11 +44,7 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
     ? convData
     : convData?.messages || [];
   const last = messages[messages.length - 1];
-  const preview =
-    last?.text ||
-    last?.content ||
-    last?.message ||
-    "Tap to continue your last chat";
+  const preview = last?.message || "Tap to continue your last chat";
 
   const handleOpen = () => {
     if (onOpenChat) onOpenChat(conversationId, title);

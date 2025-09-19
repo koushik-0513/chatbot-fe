@@ -16,11 +16,7 @@ export const ChatHistory = ({
   day,
   onClick,
 }: TChatHistoryProps) => {
-  console.log("ChatHistory component props:", { id, title, timestamp, day });
-
   const handleClick = () => {
-    console.log("ChatHistory clicked with id:", id, "title:", title);
-    console.log("ID type:", typeof id, "ID value:", id);
     onClick(id);
   };
 

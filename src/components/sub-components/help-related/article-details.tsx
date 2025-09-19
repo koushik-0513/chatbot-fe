@@ -137,11 +137,6 @@ export const ArticleDetails = ({
     return "Anonymous";
   };
 
-  const get_author_initial = (): string => {
-    const name = get_author_name();
-    return name.charAt(0).toUpperCase();
-  };
-
   const get_author_image = (): string | null => {
     if (
       articleDetailsData?.data?.author &&
@@ -228,23 +223,12 @@ export const ArticleDetails = ({
           variants={item_variants}
         >
           <div className="flex items-center gap-3">
-            {get_author_image() ? (
-              <motion.img
-                src={get_author_image()!}
-                alt={get_author_name()}
-                className="h-10 w-10 rounded-full object-cover"
-                variants={scale_variants}
-              />
-            ) : (
-              <motion.div
-                className="bg-muted flex h-10 w-10 items-center justify-center rounded-full"
-                variants={scale_variants}
-              >
-                <span className="text-primary text-sm font-medium">
-                  {get_author_initial()}
-                </span>
-              </motion.div>
-            )}
+            <motion.img
+              src={get_author_image()!}
+              alt={get_author_name()}
+              className="h-10 w-10 rounded-full object-cover"
+              variants={scale_variants}
+            />
             <motion.div
               className="flex flex-row items-center gap-2"
               variants={item_variants}

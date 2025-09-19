@@ -127,7 +127,12 @@ export const Help = ({
   const [showTitle, setShowTitle] = useState(false);
 
   // Centralized navigation stack management
-  const navigationStack = useNavigationStack({ maxSize: 20 });
+  const {
+    push: pushNavigationItem,
+    pop: popNavigationItem,
+    clear: clearNavigationStack,
+    hasItems: navigationStackHasItems,
+  } = useNavigationStack({ maxSize: 20 });
 
   // Fetch collection details when a collection is selected
   const {
@@ -262,8 +267,6 @@ export const Help = ({
     } else if (pageState.currentView === "article" && showTitle) {
       // Otherwise, only show title if scrolled up
       onTitleChange?.(currentTitle);
-    } else if (!navigatedFromHomepage) {
-      onTitleChange?.("Help");
     }
   }, [
     pageState.currentView,
@@ -284,9 +287,8 @@ export const Help = ({
           selectedArticle: null,
         });
         setSelectedCollectionId(null);
-        // selectedArticleId is managed by context
         setParentCollectionId(null);
-        navigationStack.clear(); // Clear navigation stack
+        clearNavigationStack(); // Clear navigation stack
         onShowBackButton(false);
         // Ensure navbar is visible when entering help from other tabs
         onShowDetails?.(false);
@@ -302,9 +304,9 @@ export const Help = ({
         selectedArticle: null,
       });
       setSelectedCollectionId(null);
-      // selectedArticleId is managed by context
+      // Clear article context when switching away from help
       setParentCollectionId(null);
-      navigationStack.clear(); // Clear navigation stack
+      clearNavigationStack(); // Clear navigation stack
       onShowBackButton(false);
     }
   }, [
@@ -313,6 +315,7 @@ export const Help = ({
     resetAllScrollWithDelay,
     propSelectedArticleId,
     navigatedFromHomepage,
+    clearNavigationStack,
   ]);
 
   // Handle back button trigger from navbar
@@ -373,7 +376,7 @@ export const Help = ({
     (articleId: string) => {
       // Add current article to navigation stack before navigating to related article
       if (selectedArticleId) {
-        navigationStack.push({
+        pushNavigationItem({
           id: selectedArticleId,
           type: "article",
           data: { collectionId: pageState.selectedCollection?.id },
@@ -403,7 +406,7 @@ export const Help = ({
       selectedArticleId,
       pageState.selectedCollection,
       resetAllScrollWithDelay,
-      navigationStack,
+      pushNavigationItem,
       openArticleDetails,
     ]
   );
@@ -485,7 +488,7 @@ export const Help = ({
         selectedArticle: null,
       });
       // Clear navigation stack when going back to search
-      navigationStack.clear();
+      clearNavigationStack();
       // Keep search query active
       setIsSearching(true);
       onShowBackButton(false);
@@ -515,7 +518,7 @@ export const Help = ({
         selectedCollection: null,
         selectedArticle: null,
       });
-      navigationStack.clear(); // Clear navigation stack
+      clearNavigationStack(); // Clear navigation stack
       onShowBackButton(false);
       onShowDetails?.(false);
       onBackFromDetails?.(); // Call the callback to auto-minimize
@@ -536,7 +539,7 @@ export const Help = ({
         selectedArticle: null,
       });
       // Clear navigation stack when going back to search
-      navigationStack.clear();
+      clearNavigationStack();
       // Don't hide navbar for search view
       onShowDetails?.(false);
       // Call onMinimizeOnly to trigger minimize without affecting back button state
@@ -550,9 +553,9 @@ export const Help = ({
     }
 
     // Check if we have articles in the navigation stack (related article navigation)
-    if (navigationStack.hasItems) {
+    if (navigationStackHasItems) {
       // Go back to the previous article in the stack
-      const previousItem = navigationStack.pop();
+      const previousItem = popNavigationItem();
 
       if (previousItem && previousItem.type === "article") {
         // Use context to open previous article
@@ -584,7 +587,7 @@ export const Help = ({
       selectedArticle: null,
     });
     // Clear navigation stack when going back to collection
-    navigationStack.clear();
+    clearNavigationStack();
     // Don't hide navbar for collection view
     onShowDetails?.(false);
     // Call onMinimizeOnly to trigger minimize without affecting back button state
@@ -594,14 +597,15 @@ export const Help = ({
     resetAllScrollWithDelay(100);
   }, [
     cameFromSearch,
-    navigationStack,
+    navigationStackHasItems,
+    popNavigationItem,
+    clearNavigationStack,
     pageState.selectedCollection,
     onShowDetails,
     onMinimizeOnly,
     resetAllScrollWithDelay,
     openArticleDetails,
   ]);
-
 
   const handle_child_collection_click = (
     collection: THelpCollection,
@@ -614,7 +618,7 @@ export const Help = ({
       selectedCollection: collection,
       selectedArticle: null,
     });
-    navigationStack.clear(); // Clear navigation stack when navigating to child collection
+    clearNavigationStack(); // Clear navigation stack when navigating to child collection
     // Ensure back button is visible for collection view
     onShowBackButton(true);
     // Don't hide navbar for collection view

@@ -1,10 +1,15 @@
 import { useCallback, useState } from "react";
 
-export interface NavigationStackItem {
+export type NavigationStackItem = {
   id: string;
   type: "article" | "collection" | "search";
-  data?: any; // Additional data associated with the item
-}
+  data?: {
+    collectionId?: string;
+    newsId?: string;
+    searchQuery?: string;
+    searchResults?: any[];
+  };
+};
 
 export interface UseNavigationStackOptions {
   maxSize?: number; // Maximum stack size to prevent memory issues

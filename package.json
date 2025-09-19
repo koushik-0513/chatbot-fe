@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "build": "next build --turbopack",
+    "build:widget": "npm run build:widget:css && npm run build:widget:js",
+    "build:widget:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/chatbot-widget.css --config ./tailwind.config.ts --minify",
+    "build:widget:js": "node ./scripts/build-widget.mjs",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
@@ -31,11 +34,13 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@tailwindcss/cli": "^4.1.13",
     "@tailwindcss/postcss": "^4",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.25.10",
     "eslint": "^9.34.0",
     "eslint-config-next": "^15.5.2",
     "eslint-config-prettier": "^10.1.8",

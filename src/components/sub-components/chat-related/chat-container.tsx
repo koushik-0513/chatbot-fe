@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState, useMemo } from "react";
-import { useScrollContext } from "@/contexts/scroll-context";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import env from "@/config/env";
 import { TChatMessage } from "@/types/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { ArrowDown, ArrowLeft, Paperclip, Send, Smile, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
 import {
   useGetConversationById,
   useSendMessage,
 } from "@/hooks/api/chat-service";
 import { uploadFile } from "@/hooks/api/file-service";
+
 import { useUserId } from "../../../hooks/use-user-id";
 import { EmojiPicker } from "./emoji-picker";
 
@@ -23,17 +26,9 @@ type TChatContainerProps = {
 
 type UploadItem = {
   id: string;
-  file: File;
   name: string;
-  progress: number;
   status: "uploading" | "success" | "error";
   error?: string;
-};
-
-type StreamingMessage = {
-  id: string;
-  content: string;
-  isComplete: boolean;
 };
 
 export const ChatContainer = ({
@@ -48,82 +43,130 @@ export const ChatContainer = ({
     isLoading,
     error,
   } = useGetConversationById(chatId);
-  const { resetAllScrollWithDelay } = useScrollContext();
-  const messagesRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const sendMessageMutation = useSendMessage();
 
+  // Refs
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const isAutoScrollingRef = useRef(false);
+
+  // State
   const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState<TChatMessage[]>([]);
+  const [streamingContent, setStreamingContent] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
-  const [isAtBottom, setIsAtBottom] = useState(true);
-  const [streamingMessage, setStreamingMessage] = useState<StreamingMessage | null>(null);
-  const [displayMessages, setDisplayMessages] = useState<TChatMessage[]>([]);
 
-  // Memoize messages to prevent infinite re-renders
-  const messages: TChatMessage[] = useMemo(() => {
-    return chatHistoryResponse?.data?.messages || [];
-  }, [chatHistoryResponse?.data?.messages]);
+  const previousChatIdRef = useRef<string | null>(null);
+  const lastSyncedMessageIdRef = useRef<string | null>(null);
 
-  const conversationTitle = chatHistoryResponse?.data?.title;
+  const areMessagesEqual = useCallback(
+    (incoming: TChatMessage[], current: TChatMessage[]) => {
+      if (incoming.length !== current.length) return false;
+      for (let index = 0; index < incoming.length; index += 1) {
+        const incomingMessage = incoming[index];
+        const currentMessage = current[index];
+        if (
+          incomingMessage._id !== currentMessage._id ||
+          incomingMessage.updatedAt !== currentMessage.updatedAt
+        ) {
+          return false;
+        }
+      }
+      return true;
+    },
+    []
+  );
 
-  // Simple title logic
-  const displayTitle = chatTitle || conversationTitle || (messages.length > 0 ? "Untitled Chat" : "");
+  // Smooth scroll to bottom function
+  const scrollToBottom = useCallback((smooth = true) => {
+    if (!messagesEndRef.current) return;
 
-  // Update display messages when messages actually change
+    isAutoScrollingRef.current = true;
+    messagesEndRef.current.scrollIntoView({
+      behavior: smooth ? "smooth" : "instant",
+      block: "end",
+    });
+
+    // Reset auto-scrolling flag after animation
+    setTimeout(() => {
+      isAutoScrollingRef.current = false;
+    }, 500);
+  }, []);
+
+  // Check if user is near bottom of chat
+  const isNearBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+
+    const threshold = 100; // pixels from bottom
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    return scrollHeight - scrollTop - clientHeight < threshold;
+  }, []);
+
+  // Initialize or sync messages from API response without disrupting manual scroll
   useEffect(() => {
-    setDisplayMessages(messages);
-  }, [messages]);
+    const fetchedMessages = chatHistoryResponse?.data?.messages ?? [];
+    const isNewChat = previousChatIdRef.current !== chatId;
 
-  const scrollToBottom = (smooth: boolean = true) => {
-    const el = bottomRef.current;
-    if (!el) return;
-    el.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "end" });
-    setIsAtBottom(true);
-  };
+    setMessages((currentMessages) => {
+      if (!isNewChat && areMessagesEqual(fetchedMessages, currentMessages)) {
+        return currentMessages;
+      }
+      return fetchedMessages;
+    });
 
-  // Auto-scroll to bottom on initial load
-  useEffect(() => {
-    scrollToBottom(false);
-  }, [chatHistoryResponse]);
+    const latestFetchedMessageId =
+      fetchedMessages.length > 0
+        ? fetchedMessages[fetchedMessages.length - 1]._id
+        : null;
+    const hasNewMessages =
+      !!latestFetchedMessageId &&
+      latestFetchedMessageId !== lastSyncedMessageIdRef.current;
 
-  // Auto-scroll during streaming ONLY if user was already at bottom
-  useEffect(() => {
-    if (streamingMessage?.content && isAtBottom) {
-      requestAnimationFrame(() => scrollToBottom(true));
+    if (isNewChat || (hasNewMessages && isNearBottom())) {
+      // For new chats use an instant jump to avoid visible flicker
+      scrollToBottom(isNewChat ? false : true);
     }
-  }, [streamingMessage?.content, isAtBottom]);
 
-  // Reset scroll when chatId changes
+    lastSyncedMessageIdRef.current = latestFetchedMessageId;
+    previousChatIdRef.current = chatId;
+  }, [
+    chatId,
+    chatHistoryResponse?.data?.messages,
+    areMessagesEqual,
+    isNearBottom,
+    scrollToBottom,
+  ]);
+
+  // Handle scroll to show/hide scroll button
+  const handleScroll = useCallback(() => {
+    // Don't update during auto-scrolling to prevent button flicker
+    if (isAutoScrollingRef.current) return;
+
+    const nearBottom = isNearBottom();
+    setShowScrollButton(!nearBottom);
+  }, [isNearBottom]);
+
+  // Auto-scroll during streaming if user is near bottom
   useEffect(() => {
-    resetAllScrollWithDelay(100);
-  }, [chatId, resetAllScrollWithDelay]);
+    if (streamingContent && isNearBottom()) {
+      scrollToBottom();
+    }
+  }, [streamingContent, isNearBottom, scrollToBottom]);
 
-  const handleScrollPosition = () => {
-    const el = messagesRef.current;
-    if (!el) return;
-    const threshold = 50;
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
-    setIsAtBottom(atBottom);
-  };
-
-  // Memoize scroll position check to avoid disrupting streaming
-  const checkAndMaintainScroll = () => {
-    const messagesEl = messagesRef.current;
-    return messagesEl ? 
-      messagesEl.scrollTop + messagesEl.clientHeight >= messagesEl.scrollHeight - 20 
-      : true;
-  };
-
+  // Handle sending message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user_id) return;
+    if (!newMessage.trim() || !user_id || isStreaming) return;
 
-    const messageText = newMessage;
+    const messageText = newMessage.trim();
     const userMessageId = new ObjectId().toHexString();
     const aiMessageId = new ObjectId().toHexString();
-    
-    // Create user message
+
+    // Create and add user message
     const userMessage: TChatMessage = {
       _id: userMessageId,
       message: messageText,
@@ -132,16 +175,14 @@ export const ChatContainer = ({
       updatedAt: new Date().toISOString(),
     };
 
-    // Add user message to display immediately
-    setDisplayMessages(prev => [...prev, userMessage]);
+    // Update UI optimistically
+    setMessages((prev) => [...prev, userMessage]);
     setNewMessage("");
-    
-    // Initialize streaming AI response
-    setStreamingMessage({
-      id: aiMessageId,
-      content: "",
-      isComplete: false,
-    });
+    setIsStreaming(true);
+    setStreamingContent("");
+
+    // Scroll to show new user message
+    setTimeout(() => scrollToBottom(), 50);
 
     try {
       const response = await sendMessageMutation.mutateAsync({
@@ -163,68 +204,63 @@ export const ChatContainer = ({
 
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
-          
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            
+            if (!line.trim() || !line.startsWith("data: ")) continue;
+
             try {
-              const jsonPart = trimmed.slice(6); // Remove "data: "
-              if (jsonPart === '[DONE]') continue;
-              
+              const jsonPart = line.slice(6);
+              if (jsonPart === "[DONE]") break;
+
               const data = JSON.parse(jsonPart);
-              const delta = data.delta || data.content || data.token || '';
-              
-              if (typeof delta === 'string' && delta) {
+              const delta = data.delta || data.content || data.token || "";
+
+              if (typeof delta === "string" && delta) {
                 accumulatedContent += delta;
-                
-                // Update streaming message with accumulated content
-                setStreamingMessage(prev => prev ? {
-                  ...prev,
-                  content: accumulatedContent
-                } : null);
+                setStreamingContent(accumulatedContent);
               }
             } catch (e) {
-              console.warn('Failed to parse SSE data:', e);
+              console.warn("SSE parse error:", e);
             }
           }
         }
 
-        // Complete the streaming message
-        setStreamingMessage(prev => prev ? { ...prev, isComplete: true } : null);
-        
-        // Clear streaming and refresh data while preserving scroll position
-        setTimeout(() => {
-          // Check if user was at bottom before clearing streaming
-          const wasAtBottom = checkAndMaintainScroll();
-          
-          setStreamingMessage(null);
-          
-          // Refresh data
-          queryClient.invalidateQueries({ queryKey: ["conversation", chatId] });
-          queryClient.invalidateQueries({ queryKey: ["chatHistory", user_id] });
-          
-          // Restore scroll position after data loads if user was at bottom
-          if (wasAtBottom) {
-            setTimeout(() => scrollToBottom(false), 50);
-          }
-        }, 200);
+        // Create AI message from streamed content
+        const aiMessage: TChatMessage = {
+          _id: aiMessageId,
+          message: accumulatedContent,
+          sender: "assistant",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        // Add AI message to messages
+        setMessages((prev) => [...prev, aiMessage]);
+
+        // Clean up streaming state
+        setStreamingContent("");
+        setIsStreaming(false);
+
+        // Update sidebar only (not current conversation to avoid re-render)
+        queryClient.invalidateQueries({ queryKey: ["chatHistory", user_id] });
+
+        // Final scroll to bottom
+        setTimeout(() => scrollToBottom(), 50);
       }
     } catch (error) {
-      console.error("Failed to send message:", error);
-      // Clear streaming state on error
-      setStreamingMessage(null);
+      console.error("Send message error:", error);
+      setStreamingContent("");
+      setIsStreaming(false);
+
+      // Optionally show error message
+      // You could add a toast notification here
     }
   };
 
-  const handleBack = () => {
-    resetAllScrollWithDelay(100);
-    onBack();
-  };
-
+  // Handle Enter key
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -232,63 +268,73 @@ export const ChatContainer = ({
     }
   };
 
+  // Handle emoji selection
   const handleEmojiSelect = (emoji: string) => {
     setNewMessage((prev) => prev + emoji);
     setShowEmojiPicker(false);
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (!files || !user_id) return;
 
     const fileArray = Array.from(files);
 
-    fileArray.forEach((file) => {
+    for (const file of fileArray) {
       const id = new ObjectId().toHexString();
       const newItem: UploadItem = {
         id,
-        file,
         name: file.name,
-        progress: 0,
         status: "uploading",
       };
       setUploads((prev) => [...prev, newItem]);
 
-      uploadFile({
-        file,
-        userId: user_id,
-        onProgress: (p) =>
+      try {
+        const formData = new FormData();
+        formData.append("file", file, file.name);
+
+        // use the service file
+        const response = await uploadFile({
+          file,
+          userId: user_id,
+        });
+
+        if (response.ok) {
           setUploads((prev) =>
-            prev.map((u) => (u.id === id ? { ...u, progress: p } : u))
-          ),
-      })
-        .then((res) => {
+            prev.map((u) => (u.id === id ? { ...u, status: "success" } : u))
+          );
+        } else {
           setUploads((prev) =>
             prev.map((u) =>
               u.id === id
-                ? { ...u, progress: 100, status: res.ok ? "success" : "error" }
+                ? { ...u, status: "error", error: "Upload failed" }
                 : u
             )
           );
-          setTimeout(() => {
-            setUploads((prev) => prev.filter((u) => u.id !== id));
-          }, 1500);
-        })
-        .catch(() => {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === id ? { ...u, status: "error", error: "Upload failed" } : u
-            )
-          );
-        });
-    });
+        }
+      } catch (error) {
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === id ? { ...u, status: "error", error: "Upload failed" } : u
+          )
+        );
+      }
+
+      // Remove upload item after 2 seconds
+      setTimeout(() => {
+        setUploads((prev) => prev.filter((u) => u.id !== id));
+      }, 2000);
+    }
 
     event.currentTarget.value = "";
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-full flex-col items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <div className="text-muted-foreground">Loading chat...</div>
       </div>
     );
@@ -296,122 +342,124 @@ export const ChatContainer = ({
 
   if (error) {
     return (
-      <div className="flex h-full flex-col items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <div className="text-destructive">Failed to load chat</div>
-        <div className="text-muted-foreground mt-2 text-sm">{error.message}</div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex h-full flex-col">
-      {/* Chat Header */}
-      <div className="border-border bg-background flex items-center justify-between border-b p-2">
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="border-border bg-background flex items-center justify-between border-b p-3">
         <div className="flex items-center gap-3">
           <button
-            onClick={handleBack}
-            className="hover:bg-muted rounded-full p-1 transition-colors"
+            onClick={onBack}
+            className="hover:bg-muted rounded-lg p-1.5 transition-colors"
+            aria-label="Go back"
           >
-            <ArrowLeft className="text-muted-foreground h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" />
           </button>
-          <span className="text-foreground text-sm font-bold">
-            {displayTitle}
-          </span>
+          <h2 className="font-semibold">
+            {chatTitle || chatHistoryResponse?.data?.title || "Chat"}
+          </h2>
         </div>
-        <button
-          onClick={onClose}
-          className="hover:bg-muted rounded-full p-1 transition-colors"
-          title="Close chat"
-        >
-          <X className="text-muted-foreground h-5 w-5" />
-        </button>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="hover:bg-muted rounded-lg p-1.5 transition-colors"
+            aria-label="Close chat"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Container */}
       <div
-        ref={messagesRef}
-        className="flex-1 space-y-1 overflow-y-auto p-2"
-        onScroll={handleScrollPosition}
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-3"
+        onScroll={handleScroll}
       >
-        {displayMessages.length === 0 && !streamingMessage ? (
-          <div className="flex justify-start">
-            <div className="bg-card text-card-foreground border-border max-w-xs rounded-lg border p-1.5">
-              <p className="text-foreground text-sm">
-                👋 Hello! How can I help you today?
+        {/* Welcome message if no messages */}
+        {messages.length === 0 && !isStreaming && (
+          <div className="flex justify-center py-8">
+            <div className="text-center">
+              <p className="mb-2 text-lg font-medium">Welcome! 👋</p>
+              <p className="text-muted-foreground">
+                Start a conversation by typing a message below
               </p>
             </div>
           </div>
-        ) : (
-          <>
-            {displayMessages.map((message) => {
-              const isUser = message.sender === "user";
-              return (
+        )}
+
+        {/* Messages */}
+        <div className="space-y-4">
+          {messages.map((message) => {
+            const isUser = message.sender === "user";
+            return (
+              <div
+                key={message._id}
+                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+              >
                 <div
-                  key={message._id}
-                  className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                  className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                    isUser ? "bg-primary text-primary-foreground" : "bg-muted"
+                  }`}
                 >
-                  <div
-                    className={`mb-2 max-w-xs rounded-lg p-2 ${
-                      isUser
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card text-card-foreground border-border border"
-                    }`}
-                  >
-                    <MarkdownRenderer
-                      content={message.message}
-                      className={`${
-                        isUser ? "text-primary-foreground" : "text-foreground"
-                      } prose-p:text-xs prose-p:mb-0.5 prose-headings:text-xs prose-headings:font-normal prose-code:text-xs`}
-                      invert={isUser}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-            
-            {/* Streaming AI Message */}
-            {streamingMessage && (
-              <div className="flex justify-start">
-                <div className="bg-card text-card-foreground border-border mb-2 max-w-xs rounded-lg border p-2">
-                  {streamingMessage.content ? (
-                    <MarkdownRenderer
-                      content={streamingMessage.content}
-                      className="text-foreground prose-p:text-xs prose-p:mb-0.5 prose-headings:text-xs prose-headings:font-normal prose-code:text-xs"
-                    />
-                  ) : (
-                    <div className="flex items-center gap-1 py-1">
-                      <span className="sr-only">Assistant is typing</span>
-                      <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.2s]"></span>
-                      <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full [animation-delay:-0.1s]"></span>
-                      <span className="bg-muted-foreground h-1.5 w-1.5 animate-bounce rounded-full"></span>
-                    </div>
-                  )}
-                  {!streamingMessage.isComplete && streamingMessage.content && (
-                    <span className="animate-pulse">▎</span>
-                  )}
+                  <MarkdownRenderer
+                    content={message.message}
+                    className="prose-sm"
+                  />
                 </div>
               </div>
-            )}
-          </>
-        )}
-        <div ref={bottomRef} />
+            );
+          })}
+
+          {/* Streaming Message */}
+          {isStreaming && (
+            <div className="flex justify-start">
+              <div className="bg-muted max-w-[70%] rounded-lg px-4 py-2">
+                {streamingContent ? (
+                  <>
+                    <MarkdownRenderer
+                      content={streamingContent}
+                      className="prose-sm"
+                    />
+                    <span className="bg-foreground ml-1 inline-block h-4 w-2 animate-pulse" />
+                  </>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <span className="bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:-0.3s]" />
+                    <span className="bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:-0.15s]" />
+                    <span className="bg-foreground h-2 w-2 animate-bounce rounded-full" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Invisible element to scroll to */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Scroll to bottom button */}
-      {!isAtBottom && (
+      {showScrollButton && (
         <button
-          onClick={() => scrollToBottom(true)}
-          className="bg-primary text-primary-foreground fixed right-10 bottom-40 rounded-full px-2 py-2 shadow hover:opacity-90"
-          title="Scroll to bottom"
+          onClick={() => scrollToBottom()}
+          className="bg-primary text-primary-foreground absolute right-4 bottom-20 rounded-full p-2 shadow-lg transition-opacity hover:opacity-90"
+          aria-label="Scroll to bottom"
         >
-          <ArrowDown className="h-4 w-4" />
+          <ArrowDown className="h-5 w-5" />
         </button>
       )}
 
-      {/* Message Input */}
-      <div className="border-border bg-background relative border-t p-2">
+      {/* Input Area */}
+      <div className="border-border bg-background border-t p-4">
+        {/* File uploads display */}
         {uploads.length > 0 && (
-          <div className="mb-2 flex flex-col gap-2">
+          <div className="mb-3 flex flex-col gap-2">
             {uploads.map((u) => (
               <div
                 key={u.id}
@@ -422,20 +470,10 @@ export const ChatContainer = ({
                     {u.name}
                   </span>
                   <span className="text-muted-foreground">
-                    {u.status === "uploading" && `${u.progress}%`}
-                    {u.status === "success" && "Uploaded"}
-                    {u.status === "error" && "Failed"}
+                    {u.status === "uploading" && "Uploading..."}
+                    {u.status === "success" && "✓ Uploaded"}
+                    {u.status === "error" && "✗ Failed"}
                   </span>
-                </div>
-                <div className="bg-muted mt-2 h-2 w-full rounded">
-                  <div
-                    className={`h-2 rounded ${
-                      u.status === "error" ? "bg-destructive" : "bg-primary"
-                    }`}
-                    style={{
-                      width: `${u.status === "error" ? 100 : u.progress}%`,
-                    }}
-                  />
                 </div>
                 {u.status === "error" && u.error && (
                   <div className="text-destructive mt-1 text-xs">{u.error}</div>
@@ -445,44 +483,52 @@ export const ChatContainer = ({
           </div>
         )}
 
-        <div className="flex items-center gap-1">
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="hover:bg-muted rounded-full p-1.5 transition-colors"
-            >
-              <Smile className="text-muted-foreground h-3.5 w-3.5" />
-            </button>
-            <label className="hover:bg-muted cursor-pointer rounded-full p-1.5 transition-colors">
-              <Paperclip className="text-muted-foreground h-3.5 w-3.5" />
-              <Input
-                type="file"
-                multiple
-                onChange={handleFileSelect}
-                disabled={!user_id}
-                className="hidden"
-              />
-            </label>
-          </div>
+        <div className="flex items-center gap-2">
+          {/* Emoji picker button */}
+          <button
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="hover:bg-muted rounded-lg p-2 transition-colors"
+            disabled={isStreaming}
+          >
+            <Smile className="h-5 w-5" />
+          </button>
+
+          {/* File upload button */}
+          <label className="hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+            <Paperclip className="h-5 w-5" />
+            <input
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              disabled={!user_id || isStreaming}
+              className="hidden"
+            />
+          </label>
+
+          {/* Message input */}
           <input
             type="text"
-            placeholder="Message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyPress}
-            className="border-input bg-background text-foreground focus:ring-ring flex-1 rounded-full border p-2 text-sm focus:ring-2 focus:outline-none"
+            placeholder="Type a message..."
+            disabled={isStreaming}
+            className="border-input bg-background focus:ring-ring flex-1 rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
           />
+
+          {/* Send button */}
           <button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || !user_id}
-            className="bg-secondary hover:bg-muted/80 rounded-full p-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!newMessage.trim() || !user_id || isStreaming}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Send className="text-secondary-foreground h-3.5 w-3.5" />
+            <Send className="h-5 w-5" />
           </button>
         </div>
 
+        {/* Emoji picker */}
         {showEmojiPicker && (
-          <div>
+          <div className="absolute bottom-20 left-4 z-50">
             <EmojiPicker
               onEmojiSelect={handleEmojiSelect}
               onClose={() => setShowEmojiPicker(false)}

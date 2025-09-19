@@ -38,11 +38,10 @@ export const Home = ({
   const display_articles = topArticlesData?.data?.articles || [];
 
   const display_posts =
-    posts_data?.data
-      ?.map((post) => ({
-        ...post,
-        id: post._id,
-      })) || [];
+    posts_data?.data?.map((post) => ({
+      ...post,
+      id: post._id,
+    })) || [];
 
   const isLoading = isLoadingArticles || isLoadingPosts;
   const hasError = articlesError || postsError;
