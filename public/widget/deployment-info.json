@@ -1,0 +1,15 @@
+{
+  "buildDate": "2025-09-19T12:21:29.052Z",
+  "version": "0.1.0",
+  "files": [
+    "chatbot-widget.js",
+    "chatbot-embed.js",
+    "chatbot-combined.js",
+    "chatbot-widget.css"
+  ],
+  "cdnUrl": "https://your-domain.com/widget",
+  "usage": {
+    "scriptTag": "<script src=\"https://your-domain.com/widget/chatbot-combined.js\" data-chatbot-widget data-api-url=\"YOUR_API_URL\"></script>",
+    "webComponent": "<script src=\"https://your-domain.com/widget/chatbot-widget.js\"></script>\n<chatbot-widget api-url=\"YOUR_API_URL\"></chatbot-widget>"
+  }
+}

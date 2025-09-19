@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Chatbot Widget Usage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .content {
+            line-height: 1.6;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Our Website</h1>
+        <div class="content">
+            <p>This is a basic example of how to integrate the chatbot widget into your website.</p>
+            <p>The chatbot widget will appear as a floating button in the bottom-right corner of the page.</p>
+            <p>Click the button to open the chatbot and start chatting!</p>
+            
+            <h2>Features:</h2>
+            <ul>
+                <li>Floating chat button</li>
+                <li>Multiple chat pages (Home, Chat, Help, News)</li>
+                <li>Responsive design</li>
+                <li>Customizable appearance</li>
+                <li>Easy integration</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget Script -->
+    <!-- Replace the src with your actual deployed script URL -->
+    <script 
+        src="https://your-domain.com/chatbot-combined.js"
+        data-chatbot-widget
+        data-api-url="https://your-api-domain.com"
+        data-position="bottom-right"
+        data-theme="light"
+        data-primary-color="#3b82f6"
+        data-button-color="#3b82f6"
+        data-button-text-color="#ffffff"
+        data-width="400px"
+        data-height="700px"
+        data-z-index="9999"
+        data-show-welcome="false"
+        data-welcome-message="Welcome to Our Support Chat">
+    </script>
+</body>
+</html>
