@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Component Chatbot Integration</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .content {
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .demo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        
+        .demo-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .web-component-demo {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .web-component-demo > div {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .web-component-demo h4 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .web-component-demo p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .web-component-demo button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .web-component-demo button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧩 Web Component Chatbot Integration</h1>
+        
+        <div class="content">
+            <p>This page demonstrates how to use the chatbot as a web component with data attributes for easy configuration.</p>
+            
+            <h2>Method 1: Data Attributes (Auto-initialization)</h2>
+            <p>Simply add the script tag with data attributes and the chatbot will initialize automatically:</p>
+            
+            <div class="code-block">
+&lt;!-- Auto-initialization with data attributes --&gt;
+&lt;script 
+    src="https://yourdomain.com/embed/chatbot-embed.js"
+    data-chatbot-widget
+    data-iframe-url="https://yourdomain.com/iframe"
+    data-position="bottom-right"
+    data-theme="dark"
+    data-auto-open="false"
+    data-toggle-button-text="Chat with us"
+    data-toggle-button-icon="💬"&gt;
+&lt;/script&gt;
+            </div>
+            
+            <h2>Method 2: Custom Web Component</h2>
+            <p>Create a custom web component for more control:</p>
+            
+            <div class="code-block">
+&lt;!-- Custom web component --&gt;
+&lt;chatbot-widget
+    iframe-url="https://yourdomain.com/iframe"
+    position="bottom-right"
+    theme="dark"
+    auto-open="false"
+    toggle-button-text="Support"
+    toggle-button-icon="🤖"&gt;
+&lt;/chatbot-widget&gt;
+
+&lt;script&gt;
+    // Define custom web component
+    class ChatbotWidget extends HTMLElement {
+        connectedCallback() {
+            const iframeUrl = this.getAttribute('iframe-url');
+            const position = this.getAttribute('position') || 'bottom-right';
+            const theme = this.getAttribute('theme') || 'dark';
+            const autoOpen = this.getAttribute('auto-open') === 'true';
+            const toggleButtonText = this.getAttribute('toggle-button-text') || 'Chat';
+            const toggleButtonIcon = this.getAttribute('toggle-button-icon') || '💬';
+            
+            // Initialize chatbot with attributes
+            if (window.ChatbotWidget) {
+                window.ChatbotWidget.init({
+                    iframeUrl,
+                    position,
+                    theme,
+                    autoOpen,
+                    toggleButtonText,
+                    toggleButtonIcon
+                });
+            }
+        }
+    }
+    
+    customElements.define('chatbot-widget', ChatbotWidget);
+&lt;/script&gt;
+            </div>
+            
+            <h2>Method 3: React Component</h2>
+            <p>For React applications, create a wrapper component:</p>
+            
+            <div class="code-block">
+import React, { useEffect, useRef } from 'react';
+
+const ChatbotWidget = ({ 
+    iframeUrl, 
+    position = 'bottom-right', 
+    theme = 'dark',
+    autoOpen = false,
+    toggleButtonText = 'Chat with us',
+    toggleButtonIcon = '💬'
+}) => {
+    const scriptRef = useRef(null);
+    
+    useEffect(() => {
+        // Load the chatbot script
+        const script = document.createElement('script');
+        script.src = 'https://yourdomain.com/embed/chatbot-embed.js';
+        script.async = true;
+        script.onload = () => {
+            // Initialize chatbot when script loads
+            if (window.ChatbotWidget) {
+                window.ChatbotWidget.init({
+                    iframeUrl,
+                    position,
+                    theme,
+                    autoOpen,
+                    toggleButtonText,
+                    toggleButtonIcon
+                });
+            }
+        };
+        
+        document.head.appendChild(script);
+        scriptRef.current = script;
+        
+        return () => {
+            // Cleanup
+            if (scriptRef.current) {
+                document.head.removeChild(scriptRef.current);
+            }
+            if (window.ChatbotWidget) {
+                window.ChatbotWidget.destroy();
+            }
+        };
+    }, [iframeUrl, position, theme, autoOpen, toggleButtonText, toggleButtonIcon]);
+    
+    return null; // The widget renders itself
+};
+
+export default ChatbotWidget;
+            </div>
+            
+            <h2>Method 4: Vue Component</h2>
+            <p>For Vue applications:</p>
+            
+            <div class="code-block">
+&lt;template&gt;
+  &lt;div ref="chatbotContainer"&gt;&lt;/div&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  name: 'ChatbotWidget',
+  props: {
+    iframeUrl: {
+      type: String,
+      required: true
+    },
+    position: {
+      type: String,
+      default: 'bottom-right'
+    },
+    theme: {
+      type: String,
+      default: 'dark'
+    },
+    autoOpen: {
+      type: Boolean,
+      default: false
+    },
+    toggleButtonText: {
+      type: String,
+      default: 'Chat with us'
+    },
+    toggleButtonIcon: {
+      type: String,
+      default: '💬'
+    }
+  },
+  mounted() {
+    this.loadChatbot();
+  },
+  beforeUnmount() {
+    this.destroyChatbot();
+  },
+  methods: {
+    loadChatbot() {
+      const script = document.createElement('script');
+      script.src = 'https://yourdomain.com/embed/chatbot-embed.js';
+      script.async = true;
+      script.onload = () => {
+        if (window.ChatbotWidget) {
+          window.ChatbotWidget.init({
+            iframeUrl: this.iframeUrl,
+            position: this.position,
+            theme: this.theme,
+            autoOpen: this.autoOpen,
+            toggleButtonText: this.toggleButtonText,
+            toggleButtonIcon: this.toggleButtonIcon
+          });
+        }
+      };
+      document.head.appendChild(script);
+    },
+    destroyChatbot() {
+      if (window.ChatbotWidget) {
+        window.ChatbotWidget.destroy();
+      }
+    }
+  }
+};
+&lt;/script&gt;
+            </div>
+            
+            <div class="demo-section">
+                <h3>Live Demo</h3>
+                <p>This page uses the auto-initialization method with data attributes. The chatbot should appear in the bottom-right corner.</p>
+                
+                <div class="web-component-demo">
+                    <div>
+                        <h4>Current Configuration</h4>
+                        <p><strong>Position:</strong> Bottom Right</p>
+                        <p><strong>Theme:</strong> Dark</p>
+                        <p><strong>Auto Open:</strong> False</p>
+                        <p><strong>Button Text:</strong> Chat with us</p>
+                        <p><strong>Button Icon:</strong> 💬</p>
+                    </div>
+                    <div>
+                        <h4>Test Controls</h4>
+                        <button onclick="window.ChatbotWidget.open()">Open Chatbot</button>
+                        <br><br>
+                        <button onclick="window.ChatbotWidget.close()">Close Chatbot</button>
+                        <br><br>
+                        <button onclick="window.ChatbotWidget.toggle()">Toggle Chatbot</button>
+                    </div>
+                </div>
+            </div>
+            
+            <h2>Supported Data Attributes</h2>
+            <ul>
+                <li><span class="highlight">data-iframe-url</span>: URL to the chatbot iframe page</li>
+                <li><span class="highlight">data-position</span>: Widget position (bottom-right, bottom-left, top-right, top-left)</li>
+                <li><span class="highlight">data-theme</span>: Color theme (dark, light)</li>
+                <li><span class="highlight">data-auto-open</span>: Whether to open automatically (true, false)</li>
+                <li><span class="highlight">data-toggle-button-text</span>: Text for the toggle button</li>
+                <li><span class="highlight">data-toggle-button-icon</span>: Icon/emoji for the toggle button</li>
+                <li><span class="highlight">data-show-toggle-button</span>: Whether to show toggle button (true, false)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Chatbot Integration using data attributes -->
+    <script 
+        src="https://chat.com/embed/chatbot-embed.js"
+        data-chatbot-widget
+        data-iframe-url="https://chat.com/iframe"
+        data-position="bottom-right"
+        data-theme="dark"
+        data-auto-open="false"
+        data-toggle-button-text="Chat with us"
+        data-toggle-button-icon="💬">
+    </script>
+</body>
+</html>

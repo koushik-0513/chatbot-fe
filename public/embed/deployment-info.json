@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "createdAt": "2025-09-19T14:17:05.124Z",
+  "files": {
+    "embedScript": "/embed/chatbot-embed.js",
+    "iframePage": "/iframe",
+    "examples": "/embed/examples/",
+    "styles": "/embed/chatbot-iframe.css"
+  },
+  "usage": {
+    "basic": "Include the embed script and call ChatbotWidget.init()",
+    "autoInit": "Use data attributes for automatic initialization",
+    "frameworks": "React, Vue, Angular examples available"
+  },
+  "endpoints": {
+    "iframe": "/iframe",
+    "embed": "/embed/chatbot-embed.js",
+    "styles": "/embed/chatbot-iframe.css"
+  }
+}
