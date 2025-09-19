@@ -1,43 +1,46 @@
-import { useMutation } from "@tanstack/react-query";
-
-import env from "../../config/env";
-import { TNewsReactionResponse } from "../../types/types";
+import type { TApiPromise, TMutationOpts } from "@/types/api";
+import type { TNewsReactionResponse } from "@/types/component-types/news-types";
 import {
   NEWS_REACTIONS,
   REACTION_EMOJI_MAP,
   TNewsReaction,
-} from "../../utils/news-reaction-utils";
+} from "@/utils/news-reaction-utils";
+import { useMutation } from "@tanstack/react-query";
 
-// Submit news reaction
-export const useSubmitNewsReaction = () => {
-  return useMutation<
-    TNewsReactionResponse,
-    Error,
-    { newsId: string; reaction: string; userId: string }
-  >({
-    mutationFn: async ({ newsId, reaction, userId }) => {
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/news/${newsId}/reaction?user_id=${userId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            reaction: reaction,
-          }),
-        }
-      );
+import { api } from "@/lib/api";
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+// Base URL: /api/v1/news/...
 
-      return response.json();
-    },
+// News Reaction Types
+type TSubmitNewsReactionPayload = {
+  newsId: string;
+  reaction: string;
+  userId: string;
+};
+
+// News Reaction Services
+const submitNewsReaction = (
+  payload: TSubmitNewsReactionPayload
+): TApiPromise<TNewsReactionResponse> => {
+  const { newsId, reaction, userId } = payload;
+  return api.post(
+    `/news/${newsId}/reaction`,
+    { reaction },
+    { params: { user_id: userId } }
+  );
+};
+
+// News Reaction Hooks
+export const useSubmitNewsReaction = (
+  options?: TMutationOpts<TSubmitNewsReactionPayload>
+) => {
+  return useMutation({
+    mutationKey: ["useSubmitNewsReaction"],
+    mutationFn: submitNewsReaction,
     onError: (error) => {
       console.error("Error submitting news reaction:", error);
     },
+    ...options,
   });
 };
 

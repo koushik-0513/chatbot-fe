@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 
 import { useGetTopArticles } from "../../../hooks/api/help-service";
 
-interface TSearchComponentProps {
+type TSearchComponentProps = {
   onNavigateToHelp?: (articleId?: string) => void;
 }
 

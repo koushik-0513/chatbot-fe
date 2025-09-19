@@ -1,5 +1,5 @@
-import { TChatHistoryItem } from "@/types/types";
-import { formatChatTime, formatDayOrDate } from "@/utils/datetime";
+import { TChatHistoryItem } from "@/types/component-types/chat-types";
+import { formatChatTime, formatDayOrDate } from "@/utils/date-time";
 import { ObjectId } from "bson";
 import { motion } from "framer-motion";
 import { MessageCircleQuestionMark } from "lucide-react";
@@ -29,7 +29,10 @@ export const Message = ({
     data: chatHistoryResponse,
     isLoading,
     error,
-  } = useGetChatHistory(user_id || "", 1, 5);
+  } = useGetChatHistory(
+    { user_id: user_id || "", page: 1, limit: 5 },
+    { enabled: !!user_id }
+  );
 
   const handleChatClick = (chatId: string, chatTitle: string) => {
     onChatSelected(chatId);
@@ -83,8 +86,8 @@ export const Message = ({
   }
 
   // Extract the data array from the response
-  const chatHistoryDataRaw: TChatHistoryItem[] = (chatHistoryResponse?.data ||
-    []) as TChatHistoryItem[];
+  const chatHistoryDataRaw: TChatHistoryItem[] =
+    chatHistoryResponse?.data || [];
   const chatHistoryData = [...chatHistoryDataRaw].sort(
     (a: TChatHistoryItem, b: TChatHistoryItem) => {
       const getTs = (x: TChatHistoryItem) => new Date(x.updatedAt).getTime();

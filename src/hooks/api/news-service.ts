@@ -1,72 +1,63 @@
-import { useQuery } from "@tanstack/react-query";
-
-import env from "../../config/env";
-import {
+import type { TApiPromise, TQueryOpts } from "@/types/api";
+import type {
   TGetNewsParams,
   TNewsDetailResponse,
   TNewsResponse,
-} from "../../types/types";
+} from "@/types/component-types/news-types";
+import { useQuery } from "@tanstack/react-query";
 
-// Get all news query
-export const useGetNews = (params: TGetNewsParams) => {
+import { api } from "@/lib/api";
+
+// Base URL: /api/v1/news/...
+
+// News Types
+type TGetNewsByIdQParams = {
+  news_id: string;
+  user_id?: string;
+};
+
+// News Services
+const getNews = (params: TGetNewsParams): TApiPromise<TNewsResponse> => {
   const { page = 1, limit = 10 } = params;
+  return api.get("/news", { params: { page, limit } });
+};
 
-  return useQuery<TNewsResponse, Error>({
-    queryKey: ["news", page, limit],
-    queryFn: async () => {
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/news/?page=${page}&limit=${limit}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    },
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
+const getNewsById = ({
+  news_id,
+  user_id,
+  ...params
+}: TGetNewsByIdQParams): TApiPromise<TNewsDetailResponse> => {
+  return api.get(`/news/${news_id}`, {
+    params: { user_id, ...params },
   });
 };
 
-// Get single news by ID
-export const useGetNewsById = (
-  news_id: string | null,
-  user_id: string | null
+// News Hooks
+export const useGetNews = (
+  params: TGetNewsParams,
+  options?: TQueryOpts<TNewsResponse>
 ) => {
-  return useQuery<TNewsDetailResponse, Error>({
-    queryKey: ["news", news_id],
-    queryFn: async () => {
-      if (!news_id) {
-        throw new Error("News ID is required");
-      }
-
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/news/${news_id}/?user_id=${user_id}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return response.json();
-    },
-    enabled: !!news_id && !!user_id,
+  return useQuery({
+    queryKey: ["useGetNews", params],
+    queryFn: () => getNews(params),
     retry: 2,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useGetNewsById = (
+  params: TGetNewsByIdQParams,
+  options?: TQueryOpts<TNewsDetailResponse>
+) => {
+  return useQuery({
+    queryKey: ["useGetNewsById", params],
+    queryFn: () => getNewsById(params),
+    enabled: !!params.news_id,
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
   });
 };

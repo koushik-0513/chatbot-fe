@@ -1,16 +1,14 @@
-import env from "@/config/env";
-import { TUploadOptions } from "@/types/types";
+import type { TUploadOptions } from "@/types/component-types/chat-types";
 
-export type UploadStatus = "uploading" | "success" | "error";
-
+// File Upload Types
 export type UploadResult<T = unknown> = {
-  ok: boolean;
-  status: number;
+  success: boolean;
   data?: T;
   error?: string;
+  progress?: number;
 };
 
-// Uploads a file using XMLHttpRequest to support upload progress events
+// File Upload Service
 export function uploadFile<T = unknown>({
   file,
   userId,
@@ -18,69 +16,75 @@ export function uploadFile<T = unknown>({
   signal,
 }: TUploadOptions): Promise<UploadResult<T>> {
   return new Promise((resolve, reject) => {
-    try {
-      const url = `${env.backendUrl}/api/v1/file/upload?user_id=${userId}`;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("userId", userId);
 
-      const formData = new FormData();
-      // Assuming backend expects the key to be 'file'
-      formData.append("file", file, file.name);
+    const xhr = new XMLHttpRequest();
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", url, true);
-
-      // Progress events for uploads
-      xhr.upload.onprogress = (event) => {
-        if (!onProgress) return;
+    // Handle progress
+    if (onProgress) {
+      xhr.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          onProgress(percent);
+          const percentComplete = (event.loaded / event.total) * 100;
+          onProgress(percentComplete);
         }
-      };
-
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState !== XMLHttpRequest.DONE) return;
-        const status = xhr.status;
-        const text = xhr.responseText;
-        try {
-          const json = text ? JSON.parse(text) : undefined;
-          if (status >= 200 && status < 300) {
-            resolve({ ok: true, status, data: json });
-          } else {
-            resolve({
-              ok: false,
-              status,
-              error: json?.message || text || "Upload failed",
-            });
-          }
-        } catch {
-          if (status >= 200 && status < 300) {
-            resolve({ ok: true, status, data: undefined as unknown as T });
-          } else {
-            resolve({ ok: false, status, error: text || "Upload failed" });
-          }
-        }
-      };
-
-      xhr.onerror = () => {
-        resolve({ ok: false, status: xhr.status || 0, error: "Network error" });
-      };
-
-      // Support cancellation via AbortSignal
-      if (signal) {
-        if (signal.aborted) {
-          xhr.abort();
-          return resolve({ ok: false, status: 0, error: "Upload aborted" });
-        }
-        const onAbort = () => {
-          xhr.abort();
-          resolve({ ok: false, status: 0, error: "Upload aborted" });
-        };
-        signal.addEventListener("abort", onAbort, { once: true });
-      }
-
-      xhr.send(formData);
-    } catch (err) {
-      reject(err);
+      });
     }
+
+    // Handle abort signal
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        xhr.abort();
+        reject(new Error("Upload aborted"));
+      });
+    }
+
+    // Handle response
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve({
+            success: true,
+            data: response,
+          });
+        } catch (error) {
+          resolve({
+            success: false,
+            error: "Failed to parse response",
+          });
+        }
+      } else {
+        resolve({
+          success: false,
+          error: `Upload failed with status: ${xhr.status}`,
+        });
+      }
+    });
+
+    // Handle errors
+    xhr.addEventListener("error", () => {
+      resolve({
+        success: false,
+        error: "Network error occurred during upload",
+      });
+    });
+
+    // Handle abort
+    xhr.addEventListener("abort", () => {
+      reject(new Error("Upload was aborted"));
+    });
+
+    // Start upload
+    xhr.open("POST", "/api/v1/upload"); // This would need to be configured with your actual API base URL
+    xhr.send(formData);
   });
 }
+
+// File Upload Hook (if you want to use it with React Query)
+export const useFileUpload = () => {
+  return {
+    uploadFile,
+  };
+};

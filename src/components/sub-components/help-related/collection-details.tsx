@@ -7,7 +7,7 @@ import {
   THelpArticle,
   THelpCollection,
   THelpCollectionDetailResponse,
-} from "../../../types/types";
+} from "../../../types/component-types/help-types";
 
 type TCollectionDetailsProps = {
   collectionDetailsData: THelpCollectionDetailResponse | undefined;

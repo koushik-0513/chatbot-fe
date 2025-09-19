@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 
-import { TArticleSearchResult } from "@/types/types";
+import { TArticleSearchResult } from "@/types/component-types/help-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 

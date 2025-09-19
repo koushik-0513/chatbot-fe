@@ -1,46 +1,36 @@
-import { useQuery } from "@tanstack/react-query";
-
-import env from "../../config/env";
-import {
+import type { TApiPromise, TQueryOpts } from "@/types/api";
+import type {
   TArticleSearchParams,
   TArticleSearchResponse,
-} from "../../types/types";
+} from "@/types/component-types/help-types";
+import { useQuery } from "@tanstack/react-query";
 
-// Search articles query
-export const useSearchArticles = (params: TArticleSearchParams) => {
+import { api } from "@/lib/api";
+
+// Base URL: /api/v1/article/...
+
+// Article Search Services
+const searchArticles = (
+  params: TArticleSearchParams
+): TApiPromise<TArticleSearchResponse> => {
   const { query, page = 1, limit = 10 } = params;
+  return api.get("/article", {
+    params: { search: query, page, limit },
+  });
+};
 
-  return useQuery<TArticleSearchResponse, Error>({
-    queryKey: ["article-search", query, page, limit],
-    queryFn: async () => {
-      if (!query.trim()) {
-        throw new Error("Search query is required");
-      }
-
-      const searchParams = new URLSearchParams({
-        search: query,
-      });
-
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/article/?${searchParams}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data;
-    },
-    enabled: !!query.trim(),
+// Article Search Hooks
+export const useSearchArticles = (
+  params: TArticleSearchParams,
+  options?: TQueryOpts<TArticleSearchResponse>
+) => {
+  return useQuery({
+    queryKey: ["useSearchArticles", params],
+    queryFn: () => searchArticles(params),
+    enabled: !!params.query?.trim(),
     retry: 2,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: false,
+    ...options,
   });
 };

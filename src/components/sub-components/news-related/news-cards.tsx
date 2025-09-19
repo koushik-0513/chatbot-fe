@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { TNews } from "../../../types/types";
+import { TNews } from "../../../types/component-types/news-types";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 type TNewsCardProps = {

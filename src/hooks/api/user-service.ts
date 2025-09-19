@@ -1,27 +1,24 @@
+import type { TApiPromise, TMutationOpts } from "@/types/api";
+import type { TCreateUserRequest, TCreateUserResponse } from "@/types/types";
+import { setUserCreatedOnBackend } from "@/utils/user-id";
 import { useMutation } from "@tanstack/react-query";
 
-import env from "../../config/env";
-import { TCreateUserRequest, TCreateUserResponse } from "../../types/types";
-import { setUserCreatedOnBackend } from "../../utils/user-id";
+import { api } from "@/lib/api";
 
-// Create user mutation
-export const useCreateUser = () => {
-  return useMutation<TCreateUserResponse, Error, TCreateUserRequest>({
-    mutationFn: async (data: TCreateUserRequest) => {
-      const response = await fetch(`${env.backendUrl}/api/v1/user`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+// Base URL: /api/v1/user/...
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+// User Services
+const createUser = (
+  payload: TCreateUserRequest
+): TApiPromise<TCreateUserResponse> => {
+  return api.post("/user", payload);
+};
 
-      return response.json();
-    },
+// User Hooks
+export const useCreateUser = (options?: TMutationOpts<TCreateUserRequest>) => {
+  return useMutation({
+    mutationKey: ["useCreateUser"],
+    mutationFn: createUser,
     onError: (error) => {
       console.error("Error creating user:", error);
     },
@@ -30,5 +27,6 @@ export const useCreateUser = () => {
       // Store the creation status in localStorage
       setUserCreatedOnBackend();
     },
+    ...options,
   });
 };

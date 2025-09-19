@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import env from "@/config/env";
-import { TChatMessage } from "@/types/types";
+import {
+  TChatMessage,
+  TChatMessageSender,
+  TUploadStatus,
+} from "@/types/component-types/chat-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { ArrowDown, ArrowLeft, Paperclip, Send, Smile, X } from "lucide-react";
@@ -27,10 +30,9 @@ type TChatContainerProps = {
 type UploadItem = {
   id: string;
   name: string;
-  status: "uploading" | "success" | "error";
+  status: TUploadStatus;
   error?: string;
 };
-
 export const ChatContainer = ({
   chatId,
   chatTitle,
@@ -42,7 +44,10 @@ export const ChatContainer = ({
     data: chatHistoryResponse,
     isLoading,
     error,
-  } = useGetConversationById(chatId);
+  } = useGetConversationById(
+    { conversationId: chatId || "" },
+    { enabled: !!chatId }
+  );
   const queryClient = useQueryClient();
   const sendMessageMutation = useSendMessage();
 
@@ -127,9 +132,12 @@ export const ChatContainer = ({
       !!latestFetchedMessageId &&
       latestFetchedMessageId !== lastSyncedMessageIdRef.current;
 
-    if (isNewChat || (hasNewMessages && isNearBottom())) {
+    // Always scroll to bottom when opening a new chat or when there are new messages
+    if (isNewChat || hasNewMessages) {
       // For new chats use an instant jump to avoid visible flicker
-      scrollToBottom(isNewChat ? false : true);
+      // For existing chats with new messages, scroll smoothly if user was near bottom
+      const shouldScrollSmoothly = !isNewChat && isNearBottom();
+      scrollToBottom(!shouldScrollSmoothly);
     }
 
     lastSyncedMessageIdRef.current = latestFetchedMessageId;
@@ -158,6 +166,16 @@ export const ChatContainer = ({
     }
   }, [streamingContent, isNearBottom, scrollToBottom]);
 
+  // Ensure chat scrolls to bottom when first loaded
+  useEffect(() => {
+    if (chatHistoryResponse && !isLoading) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        scrollToBottom(false);
+      }, 100);
+    }
+  }, [chatHistoryResponse, isLoading, scrollToBottom]);
+
   // Handle sending message
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user_id || isStreaming) return;
@@ -170,7 +188,7 @@ export const ChatContainer = ({
     const userMessage: TChatMessage = {
       _id: userMessageId,
       message: messageText,
-      sender: "user",
+      sender: TChatMessageSender.USER,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -232,7 +250,7 @@ export const ChatContainer = ({
         const aiMessage: TChatMessage = {
           _id: aiMessageId,
           message: accumulatedContent,
-          sender: "assistant",
+          sender: TChatMessageSender.ASSISTANT,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -288,7 +306,7 @@ export const ChatContainer = ({
       const newItem: UploadItem = {
         id,
         name: file.name,
-        status: "uploading",
+        status: TUploadStatus.UPLOADING,
       };
       setUploads((prev) => [...prev, newItem]);
 
@@ -302,15 +320,15 @@ export const ChatContainer = ({
           userId: user_id,
         });
 
-        if (response.ok) {
+        if (response.success) {
           setUploads((prev) =>
-            prev.map((u) => (u.id === id ? { ...u, status: "success" } : u))
+            prev.map((u) => (u.id === id ? { ...u, status: TUploadStatus.SUCCESS } : u))
           );
         } else {
           setUploads((prev) =>
             prev.map((u) =>
               u.id === id
-                ? { ...u, status: "error", error: "Upload failed" }
+                ? { ...u, status: TUploadStatus.ERROR, error: "Upload failed" }
                 : u
             )
           );
@@ -318,7 +336,7 @@ export const ChatContainer = ({
       } catch (error) {
         setUploads((prev) =>
           prev.map((u) =>
-            u.id === id ? { ...u, status: "error", error: "Upload failed" } : u
+            u.id === id ? { ...u, status: TUploadStatus.ERROR, error: "Upload failed" } : u
           )
         );
       }

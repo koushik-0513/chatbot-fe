@@ -1,141 +1,123 @@
-import env from "@/config/env";
-import {
+import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
+import type {
   TChatHistoryAPIResponse,
   TConversationAPIResponse,
-} from "@/types/types";
+} from "@/types/component-types/chat-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-// Chat history
+import { api } from "@/lib/api";
+
+// Base URL: /api/v1/conversation/...
+
+// Chat Types
+type TGetChatHistoryQParams = {
+  user_id: string;
+  page?: number;
+  limit?: number;
+};
+
+type TGetConversationByIdQParams = {
+  conversationId: string;
+};
+
+type TDeleteConversationPayload = {
+  conversationId: string;
+};
+
+type TSendMessagePayload = {
+  conversationId: string | null;
+  message: string;
+  userId: string;
+  messageId?: string;
+};
+
+// Chat Services
+const getChatHistory = (
+  params: TGetChatHistoryQParams
+): TApiPromise<TChatHistoryAPIResponse> => {
+  const { user_id, page = 1, limit = 5 } = params;
+  return api.get("/conversation", {
+    params: { user_id, page, limit },
+  });
+};
+
+const getConversationById = ({
+  conversationId,
+  ...params
+}: TGetConversationByIdQParams): TApiPromise<TConversationAPIResponse> => {
+  return api.get(`/conversation/${conversationId}`, { params });
+};
+
+const deleteConversation = ({
+  conversationId,
+  ...payload
+}: TDeleteConversationPayload): TApiPromise => {
+  return api.delete(`/conversation/${conversationId}`, payload);
+};
+
+const sendMessage = (payload: TSendMessagePayload): Promise<Response> => {
+  const { conversationId, message, userId, messageId } = payload;
+  const url = `/chat/stream/${conversationId}?user_id=${userId}`;
+
+  return fetch(`${api.defaults.baseURL}${url}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    },
+    cache: "no-store",
+    body: JSON.stringify({
+      message,
+      user_id: userId,
+      conversation_id: conversationId,
+      message_id: messageId,
+    }),
+  });
+};
+
+// Chat Hooks
 export const useGetChatHistory = (
-  user_id: string | null,
-  page: number = 1,
-  limit: number = 5
+  params: TGetChatHistoryQParams,
+  options?: TQueryOpts<TChatHistoryAPIResponse>
 ) => {
-  return useQuery<TChatHistoryAPIResponse>({
-    queryKey: ["chatHistory", user_id, page, limit],
-    enabled: !!user_id,
+  return useQuery({
+    queryKey: ["useGetChatHistory", params],
+    queryFn: () => getChatHistory(params),
+    enabled: !!params.user_id,
     retry: 2,
-    queryFn: async () => {
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/conversation?user_id=${user_id}&page=${page}&limit=${limit}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (response.status === 404) {
-        return {
-          data: [],
-          pagination: {
-            page,
-            limit,
-            total_conversations: 0,
-            total_pages: 0,
-          },
-        };
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch chat history: ${response.statusText}`);
-      }
-      return response.json();
-    },
     staleTime: 60_000,
+    ...options,
   });
 };
 
-// Single conversation by ID - FIXED VERSION
-export const useGetConversationById = (conversationId: string | null) => {
-  return useQuery<TConversationAPIResponse>({
-    queryKey: ["conversation", conversationId],
-    enabled: !!conversationId, // Only run when conversationId exists
-    staleTime: 60_000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true, // Allow refetch when conversationId changes
-    queryFn: async () => {
-      if (!conversationId) {
-        throw new Error("Conversation ID is required");
-      }
-
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/conversation/${conversationId}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (response.status === 404) {
-        return {
-          data: [],
-          pagination: {
-            page: 1,
-            limit: 50,
-            total_messages: 0,
-            total_pages: 0,
-          },
-        };
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch conversation: ${response.statusText}`);
-      }
-      return response.json();
-    },
+export const useGetConversationById = (
+  params: TGetConversationByIdQParams,
+  options?: TQueryOpts<TConversationAPIResponse>
+) => {
+  return useQuery({
+    queryKey: ["useGetConversationById", params],
+    queryFn: () => getConversationById(params),
+    enabled: !!params.conversationId,
+    ...options,
   });
 };
 
-// Delete a conversation
-export const useDeleteConversation = () => {
+export const useDeleteConversation = (
+  options?: TMutationOpts<TDeleteConversationPayload>
+) => {
   return useMutation({
-    mutationFn: async (conversationId: string) => {
-      const response = await fetch(
-        `${env.backendUrl}/api/v1/conversation/${conversationId}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(
-          `Failed to delete conversation: ${response.statusText}`
-        );
-      }
-      return response.json();
-    },
+    mutationKey: ["useDeleteConversation"],
+    mutationFn: deleteConversation,
+    ...options,
   });
 };
 
-// Send message with streaming support
-export const useSendMessage = () => {
+export const useSendMessage = (
+  options?: TMutationOpts<TSendMessagePayload>
+) => {
   return useMutation({
-    mutationFn: async (args: {
-      conversationId: string | null;
-      message: string;
-      userId: string;
-      messageId?: string;
-    }) => {
-      const { conversationId, message, userId, messageId } = args;
-      const url = `${env.backendUrl}/api/v1/chat/stream/${conversationId}?user_id=${userId}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "text/event-stream",
-        },
-        cache: "no-store",
-        body: JSON.stringify({
-          message,
-          user_id: userId,
-          conversation_id: conversationId,
-          message_id: messageId,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to send message: ${response.statusText}`);
-      }
-      return response;
-    },
+    mutationKey: ["useSendMessage"],
+    mutationFn: sendMessage,
+    ...options,
   });
 };

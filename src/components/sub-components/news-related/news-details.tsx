@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 import { useSubmitNewsReaction } from "../../../hooks/api/news-reaction-service";
 import { useUserId } from "../../../hooks/use-user-id";
-import { TNews } from "../../../types/types";
+import { TNews } from "../../../types/component-types/news-types";
 import {
   NEWS_REACTIONS,
   REACTION_EMOJI_MAP,
@@ -13,7 +13,7 @@ import {
 } from "../../../utils/news-reaction-utils";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
-interface TNewsDetailsProps {
+type TNewsDetailsProps = {
   news: TNews;
   onBack: () => void;
   onAutoMaximize?: () => void;

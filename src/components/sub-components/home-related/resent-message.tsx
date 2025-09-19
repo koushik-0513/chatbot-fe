@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 
-import { TConversation, TConversationMessage } from "@/types/types";
-import { formatChatTime, formatDayOrDate } from "@/utils/datetime";
+import {
+  TChatMessage,
+  TConversation,
+} from "@/types/component-types/chat-types";
+import { formatChatTime, formatDayOrDate } from "@/utils/date-time";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -19,9 +22,8 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
   const { user_id } = useUserId();
 
   const { data: history, isLoading: isHistoryLoading } = useGetChatHistory(
-    user_id || "",
-    1,
-    1
+    { user_id: user_id || "", page: 1, limit: 1 },
+    { enabled: !!user_id }
   );
 
   const recent = history?.data?.[0];
@@ -34,15 +36,13 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
   const day = formatDayOrDate(tsRaw);
   const time = formatChatTime(tsRaw);
 
-  const { data: conv } = useGetConversationById(conversationId);
+  const { data: conv } = useGetConversationById(
+    { conversationId: conversationId || "" },
+    { enabled: !!conversationId }
+  );
 
-  const convData = conv?.data as
-    | TConversation
-    | TConversationMessage[]
-    | undefined;
-  const messages: TConversationMessage[] = Array.isArray(convData)
-    ? convData
-    : convData?.messages || [];
+  const convData = conv?.data as TConversation;
+  const messages: TChatMessage[] = convData?.messages || [];
   const last = messages[messages.length - 1];
   const preview = last?.message || "Tap to continue your last chat";
 

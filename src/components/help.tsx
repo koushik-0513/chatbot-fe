@@ -15,7 +15,12 @@ import {
   useGetCollectionDetails,
   useGetCollections,
 } from "../hooks/api/help-service";
-import { THelpArticle, THelpCollection, THelpPageState } from "../types/types";
+import {
+  THelpArticle,
+  THelpCollection,
+  THelpPageState,
+  currentView,
+} from "../types/component-types/help-types";
 import { ArticleCard } from "./sub-components/help-related/article-cards";
 import { ArticleDetails } from "./sub-components/help-related/article-details";
 import { CollectionDetails } from "./sub-components/help-related/collection-details";
@@ -32,7 +37,6 @@ type THelppageProps = {
   onAutoMaximize?: () => void;
   selectedArticleId?: string | null;
   onTitleChange?: (title: string) => void;
-  onNavigateToHome?: () => void;
   navigatedFromHomepage?: boolean;
 };
 
@@ -46,12 +50,11 @@ export const Help = ({
   onAutoMaximize,
   selectedArticleId: propSelectedArticleId,
   onTitleChange,
-  onNavigateToHome,
   navigatedFromHomepage = false,
 }: THelppageProps) => {
   const { shouldAutoMaximize } = useAutoMaximize({});
   const [pageState, setPageState] = useState<THelpPageState>({
-    currentView: "list",
+    currentView: currentView.LIST,
     selectedCollection: null,
     selectedArticle: null,
   });
@@ -70,8 +73,6 @@ export const Help = ({
   const {
     selectedArticleId,
     articleDetailsData,
-    isLoadingArticle,
-    articleError,
     openArticleDetails,
     setArticleDetailsData,
     setLoadingArticle,
@@ -99,7 +100,10 @@ export const Help = ({
     data: fetchedArticleDetailsData,
     isLoading: isFetchingArticle,
     error: fetchArticleError,
-  } = useGetArticleDetails(selectedArticleId, user_id);
+  } = useGetArticleDetails(
+    { article_id: selectedArticleId || "" },
+    { enabled: !!selectedArticleId }
+  );
 
   // Fetch collections from API
   const { data: collectionsData, isLoading, error } = useGetCollections();
@@ -139,7 +143,10 @@ export const Help = ({
     data: collectionDetailsData,
     isLoading: isLoadingDetails,
     error: detailsError,
-  } = useGetCollectionDetails(selectedCollectionId);
+  } = useGetCollectionDetails(
+    { collection_id: selectedCollectionId || "" },
+    { enabled: !!selectedCollectionId }
+  );
 
   console.log(collectionDetailsData);
 
@@ -188,7 +195,7 @@ export const Help = ({
     if (selectedArticleId && articleDetailsData?.data?.article) {
       const article = articleDetailsData.data.article;
       setPageState({
-        currentView: "article",
+        currentView: currentView.ARTICLE,
         selectedCollection: null,
         selectedArticle: {
           id: article.id,
@@ -267,6 +274,12 @@ export const Help = ({
     } else if (pageState.currentView === "article" && showTitle) {
       // Otherwise, only show title if scrolled up
       onTitleChange?.(currentTitle);
+    } else if (
+      pageState.currentView === "list" ||
+      pageState.currentView === "collection"
+    ) {
+      // Always show "Help" when not viewing an article
+      onTitleChange?.("Help");
     }
   }, [
     pageState.currentView,
@@ -282,7 +295,7 @@ export const Help = ({
       // Don't reset everything if we're navigating from homepage with an article
       if (!navigatedFromHomepage) {
         setPageState({
-          currentView: "list",
+          currentView: currentView.LIST,
           selectedCollection: null,
           selectedArticle: null,
         });
@@ -299,7 +312,7 @@ export const Help = ({
     } else {
       // Reset state when switching away from help
       setPageState({
-        currentView: "list",
+        currentView: currentView.LIST,
         selectedCollection: null,
         selectedArticle: null,
       });
@@ -333,7 +346,7 @@ export const Help = ({
     (collection: THelpCollection) => {
       setSelectedCollectionId(collection.id);
       setPageState({
-        currentView: "collection",
+        currentView: currentView.COLLECTION,
         selectedCollection: collection,
         selectedArticle: null,
       });
@@ -353,7 +366,7 @@ export const Help = ({
       openArticleDetails(article);
       setPageState((prev) => ({
         ...prev,
-        currentView: "article",
+        currentView: currentView.ARTICLE,
         selectedCollection: prev.selectedCollection,
         selectedArticle: article,
       }));
@@ -394,7 +407,7 @@ export const Help = ({
       };
       openArticleDetails(article);
       setPageState({
-        currentView: "article",
+        currentView: currentView.ARTICLE,
         selectedCollection: pageState.selectedCollection,
         selectedArticle: null, // Will be populated by the useEffect when article loads
       });
@@ -438,7 +451,7 @@ export const Help = ({
       setCameFromSearch(true); // Mark that we came from search
       setPageState((prev) => ({
         ...prev,
-        currentView: "article",
+        currentView: currentView.ARTICLE,
         selectedCollection: null,
         selectedArticle: {
           id: articleId,
@@ -483,7 +496,7 @@ export const Help = ({
       // Go back to search results (list view with search active)
       setCameFromSearch(false);
       setPageState({
-        currentView: "list",
+        currentView: currentView.LIST,
         selectedCollection: null,
         selectedArticle: null,
       });
@@ -494,6 +507,8 @@ export const Help = ({
       onShowBackButton(false);
       onShowDetails?.(false);
       onBackFromDetails?.(); // Call the callback to auto-minimize
+      // Reset title to "Help"
+      onTitleChange?.("Help");
 
       // Reset scroll when going back to search
       resetAllScrollWithDelay(100);
@@ -505,7 +520,7 @@ export const Help = ({
       setSelectedCollectionId(parentCollectionId);
       setParentCollectionId(null); // Clear the parent since we're going back
       setPageState({
-        currentView: "collection",
+        currentView: currentView.COLLECTION,
         selectedCollection: null, // This will be updated by the API call
         selectedArticle: null,
       });
@@ -514,7 +529,7 @@ export const Help = ({
       setSelectedCollectionId(null);
       setParentCollectionId(null);
       setPageState({
-        currentView: "list",
+        currentView: currentView.LIST,
         selectedCollection: null,
         selectedArticle: null,
       });
@@ -522,6 +537,8 @@ export const Help = ({
       onShowBackButton(false);
       onShowDetails?.(false);
       onBackFromDetails?.(); // Call the callback to auto-minimize
+      // Reset title to "Help"
+      onTitleChange?.("Help");
     }
 
     // Reset scroll when going back
@@ -534,7 +551,7 @@ export const Help = ({
       // Go back to search results (list view with search active)
       setCameFromSearch(false);
       setPageState({
-        currentView: "list",
+        currentView: currentView.LIST,
         selectedCollection: null,
         selectedArticle: null,
       });
@@ -569,7 +586,7 @@ export const Help = ({
         };
         openArticleDetails(previousArticle);
         setPageState({
-          currentView: "article",
+          currentView: currentView.ARTICLE,
           selectedCollection: pageState.selectedCollection,
           selectedArticle: null, // Will be populated by the useEffect when article loads
         });
@@ -582,7 +599,7 @@ export const Help = ({
 
     // No previous articles in stack, go back to collection
     setPageState({
-      currentView: "collection",
+      currentView: currentView.COLLECTION,
       selectedCollection: pageState.selectedCollection,
       selectedArticle: null,
     });
@@ -592,6 +609,8 @@ export const Help = ({
     onShowDetails?.(false);
     // Call onMinimizeOnly to trigger minimize without affecting back button state
     onMinimizeOnly?.();
+    // Reset title to "Help"
+    onTitleChange?.("Help");
 
     // Reset scroll when going back to collection
     resetAllScrollWithDelay(100);
@@ -614,7 +633,7 @@ export const Help = ({
     setSelectedCollectionId(collection.id);
     setParentCollectionId(parentId); // Store the parent collection ID
     setPageState({
-      currentView: "collection",
+      currentView: currentView.COLLECTION,
       selectedCollection: collection,
       selectedArticle: null,
     });

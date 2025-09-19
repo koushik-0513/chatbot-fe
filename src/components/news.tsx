@@ -7,7 +7,7 @@ import { useNavigationStack } from "@/hooks/use-navigation-stack";
 import { useUserId } from "@/hooks/use-user-id";
 
 import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
-import { TNews } from "../types/types";
+import { TNews } from "../types/component-types/news-types";
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
 
@@ -41,7 +41,10 @@ export const News = ({
     data: detailed_news,
     isLoading: isDetailedLoading,
     error: detailedError,
-  } = useGetNewsById(selectedNewsId, user_id);
+  } = useGetNewsById(
+    { news_id: selectedNewsId || "", user_id: user_id || "" },
+    { enabled: !!selectedNewsId && !!user_id }
+  );
 
   // Reset internal navigation state when component mounts or when switching away from news
   useEffect(() => {

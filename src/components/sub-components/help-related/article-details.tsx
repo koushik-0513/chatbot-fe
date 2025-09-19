@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 import { useSubmitArticleReaction } from "../../../hooks/api/article-reaction-service";
 import { useUserId } from "../../../hooks/use-user-id";
-import { THelpArticleDetailResponse } from "../../../types/types";
+import { THelpArticleDetailResponse } from "../../../types/component-types/help-types";
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
@@ -13,10 +13,10 @@ import {
 } from "../../../utils/article-reaction-utils";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
-interface TArticleDetailsProps {
+type TArticleDetailsProps = {
   articleDetailsData: THelpArticleDetailResponse | undefined;
   onRelatedArticleClick?: (articleId: string) => void;
-}
+};
 
 // Type guard to safely convert string to TArticleReaction
 const isValidArticleReaction = (

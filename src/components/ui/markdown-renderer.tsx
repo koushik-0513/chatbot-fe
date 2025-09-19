@@ -13,6 +13,10 @@ export const MarkdownRenderer = ({
   className = "",
   invert = false,
 }: MarkdownRendererProps) => {
+  // Ensure content is always a string
+  const stringContent =
+    typeof content === "string" ? content : String(content || "");
+
   // Check if custom classes are provided for small text
   const isSmallText =
     className.includes("prose-p:text-xs") || className.includes("text-xs");
@@ -216,7 +220,7 @@ export const MarkdownRenderer = ({
           ),
         }}
       >
-        {content}
+        {stringContent}
       </ReactMarkdown>
     </div>
   );
