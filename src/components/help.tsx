@@ -15,6 +15,7 @@ import {
   useGetCollectionDetails,
   useGetCollections,
 } from "../hooks/api/help-service";
+import { UI_MESSAGES } from "@/constants";
 import {
   THelpArticle,
   THelpCollection,

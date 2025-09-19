@@ -1,12 +1,13 @@
 import env from "@/config/env";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import { API_HEADERS, API_ERROR_MESSAGES } from "@/constants";
 
 // Custom Axios instance with common configurations
 const api: AxiosInstance = axios.create({
   baseURL: env.backendUrl,
   headers: {
-    "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true",
+    "Content-Type": API_HEADERS.CONTENT_TYPE,
+    [API_HEADERS.NGROK_SKIP_WARNING]: "true",
   },
 });
 
@@ -17,7 +18,7 @@ api.interceptors.request.use(
     return config;
   },
   (error: AxiosError) => {
-    console.error("[API Request error]", error);
+    console.error(API_ERROR_MESSAGES.REQUEST_ERROR, error);
     return Promise.reject(error);
   }
 );
@@ -28,7 +29,7 @@ api.interceptors.response.use(
     return response.data;
   },
   (error: AxiosError) => {
-    console.error("[API Response error]", error?.response?.data);
+    console.error(API_ERROR_MESSAGES.RESPONSE_ERROR, error?.response?.data);
     return Promise.reject(error?.response?.data);
   }
 );

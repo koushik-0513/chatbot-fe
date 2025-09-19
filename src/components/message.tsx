@@ -7,6 +7,7 @@ import { MessageCircleQuestionMark } from "lucide-react";
 import { useGetChatHistory } from "../hooks/api/chat-service";
 import { useUserId } from "../hooks/use-user-id";
 import { ChatHistory } from "./sub-components/chat-related/chat-history";
+import { UI_MESSAGES } from "@/constants";
 
 type TMessageProps = {
   showChatHistory: boolean;
@@ -42,7 +43,7 @@ export const Message = ({
 
   const handleNewChat = async () => {
     if (!user_id) {
-      console.error("User ID is required to create a new chat");
+      console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED);
       return;
     }
     // Generate a new conversation id for the first message

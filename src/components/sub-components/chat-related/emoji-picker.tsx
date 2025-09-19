@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createElement } from "react";
 
 import dynamic from "next/dynamic";
+import { UI_MESSAGES } from "@/constants";
 
 export interface TEmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;
@@ -32,7 +33,7 @@ const EmojiPickerComponent = ({
         await import("emoji-picker-element");
         setIsLoaded(true);
       } catch (error) {
-        console.error("Failed to load emoji picker:", error);
+        console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, error);
       }
     };
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { useGetTopArticles } from "../../../hooks/api/help-service";
+import { UI_MESSAGES } from "@/constants";
 
 type TSearchComponentProps = {
   onNavigateToHelp?: (articleId?: string) => void;
@@ -54,7 +55,7 @@ export const SearchComponent = ({
       <div className="relative mb-6">
         <Input
           type="text"
-          placeholder="Search for help"
+          placeholder={UI_MESSAGES.PLACEHOLDERS.SEARCH}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyPress}
@@ -79,12 +80,12 @@ export const SearchComponent = ({
               animate={{ opacity: [0.5, 1, 0.5] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              Loading articles...
+              {UI_MESSAGES.LOADING.ARTICLES}
             </motion.div>
           </div>
         ) : error ? (
           <div className="text-destructive py-4 text-center text-sm">
-            Failed to load articles
+            {UI_MESSAGES.ERROR.ARTICLES_LOAD_FAILED}
           </div>
         ) : topArticlesData?.data?.articles &&
           topArticlesData.data.articles.length > 0 ? (

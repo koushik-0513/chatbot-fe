@@ -7,6 +7,7 @@ import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
 import { SearchComponent } from "./sub-components/home-related/search-component";
+import { UI_MESSAGES, DEFAULT_TITLES } from "@/constants";
 
 type THomepageProps = {
   onNavigateToHelp?: (articleId?: string) => void;
@@ -103,7 +104,7 @@ export const Home = ({
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            Loading articles...
+            {UI_MESSAGES.LOADING.ARTICLES}
           </motion.div>
         </motion.div>
       )}
@@ -117,7 +118,7 @@ export const Home = ({
           transition={{ duration: 0.3 }}
         >
           <p className="text-destructive text-sm">
-            Failed to load content. Please try again later.
+            {UI_MESSAGES.ERROR.NEWS_LOAD_FAILED}
           </p>
         </motion.div>
       )}

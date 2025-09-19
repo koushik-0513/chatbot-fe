@@ -1,7 +1,5 @@
 import { ObjectId } from "bson";
-
-const USER_ID_KEY = "chatbot_user_id";
-const USER_CREATED_KEY = "chatbot_user_created";
+import { USER_ID_KEY, USER_CREATED_KEY } from "@/constants";
 
 export const generateUserId = (): string => {
   const id = new ObjectId();

@@ -4,6 +4,7 @@ import { setUserCreatedOnBackend } from "@/utils/user-id";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
+import { UI_MESSAGES } from "@/constants";
 
 // Base URL: /api/v1/user/...
 
@@ -20,10 +21,10 @@ export const useCreateUser = (options?: TMutationOpts<TCreateUserRequest>) => {
     mutationKey: ["useCreateUser"],
     mutationFn: createUser,
     onError: (error) => {
-      console.error("Error creating user:", error);
+      console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, error);
     },
     onSuccess: (data) => {
-      console.log("User created successfully:", data);
+      console.log(UI_MESSAGES.SUCCESS.USER_CREATED, data);
       // Store the creation status in localStorage
       setUserCreatedOnBackend();
     },

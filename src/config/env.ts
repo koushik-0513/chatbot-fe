@@ -1,4 +1,5 @@
 import { TEnv } from "@/types/types";
+import { API_DEFAULTS } from "@/constants";
 
 type EnvOverrides = Partial<TEnv>;
 
@@ -26,7 +27,7 @@ const getGlobalOverrides = (): EnvOverrides => {
 
 const buildEnv = (): TEnv => {
   const defaults: TEnv = {
-    backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000",
+    backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || API_DEFAULTS.BACKEND_URL,
   };
 
   return {

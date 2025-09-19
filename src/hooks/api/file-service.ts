@@ -1,4 +1,5 @@
 import type { TUploadOptions } from "@/types/component-types/chat-types";
+import { UI_MESSAGES } from "@/constants";
 
 // File Upload Types
 export type UploadResult<T = unknown> = {
@@ -36,7 +37,7 @@ export function uploadFile<T = unknown>({
     if (signal) {
       signal.addEventListener("abort", () => {
         xhr.abort();
-        reject(new Error("Upload aborted"));
+        reject(new Error(UI_MESSAGES.ERROR.UPLOAD_ABORTED));
       });
     }
 
@@ -52,7 +53,7 @@ export function uploadFile<T = unknown>({
         } catch (error) {
           resolve({
             success: false,
-            error: "Failed to parse response",
+            error: UI_MESSAGES.ERROR.PARSE_RESPONSE_FAILED,
           });
         }
       } else {
@@ -73,7 +74,7 @@ export function uploadFile<T = unknown>({
 
     // Handle abort
     xhr.addEventListener("abort", () => {
-      reject(new Error("Upload was aborted"));
+      reject(new Error(UI_MESSAGES.ERROR.UPLOAD_ABORTED));
     });
 
     // Start upload

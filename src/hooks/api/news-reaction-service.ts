@@ -2,9 +2,9 @@ import type { TApiPromise, TMutationOpts } from "@/types/api";
 import type { TNewsReactionResponse } from "@/types/component-types/news-types";
 import {
   NEWS_REACTIONS,
-  REACTION_EMOJI_MAP,
+  NEWS_REACTION_EMOJI_MAP,
   TNewsReaction,
-} from "@/utils/news-reaction-utils";
+} from "@/constants";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -45,5 +45,5 @@ export const useSubmitNewsReaction = (
 };
 
 // Re-export utils for convenience
-export { NEWS_REACTIONS, REACTION_EMOJI_MAP };
+export { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP };
 export type { TNewsReaction };

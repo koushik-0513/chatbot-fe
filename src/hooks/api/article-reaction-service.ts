@@ -4,7 +4,7 @@ import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
   TArticleReaction,
-} from "@/utils/article-reaction-utils";
+} from "@/constants";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";

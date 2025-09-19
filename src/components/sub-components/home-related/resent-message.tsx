@@ -5,6 +5,7 @@ import {
   TConversation,
 } from "@/types/component-types/chat-types";
 import { formatChatTime, formatDayOrDate } from "@/utils/date-time";
+import { UI_MESSAGES, DEFAULT_TITLES } from "@/constants";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -31,7 +32,7 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
     return recent?._id || null;
   }, [recent]);
 
-  const title = recent?.title || "Recent Chat";
+  const title = recent?.title || DEFAULT_TITLES.RECENT_CHAT;
   const tsRaw = recent?.updatedAt || "";
   const day = formatDayOrDate(tsRaw);
   const time = formatChatTime(tsRaw);
@@ -58,7 +59,7 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
         </CardHeader>
         <CardContent className="-mt-6">
           {isHistoryLoading ? (
-            <div className="text-muted-foreground text-sm">Loading…</div>
+            <div className="text-muted-foreground text-sm">{UI_MESSAGES.LOADING.GENERAL}</div>
           ) : conversationId ? (
             <div>
               <div className="text-foreground my-2 line-clamp-2 text-sm">

@@ -6,11 +6,12 @@ import { motion } from "framer-motion";
 import { useSubmitArticleReaction } from "../../../hooks/api/article-reaction-service";
 import { useUserId } from "../../../hooks/use-user-id";
 import { THelpArticleDetailResponse } from "../../../types/component-types/help-types";
+import { UI_MESSAGES } from "@/constants";
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
   TArticleReaction,
-} from "../../../utils/article-reaction-utils";
+} from "@/constants";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 type TArticleDetailsProps = {
@@ -64,7 +65,7 @@ export const ArticleDetails = ({
       });
       setSelectedReaction(reaction);
     } catch (error) {
-      console.error("Failed to submit reaction:", error);
+      console.error(UI_MESSAGES.ERROR.REACTION_SUBMIT_FAILED, error);
     }
   };
 

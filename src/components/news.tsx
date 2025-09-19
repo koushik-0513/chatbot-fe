@@ -10,6 +10,7 @@ import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
 import { TNews } from "../types/component-types/news-types";
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
+import { UI_MESSAGES, DEFAULT_TITLES } from "@/constants";
 
 type TNewsProps = {
   onShowBackButton: (show: boolean) => void;
@@ -134,7 +135,7 @@ export const News = ({
                 animate={{ opacity: [0.5, 1, 0.5] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
-                Loading news details...
+                {UI_MESSAGES.LOADING.NEWS_DETAILS}
               </motion.div>
             </div>
           </motion.div>

@@ -7,6 +7,7 @@ import {
   isValidUserId,
 } from "../utils/user-id";
 import { useCreateUser } from "./api/user-service";
+import { UI_MESSAGES } from "@/constants";
 
 export const useUserId = () => {
   const [user_id, set_user_id] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export const useUserId = () => {
             set_is_new_user(true);
           } else {
             // User already exists on backend
-            console.log("User already created on backend (from localStorage)");
+            console.log(UI_MESSAGES.SUCCESS.USER_CREATED);
           }
         }
 
@@ -53,14 +54,14 @@ export const useUserId = () => {
               user_id: final_id,
               preferences: { theme: "light", language: "en" },
             });
-            console.log("User created successfully:", result);
+            console.log(UI_MESSAGES.SUCCESS.USER_CREATED, result);
           } catch (error) {
-            console.error("Failed to create user on backend:", error);
+            console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, error);
             // Continue with local user ID even if backend fails
           }
         }
       } catch (error) {
-        console.error("Error getting user ID:", error);
+        console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, error);
         // Fallback: generate a new ID
         const fallback_id = generateUserId();
         localStorage.setItem("chatbot_user_id", fallback_id);
@@ -74,7 +75,7 @@ export const useUserId = () => {
             preferences: { theme: "light", language: "en" },
           });
         } catch (backendError) {
-          console.error("Failed to create user on backend:", backendError);
+          console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, backendError);
         }
       } finally {
         set_is_loading(false);

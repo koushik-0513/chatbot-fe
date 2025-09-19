@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { TIMING } from "@/constants";
 
 interface UseAutoMaximizeProps {
   onMaximizeChange?: (isMaximized: boolean) => void;
@@ -12,13 +13,12 @@ export const useAutoMaximize = ({
   setInternalIsMaximized,
 }: UseAutoMaximizeProps) => {
   const lastMaximizeTime = useRef<number>(0);
-  const MAXIMIZE_DEBOUNCE_MS = 500; // Prevent rapid successive maximize calls
 
   const triggerAutoMaximize = useCallback(() => {
     const now = Date.now();
 
     // Debounce rapid successive calls
-    if (now - lastMaximizeTime.current < MAXIMIZE_DEBOUNCE_MS) {
+    if (now - lastMaximizeTime.current < TIMING.MAXIMIZE_DEBOUNCE_MS) {
       return;
     }
 

@@ -8,9 +8,10 @@ import { useUserId } from "../../../hooks/use-user-id";
 import { TNews } from "../../../types/component-types/news-types";
 import {
   NEWS_REACTIONS,
-  REACTION_EMOJI_MAP,
+  NEWS_REACTION_EMOJI_MAP,
   TNewsReaction,
-} from "../../../utils/news-reaction-utils";
+  UI_MESSAGES,
+} from "@/constants";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 type TNewsDetailsProps = {
@@ -58,7 +59,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
       });
       setSelectedReaction(reaction);
     } catch (error) {
-      console.error("Failed to submit reaction:", error);
+      console.error(UI_MESSAGES.ERROR.REACTION_SUBMIT_FAILED, error);
     }
   };
 
@@ -294,7 +295,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
                   transition={{ delay: index * 0.05 }}
                 >
                   <span className="text-xl">
-                    {REACTION_EMOJI_MAP[reaction]}
+                    {NEWS_REACTION_EMOJI_MAP[reaction]}
                   </span>
                 </motion.button>
               );
