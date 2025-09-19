@@ -1,5 +1,5 @@
+import { API_DEFAULTS } from "@/constants/constants";
 import { TEnv } from "@/types/types";
-import { API_DEFAULTS } from "@/constants";
 
 type EnvOverrides = Partial<TEnv>;
 

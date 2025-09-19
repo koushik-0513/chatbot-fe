@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createElement } from "react";
 
 import dynamic from "next/dynamic";
-import { UI_MESSAGES } from "@/constants";
+
+import { UI_MESSAGES } from "@/constants/constants";
 
 export interface TEmojiPickerProps {
   onEmojiSelect: (emoji: string) => void;

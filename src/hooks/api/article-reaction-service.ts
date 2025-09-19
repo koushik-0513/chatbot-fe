@@ -1,10 +1,10 @@
-import type { TApiPromise, TMutationOpts } from "@/types/api";
-import type { TArticleReactionResponse } from "@/types/component-types/help-types";
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
   TArticleReaction,
-} from "@/constants";
+} from "@/constants/constants";
+import type { TApiPromise, TMutationOpts } from "@/types/api";
+import type { TArticleReactionResponse } from "@/types/component-types/help-types";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";

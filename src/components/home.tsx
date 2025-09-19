@@ -1,3 +1,4 @@
+import { DEFAULT_TITLES, UI_MESSAGES } from "@/constants/constants";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -7,7 +8,6 @@ import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
 import { SearchComponent } from "./sub-components/home-related/search-component";
-import { UI_MESSAGES, DEFAULT_TITLES } from "@/constants";
 
 type THomepageProps = {
   onNavigateToHelp?: (articleId?: string) => void;

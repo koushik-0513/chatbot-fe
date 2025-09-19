@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import { UI_MESSAGES } from "@/constants/constants";
 import { useArticleNavigation } from "@/contexts/article-navigation-context";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,7 +16,6 @@ import {
   useGetCollectionDetails,
   useGetCollections,
 } from "../hooks/api/help-service";
-import { UI_MESSAGES } from "@/constants";
 import {
   THelpArticle,
   THelpCollection,

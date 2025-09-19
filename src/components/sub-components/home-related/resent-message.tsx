@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 
+import { DEFAULT_TITLES, UI_MESSAGES } from "@/constants/constants";
 import {
   TChatMessage,
   TConversation,
 } from "@/types/component-types/chat-types";
 import { formatChatTime, formatDayOrDate } from "@/utils/date-time";
-import { UI_MESSAGES, DEFAULT_TITLES } from "@/constants";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -59,7 +59,9 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
         </CardHeader>
         <CardContent className="-mt-6">
           {isHistoryLoading ? (
-            <div className="text-muted-foreground text-sm">{UI_MESSAGES.LOADING.GENERAL}</div>
+            <div className="text-muted-foreground text-sm">
+              {UI_MESSAGES.LOADING.GENERAL}
+            </div>
           ) : conversationId ? (
             <div>
               <div className="text-foreground my-2 line-clamp-2 text-sm">

@@ -1,3 +1,4 @@
+import { UI_MESSAGES } from "@/constants/constants";
 import { TChatHistoryItem } from "@/types/component-types/chat-types";
 import { formatChatTime, formatDayOrDate } from "@/utils/date-time";
 import { ObjectId } from "bson";
@@ -7,7 +8,6 @@ import { MessageCircleQuestionMark } from "lucide-react";
 import { useGetChatHistory } from "../hooks/api/chat-service";
 import { useUserId } from "../hooks/use-user-id";
 import { ChatHistory } from "./sub-components/chat-related/chat-history";
-import { UI_MESSAGES } from "@/constants";
 
 type TMessageProps = {
   showChatHistory: boolean;

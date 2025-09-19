@@ -1,10 +1,10 @@
+import { UI_MESSAGES } from "@/constants/constants";
 import type { TApiPromise, TMutationOpts } from "@/types/api";
 import type { TCreateUserRequest, TCreateUserResponse } from "@/types/types";
 import { setUserCreatedOnBackend } from "@/utils/user-id";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
-import { UI_MESSAGES } from "@/constants";
 
 // Base URL: /api/v1/user/...
 

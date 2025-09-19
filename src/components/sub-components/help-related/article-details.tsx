@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 
+import { UI_MESSAGES } from "@/constants/constants";
+import {
+  ARTICLE_REACTIONS,
+  ARTICLE_REACTION_EMOJI_MAP,
+  TArticleReaction,
+} from "@/constants/constants";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { motion } from "framer-motion";
 
 import { useSubmitArticleReaction } from "../../../hooks/api/article-reaction-service";
 import { useUserId } from "../../../hooks/use-user-id";
 import { THelpArticleDetailResponse } from "../../../types/component-types/help-types";
-import { UI_MESSAGES } from "@/constants";
-import {
-  ARTICLE_REACTIONS,
-  ARTICLE_REACTION_EMOJI_MAP,
-  TArticleReaction,
-} from "@/constants";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 type TArticleDetailsProps = {

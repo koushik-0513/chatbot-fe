@@ -1,5 +1,5 @@
+import { USER_CREATED_KEY, USER_ID_KEY } from "@/constants/constants";
 import { ObjectId } from "bson";
-import { USER_ID_KEY, USER_CREATED_KEY } from "@/constants";
 
 export const generateUserId = (): string => {
   const id = new ObjectId();

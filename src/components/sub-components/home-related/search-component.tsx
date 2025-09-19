@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { UI_MESSAGES } from "@/constants/constants";
 import { motion } from "framer-motion";
 import { ChevronRight, Search } from "lucide-react";
 
@@ -7,11 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { useGetTopArticles } from "../../../hooks/api/help-service";
-import { UI_MESSAGES } from "@/constants";
 
 type TSearchComponentProps = {
   onNavigateToHelp?: (articleId?: string) => void;
-}
+};
 
 export const SearchComponent = ({
   onNavigateToHelp,

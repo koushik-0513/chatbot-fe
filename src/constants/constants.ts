@@ -5,7 +5,7 @@
 // Available news reactions
 export const NEWS_REACTIONS = [
   "sleeping",
-  "heart", 
+  "heart",
   "thumbsdown",
   "tada",
 ] as const;
@@ -142,7 +142,7 @@ export const TIMING = {
 // Animation delays for loading dots
 export const ANIMATION_DELAYS = {
   DOT_1: "-0.3s",
-  DOT_2: "-0.15s", 
+  DOT_2: "-0.15s",
   DOT_3: "0s",
 } as const;
 

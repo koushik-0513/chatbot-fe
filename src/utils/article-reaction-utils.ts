@@ -3,4 +3,4 @@ export {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
   type TArticleReaction,
-} from "@/constants";
+} from "@/constants/constants";

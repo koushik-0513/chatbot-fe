@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { UI_MESSAGES } from "@/constants/constants";
+
 import {
   generateUserId,
   getUserId,
@@ -7,7 +9,6 @@ import {
   isValidUserId,
 } from "../utils/user-id";
 import { useCreateUser } from "./api/user-service";
-import { UI_MESSAGES } from "@/constants";
 
 export const useUserId = () => {
   const [user_id, set_user_id] = useState<string | null>(null);

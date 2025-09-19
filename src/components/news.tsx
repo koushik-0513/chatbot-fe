@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { DEFAULT_TITLES, UI_MESSAGES } from "@/constants/constants";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -10,7 +11,6 @@ import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
 import { TNews } from "../types/component-types/news-types";
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
-import { UI_MESSAGES, DEFAULT_TITLES } from "@/constants";
 
 type TNewsProps = {
   onShowBackButton: (show: boolean) => void;

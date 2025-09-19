@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  ANIMATION_DELAYS,
+  DEFAULT_TITLES,
+  LAYOUT,
+  UI_MESSAGES,
+} from "@/constants/constants";
+import {
   TChatMessage,
   TChatMessageSender,
   TUploadStatus,
@@ -19,7 +25,6 @@ import { uploadFile } from "@/hooks/api/file-service";
 
 import { useUserId } from "../../../hooks/use-user-id";
 import { EmojiPicker } from "./emoji-picker";
-import { UI_MESSAGES, DEFAULT_TITLES, LAYOUT, ANIMATION_DELAYS } from "@/constants";
 
 type TChatContainerProps = {
   chatId: string | null;
@@ -323,7 +328,9 @@ export const ChatContainer = ({
 
         if (response.success) {
           setUploads((prev) =>
-            prev.map((u) => (u.id === id ? { ...u, status: TUploadStatus.SUCCESS } : u))
+            prev.map((u) =>
+              u.id === id ? { ...u, status: TUploadStatus.SUCCESS } : u
+            )
           );
         } else {
           setUploads((prev) =>
@@ -337,7 +344,9 @@ export const ChatContainer = ({
       } catch (error) {
         setUploads((prev) =>
           prev.map((u) =>
-            u.id === id ? { ...u, status: TUploadStatus.ERROR, error: "Upload failed" } : u
+            u.id === id
+              ? { ...u, status: TUploadStatus.ERROR, error: "Upload failed" }
+              : u
           )
         );
       }
@@ -362,7 +371,9 @@ export const ChatContainer = ({
   if (error) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-destructive">{UI_MESSAGES.ERROR.CHAT_LOAD_FAILED}</div>
+        <div className="text-destructive">
+          {UI_MESSAGES.ERROR.CHAT_LOAD_FAILED}
+        </div>
       </div>
     );
   }
@@ -380,7 +391,9 @@ export const ChatContainer = ({
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h2 className="font-semibold">
-            {chatTitle || chatHistoryResponse?.data?.title || DEFAULT_TITLES.CHAT}
+            {chatTitle ||
+              chatHistoryResponse?.data?.title ||
+              DEFAULT_TITLES.CHAT}
           </h2>
         </div>
         {onClose && (
@@ -404,7 +417,9 @@ export const ChatContainer = ({
         {messages.length === 0 && !isStreaming && (
           <div className="flex justify-center py-8">
             <div className="text-center">
-              <p className="mb-2 text-lg font-medium">{UI_MESSAGES.WELCOME.CHAT}</p>
+              <p className="mb-2 text-lg font-medium">
+                {UI_MESSAGES.WELCOME.CHAT}
+              </p>
               <p className="text-muted-foreground">
                 {UI_MESSAGES.WELCOME.SUBTITLE}
               </p>
@@ -438,7 +453,9 @@ export const ChatContainer = ({
           {/* Streaming Message */}
           {isStreaming && (
             <div className="flex justify-start">
-              <div className={`bg-muted ${LAYOUT.MESSAGE_MAX_WIDTH} rounded-lg px-4 py-2`}>
+              <div
+                className={`bg-muted ${LAYOUT.MESSAGE_MAX_WIDTH} rounded-lg px-4 py-2`}
+              >
                 {streamingContent ? (
                   <>
                     <MarkdownRenderer
@@ -449,9 +466,15 @@ export const ChatContainer = ({
                   </>
                 ) : (
                   <div className="flex items-center gap-1">
-                    <span className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_1}]`} />
-                    <span className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_2}]`} />
-                    <span className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_3}]`} />
+                    <span
+                      className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_1}]`}
+                    />
+                    <span
+                      className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_2}]`}
+                    />
+                    <span
+                      className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_3}]`}
+                    />
                   </div>
                 )}
               </div>
@@ -489,8 +512,10 @@ export const ChatContainer = ({
                     {u.name}
                   </span>
                   <span className="text-muted-foreground">
-                    {u.status === "uploading" && UI_MESSAGES.STATUS.UPLOAD_UPLOADING}
-                    {u.status === "success" && UI_MESSAGES.STATUS.UPLOAD_SUCCESS}
+                    {u.status === "uploading" &&
+                      UI_MESSAGES.STATUS.UPLOAD_UPLOADING}
+                    {u.status === "success" &&
+                      UI_MESSAGES.STATUS.UPLOAD_SUCCESS}
                     {u.status === "error" && UI_MESSAGES.STATUS.UPLOAD_ERROR}
                   </span>
                 </div>

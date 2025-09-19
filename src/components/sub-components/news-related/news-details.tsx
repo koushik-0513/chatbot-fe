@@ -1,24 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 
+import {
+  NEWS_REACTIONS,
+  NEWS_REACTION_EMOJI_MAP,
+  TNewsReaction,
+  UI_MESSAGES,
+} from "@/constants/constants";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { motion } from "framer-motion";
 
 import { useSubmitNewsReaction } from "../../../hooks/api/news-reaction-service";
 import { useUserId } from "../../../hooks/use-user-id";
 import { TNews } from "../../../types/component-types/news-types";
-import {
-  NEWS_REACTIONS,
-  NEWS_REACTION_EMOJI_MAP,
-  TNewsReaction,
-  UI_MESSAGES,
-} from "@/constants";
 import { MarkdownRenderer } from "../../ui/markdown-renderer";
 
 type TNewsDetailsProps = {
   news: TNews;
   onBack: () => void;
   onAutoMaximize?: () => void;
-}
+};
 
 // Type guard to safely convert string to TNewsReaction
 const isValidNewsReaction = (reaction: string): TNewsReaction | null => {

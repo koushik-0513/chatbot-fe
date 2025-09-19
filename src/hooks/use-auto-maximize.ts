@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
-import { TIMING } from "@/constants";
+
+import { TIMING } from "@/constants/constants";
 
 interface UseAutoMaximizeProps {
   onMaximizeChange?: (isMaximized: boolean) => void;

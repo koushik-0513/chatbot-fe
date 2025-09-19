@@ -1,5 +1,5 @@
+import { UI_MESSAGES } from "@/constants/constants";
 import type { TUploadOptions } from "@/types/component-types/chat-types";
-import { UI_MESSAGES } from "@/constants";
 
 // File Upload Types
 export type UploadResult<T = unknown> = {

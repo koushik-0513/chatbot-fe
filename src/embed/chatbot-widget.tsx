@@ -2,11 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Root, createRoot } from "react-dom/client";
 
 import { setRuntimeEnv } from "@/config/env";
+import { Providers } from "@/providers/providers";
 import { TChatbotProps, TEnv } from "@/types/types";
 import { Bot, ChevronDown } from "lucide-react";
 
 import { Chatbot } from "@/components/chatbot";
-import { Providers } from "@/components/providers";
 
 type WidgetChatbotProps = Omit<TChatbotProps, "user_id" | "onClose">;
 
