@@ -1,11 +1,9 @@
 import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TGetCollectionsParams,
-  TGetHelpParams,
   THelpArticleDetailResponse,
   THelpCollectionDetailResponse,
   THelpCollectionsResponse,
-  THelpDetailResponse,
   THelpResponse,
   TTopArticlesResponse,
 } from "@/types/component-types/help-types";
@@ -32,9 +30,6 @@ type TGetHelpQParams = {
   limit?: number;
 };
 
-type TGetHelpByIdQParams = {
-  help_id: string;
-};
 
 // Help Services
 const getCollections = (

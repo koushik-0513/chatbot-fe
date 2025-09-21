@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { UI_MESSAGES } from "@/constants/constants";
 
@@ -14,11 +14,14 @@ export const useUserId = () => {
   const [user_id, set_user_id] = useState<string | null>(null);
   const [is_loading, set_is_loading] = useState(true);
   const [is_new_user, set_is_new_user] = useState(false);
+  const initialized = useRef(false);
 
   const createUserMutation = useCreateUser();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Prevent multiple initializations
+    if (initialized.current) return;
+    initialized.current = true;
     const initialize_user = async () => {
       try {
         // Get or generate user ID
@@ -84,7 +87,7 @@ export const useUserId = () => {
     };
 
     initialize_user();
-  }, []); // Remove createUserMutation from dependencies
+  }, [createUserMutation]); // Include createUserMutation in dependencies
 
   return {
     user_id,

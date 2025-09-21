@@ -11,8 +11,7 @@ import { useUserId } from "@/hooks/use-user-id";
 
 export default function Home() {
   const [isChatbotopen, setIsChatbotOpen] = useState(false);
-  const { user_id, is_loading, is_creating_user, create_user_error } =
-    useUserId();
+  const { user_id } = useUserId();
   return (
     <motion.div
       className="bg-card min-h-screen"

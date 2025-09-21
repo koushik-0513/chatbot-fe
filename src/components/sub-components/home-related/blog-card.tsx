@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { motion } from "framer-motion";
 
@@ -25,9 +26,11 @@ export const BlogCard = ({
       <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
         <Card className="mb-4 overflow-hidden p-0">
           <div className="px-3 pt-4">
-            <img
-              src={imageurl}
+            <Image
+              src={imageurl || ""}
               alt={title}
+              width={400}
+              height={192}
               className="h-48 w-full object-cover"
             />
           </div>
@@ -50,9 +53,11 @@ export const BlogCard = ({
     <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
       <Card className="mb-4 overflow-hidden p-0">
         <div className="px-3 pt-4">
-          <img
-            src={imageurl}
+          <Image
+            src={imageurl || ""}
             alt={title}
+            width={400}
+            height={192}
             className="h-48 w-full object-cover"
           />
         </div>

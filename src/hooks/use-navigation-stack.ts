@@ -7,7 +7,7 @@ export type NavigationStackItem = {
     collectionId?: string;
     newsId?: string;
     searchQuery?: string;
-    searchResults?: any[];
+    searchResults?: unknown[];
   };
 };
 

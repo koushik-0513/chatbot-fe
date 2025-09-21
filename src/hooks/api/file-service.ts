@@ -50,7 +50,7 @@ export function uploadFile<T = unknown>({
             success: true,
             data: response,
           });
-        } catch (error) {
+        } catch {
           resolve({
             success: false,
             error: UI_MESSAGES.ERROR.PARSE_RESPONSE_FAILED,

@@ -2,7 +2,7 @@
 
 import { ReactNode, createContext, useContext, useState } from "react";
 
-import { THelpArticle, THelpArticleDetailResponse } from "@/types/types";
+import { THelpArticle, THelpArticleDetailResponse } from "@/types/component-types/help-types";
 
 interface ArticleNavigationContextType {
   // State for article details navigation from home page

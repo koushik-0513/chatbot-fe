@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -33,9 +34,11 @@ export const NewsCard = ({
       >
         <div>
           <CardContent className="p-0">
-            <img
-              src={news.image}
+            <Image
+              src={news.image || ""}
               alt={news.title}
+              width={400}
+              height={192}
               className="h-48 w-full object-cover"
             />
           </CardContent>

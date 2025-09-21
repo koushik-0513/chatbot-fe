@@ -1,4 +1,4 @@
-import { DEFAULT_TITLES, UI_MESSAGES } from "@/constants/constants";
+import { UI_MESSAGES } from "@/constants/constants";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 

@@ -341,7 +341,7 @@ export const ChatContainer = ({
             )
           );
         }
-      } catch (error) {
+      } catch {
         setUploads((prev) =>
           prev.map((u) =>
             u.id === id

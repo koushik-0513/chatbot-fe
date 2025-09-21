@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 import {
   NEWS_REACTIONS,
@@ -184,9 +185,11 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
       {/* Main Image - Full Width */}
       {news.image_url && (
         <div className="-mx-4 -my-4 mb-6 w-[calc(100%+2rem)]">
-          <img
+          <Image
             src={news.image_url}
             alt={news.title}
+            width={800}
+            height={400}
             className="h-auto w-full object-cover"
           />
         </div>
