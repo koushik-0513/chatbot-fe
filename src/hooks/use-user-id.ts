@@ -7,6 +7,7 @@ import {
   getUserId,
   isUserCreatedOnBackend,
   isValidUserId,
+  setUserCreatedOnBackend,
 } from "../utils/user-id";
 import { useCreateUser } from "./api/user-service";
 
@@ -28,36 +29,39 @@ export const useUserId = () => {
         const id = getUserId();
         let final_id = id;
         let should_create_user = false;
+        let is_newly_created = false;
 
-        // Validate the ID
-        if (!isValidUserId(id)) {
-          // If invalid, generate a new one
-          final_id = generateUserId();
-          localStorage.setItem("chatbot_user_id", final_id);
-          set_is_new_user(true);
+        // Check if user was already created on backend
+        const user_created_on_backend = isUserCreatedOnBackend();
+
+        if (!user_created_on_backend) {
+          // User hasn't been created on backend yet
           should_create_user = true;
-        } else {
-          // Check if user was already created on backend using localStorage
-          const user_created = isUserCreatedOnBackend();
-          if (!user_created) {
-            // User hasn't been created on backend yet, need to create
-            should_create_user = true;
-            set_is_new_user(true);
+          
+          // Check if we have a valid ID
+          if (!isValidUserId(id)) {
+            // Generate a new ID if current one is invalid
+            final_id = generateUserId();
+            localStorage.setItem("chatbot_user_id", final_id);
+            is_newly_created = true;
           } else {
-            // User already exists on backend
-            console.log(UI_MESSAGES.SUCCESS.USER_CREATED);
+            // ID is valid but user not created on backend yet
+            is_newly_created = true;
           }
         }
 
         set_user_id(final_id);
+        set_is_new_user(is_newly_created);
 
         // Send user ID to backend only if needed
         if (final_id && should_create_user) {
           try {
             const result = await createUserMutation.mutateAsync({
-              user_id: final_id,
+              userId: final_id,
               preferences: { theme: "light", language: "en" },
             });
+            // Mark user as created on backend
+            setUserCreatedOnBackend();
             console.log(UI_MESSAGES.SUCCESS.USER_CREATED, result);
           } catch (error) {
             console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, error);
@@ -75,9 +79,10 @@ export const useUserId = () => {
         // Try to send to backend
         try {
           await createUserMutation.mutateAsync({
-            user_id: fallback_id,
+            userId: fallback_id,
             preferences: { theme: "light", language: "en" },
           });
+          setUserCreatedOnBackend();
         } catch (backendError) {
           console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, backendError);
         }

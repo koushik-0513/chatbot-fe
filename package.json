@@ -1,9 +1,18 @@
 {
-  "name": "my-app",
+  "name": "chatbot-launcher",
   "version": "0.1.0",
-  "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "build": "next build --turbopack",
+    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
@@ -23,12 +32,14 @@
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.1.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -46,6 +57,7 @@
     "prettier-plugin-packagejson": "^2.5.19",
     "prettier-plugin-tailwindcss": "^0.6.14",
     "tailwindcss": "^4",
+    "tsup": "^8.5.0",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5"
   }

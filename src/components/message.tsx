@@ -46,13 +46,11 @@ export const Message = ({
       console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED);
       return;
     }
-    // Generate a new conversation id for the first message
-    const newConversationId = new ObjectId().toHexString();
-    onChatSelected(newConversationId);
+    // Don't generate conversation ID yet - show initial message first
+    onChatSelected(null);
     setShowActiveChat(true);
-    // Set title to undefined/empty until backend provides one
-    title("");
-    // createNewChatMutation.mutate({ user_id: user_id });
+    // Set title for new chat
+    title("New Chat");
   };
 
   // Loading state
@@ -69,8 +67,8 @@ export const Message = ({
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state - but treat 404 as empty state
+  if (error && (error as any)?.status_code !== 404) {
     return (
       <motion.div
         className="flex h-full flex-col items-center justify-center"
@@ -87,8 +85,9 @@ export const Message = ({
   }
 
   // Extract the data array from the response
-  const chatHistoryDataRaw: TChatHistoryItem[] =
-    chatHistoryResponse?.data || [];
+  // If there's a 404 error, treat it as empty data
+  const chatHistoryDataRaw: TChatHistoryItem[] = 
+    (error as any)?.status_code === 404 ? [] : (chatHistoryResponse?.data || []);
   const chatHistoryData = [...chatHistoryDataRaw].sort(
     (a: TChatHistoryItem, b: TChatHistoryItem) => {
       const getTs = (x: TChatHistoryItem) => new Date(x.updatedAt).getTime();

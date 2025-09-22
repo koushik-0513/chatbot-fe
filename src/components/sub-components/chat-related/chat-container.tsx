@@ -46,13 +46,24 @@ export const ChatContainer = ({
   onClose,
 }: TChatContainerProps) => {
   const { user_id } = useUserId();
+  
+  // State - initialize before hooks
+  const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
+  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState<TChatMessage[]>([]);
+  const [streamingContent, setStreamingContent] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+
   const {
     data: chatHistoryResponse,
     isLoading,
     error,
   } = useGetConversationById(
-    { conversationId: chatId || "" },
-    { enabled: !!chatId }
+    { conversationId: currentChatId || "" },
+    { enabled: !!currentChatId }
   );
   const queryClient = useQueryClient();
   const sendMessageMutation = useSendMessage();
@@ -62,17 +73,13 @@ export const ChatContainer = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isAutoScrollingRef = useRef(false);
 
-  // State
-  const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState<TChatMessage[]>([]);
-  const [streamingContent, setStreamingContent] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [uploads, setUploads] = useState<UploadItem[]>([]);
-
   const previousChatIdRef = useRef<string | null>(null);
   const lastSyncedMessageIdRef = useRef<string | null>(null);
+
+  // Update currentChatId when chatId prop changes
+  useEffect(() => {
+    setCurrentChatId(chatId);
+  }, [chatId]);
 
   const areMessagesEqual = useCallback(
     (incoming: TChatMessage[], current: TChatMessage[]) => {
@@ -121,7 +128,7 @@ export const ChatContainer = ({
   // Initialize or sync messages from API response without disrupting manual scroll
   useEffect(() => {
     const fetchedMessages = chatHistoryResponse?.data?.messages ?? [];
-    const isNewChat = previousChatIdRef.current !== chatId;
+    const isNewChat = previousChatIdRef.current !== currentChatId;
 
     setMessages((currentMessages) => {
       if (!isNewChat && areMessagesEqual(fetchedMessages, currentMessages)) {
@@ -147,9 +154,9 @@ export const ChatContainer = ({
     }
 
     lastSyncedMessageIdRef.current = latestFetchedMessageId;
-    previousChatIdRef.current = chatId;
+    previousChatIdRef.current = currentChatId;
   }, [
-    chatId,
+    currentChatId,
     chatHistoryResponse?.data?.messages,
     areMessagesEqual,
     isNearBottom,
@@ -190,6 +197,13 @@ export const ChatContainer = ({
     const userMessageId = new ObjectId().toHexString();
     const aiMessageId = new ObjectId().toHexString();
 
+    // Generate conversation ID if this is a new chat (no currentChatId)
+    let conversationId = currentChatId;
+    if (!conversationId) {
+      conversationId = new ObjectId().toHexString();
+      setCurrentChatId(conversationId);
+    }
+
     // Create and add user message
     const userMessage: TChatMessage = {
       _id: userMessageId,
@@ -210,7 +224,7 @@ export const ChatContainer = ({
 
     try {
       const response = await sendMessageMutation.mutateAsync({
-        conversationId: chatId,
+        conversationId: conversationId,
         message: messageText,
         userId: user_id,
         messageId: userMessageId,
@@ -269,7 +283,7 @@ export const ChatContainer = ({
         setIsStreaming(false);
 
         // Update sidebar only (not current conversation to avoid re-render)
-        queryClient.invalidateQueries({ queryKey: ["chatHistory", user_id] });
+        queryClient.invalidateQueries({ queryKey: ["useGetChatHistory", { user_id }] });
 
         // Final scroll to bottom
         setTimeout(() => scrollToBottom(), 50);

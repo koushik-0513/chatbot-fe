@@ -20,9 +20,9 @@ type Props = {
 };
 
 export const ResentMessage = ({ onOpenChat }: Props) => {
-  const { user_id } = useUserId();
+  const { user_id, is_new_user } = useUserId();
 
-  const { data: history, isLoading: isHistoryLoading } = useGetChatHistory(
+  const { data: history, isLoading: isHistoryLoading, error: historyError } = useGetChatHistory(
     { user_id: user_id || "", page: 1, limit: 1 },
     { enabled: !!user_id }
   );
@@ -51,16 +51,29 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
     if (onOpenChat) onOpenChat(conversationId, title);
   };
 
+  const handleNewChat = () => {
+    if (onOpenChat) onOpenChat(null, "New Chat");
+  };
+
   return (
     <div>
-      <Card onClick={handleOpen} className="cursor-pointer">
+      <Card onClick={is_new_user ? handleNewChat : handleOpen} className="cursor-pointer">
         <CardHeader>
-          <CardTitle>Recent Message</CardTitle>
+          <CardTitle>{is_new_user ? "Start New Chat" : "Recent Message"}</CardTitle>
         </CardHeader>
         <CardContent className="-mt-6">
           {isHistoryLoading ? (
             <div className="text-muted-foreground text-sm">
               {UI_MESSAGES.LOADING.GENERAL}
+            </div>
+          ) : is_new_user ? (
+            <div>
+              <div className="text-foreground my-2 text-sm">
+                Welcome! Start a new conversation to get help with your questions.
+              </div>
+              <div className="text-muted-foreground mb-2 text-xs">
+                Click to begin chatting
+              </div>
             </div>
           ) : conversationId ? (
             <div>

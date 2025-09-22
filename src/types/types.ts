@@ -37,7 +37,7 @@ export type TEnv = {
 };
 
 export type TCreateUserRequest = {
-  user_id: string;
+  userId: string;
   preferences?: {
     theme?: string;
     language?: string;

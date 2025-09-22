@@ -18,7 +18,7 @@ api.interceptors.request.use(
     return config;
   },
   (error: AxiosError) => {
-    console.error(API_ERROR_MESSAGES.REQUEST_ERROR, error);
+
     return Promise.reject(error);
   }
 );
@@ -29,7 +29,6 @@ api.interceptors.response.use(
     return response.data;
   },
   (error: AxiosError) => {
-    console.error(API_ERROR_MESSAGES.RESPONSE_ERROR, error?.response?.data);
     return Promise.reject(error?.response?.data);
   }
 );
