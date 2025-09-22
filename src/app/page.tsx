@@ -1,11 +1,11 @@
 "use client";
 
-import { ChatbotLauncher } from "@/components/chat-bot-launcher";
+import { ChatbotWithProviders } from "@/components/chatbot-with-providers";
 
 export default function Home() {
   return (
     <div className="bg-card min-h-screen">
-      <ChatbotLauncher />
+      <ChatbotWithProviders />
     </div>
   );
 }

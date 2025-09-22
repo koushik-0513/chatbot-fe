@@ -59,9 +59,162 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.tsx
 var index_exports = {};
 __export(index_exports, {
-  ChatbotLauncher: () => ChatbotLauncher
+  ChatbotLauncher: () => ChatbotWithProviders
 });
 module.exports = __toCommonJS(index_exports);
+
+// src/components/chatbot-with-providers.tsx
+var import_react19 = require("react");
+var import_react_query10 = require("@tanstack/react-query");
+
+// src/contexts/article-navigation-context.tsx
+var import_react = require("react");
+var import_jsx_runtime = require("react/jsx-runtime");
+var ArticleNavigationContext = (0, import_react.createContext)(void 0);
+var ArticleNavigationProvider = ({
+  children
+}) => {
+  const [selectedArticleId, setSelectedArticleId] = (0, import_react.useState)(
+    null
+  );
+  const [selectedArticle, setSelectedArticle] = (0, import_react.useState)(
+    null
+  );
+  const [isArticleDetailsOpen, setIsArticleDetailsOpen] = (0, import_react.useState)(false);
+  const [articleDetailsData, setArticleDetailsData] = (0, import_react.useState)(void 0);
+  const [isLoadingArticle, setIsLoadingArticle] = (0, import_react.useState)(false);
+  const [articleError, setArticleError] = (0, import_react.useState)(null);
+  const openArticleDetails = (article) => {
+    setSelectedArticle(article);
+    setSelectedArticleId(article.id);
+    setIsArticleDetailsOpen(true);
+  };
+  const closeArticleDetails = () => {
+    setSelectedArticle(null);
+    setSelectedArticleId(null);
+    setIsArticleDetailsOpen(false);
+    setArticleDetailsData(void 0);
+    setIsLoadingArticle(false);
+    setArticleError(null);
+  };
+  const resetArticleNavigation = () => {
+    setSelectedArticle(null);
+    setSelectedArticleId(null);
+    setIsArticleDetailsOpen(false);
+    setArticleDetailsData(void 0);
+    setIsLoadingArticle(false);
+    setArticleError(null);
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    ArticleNavigationContext.Provider,
+    {
+      value: {
+        selectedArticleId,
+        selectedArticle,
+        isArticleDetailsOpen,
+        articleDetailsData,
+        isLoadingArticle,
+        articleError,
+        openArticleDetails,
+        closeArticleDetails,
+        resetArticleNavigation,
+        setArticleDetailsData,
+        setLoadingArticle: setIsLoadingArticle,
+        setArticleError
+      },
+      children
+    }
+  );
+};
+var useArticleNavigation = () => {
+  const context = (0, import_react.useContext)(ArticleNavigationContext);
+  if (context === void 0) {
+    throw new Error(
+      "useArticleNavigation must be used within an ArticleNavigationProvider"
+    );
+  }
+  return context;
+};
+
+// src/contexts/scroll-context.tsx
+var import_react2 = require("react");
+var import_jsx_runtime2 = require("react/jsx-runtime");
+var ScrollContext = (0, import_react2.createContext)(void 0);
+var useScrollContext = () => {
+  const context = (0, import_react2.useContext)(ScrollContext);
+  if (!context) {
+    throw new Error("useScrollContext must be used within a ScrollProvider");
+  }
+  return context;
+};
+var ScrollProvider = ({ children }) => {
+  const scrollableElementsRef = (0, import_react2.useRef)(/* @__PURE__ */ new Set());
+  const resetAllScroll = (0, import_react2.useCallback)(() => {
+    window.scrollTo(0, 0);
+    scrollableElementsRef.current.forEach((element) => {
+      if (element && element.scrollTop !== void 0) {
+        element.scrollTop = 0;
+      }
+      if (element && element.scrollLeft !== void 0) {
+        element.scrollLeft = 0;
+      }
+    });
+    const scrollableElements = document.querySelectorAll(
+      '[class*="overflow-y-auto"], [class*="overflow-y-scroll"], [class*="overflow-auto"], [class*="scrollbar"], .scroll-container, .scrollable-content, .flex-1.overflow-y-auto'
+    );
+    scrollableElements.forEach((element) => {
+      const htmlElement = element;
+      if (htmlElement && htmlElement.scrollTop !== void 0) {
+        htmlElement.scrollTop = 0;
+      }
+      if (htmlElement && htmlElement.scrollLeft !== void 0) {
+        htmlElement.scrollLeft = 0;
+      }
+    });
+    const chatbotContent = document.querySelector(".flex-1.overflow-y-auto");
+    if (chatbotContent) {
+      chatbotContent.scrollTop = 0;
+    }
+  }, []);
+  const resetScrollToElement = (0, import_react2.useCallback)(
+    (elementRef) => {
+      if (elementRef.current) {
+        elementRef.current.scrollTop = 0;
+        elementRef.current.scrollLeft = 0;
+      }
+    },
+    []
+  );
+  const registerScrollableElement = (0, import_react2.useCallback)((element) => {
+    scrollableElementsRef.current.add(element);
+  }, []);
+  const unregisterScrollableElement = (0, import_react2.useCallback)((element) => {
+    scrollableElementsRef.current.delete(element);
+  }, []);
+  const resetAllScrollWithDelay = (0, import_react2.useCallback)(
+    (delay = 100) => {
+      resetAllScroll();
+      setTimeout(() => {
+        resetAllScroll();
+      }, delay);
+      setTimeout(() => {
+        resetAllScroll();
+      }, delay * 2);
+      setTimeout(() => {
+        resetAllScroll();
+      }, delay * 3);
+    },
+    [resetAllScroll]
+  );
+  const value = {
+    resetAllScroll,
+    resetScrollToElement,
+    registerScrollableElement,
+    unregisterScrollableElement,
+    resetAllScrollWithDelay
+  };
+  return /* @__PURE__ */ (0, import_jsx_runtime2.jsx)(ScrollContext.Provider, { value, children });
+};
 
 // src/components/chat-bot-launcher.tsx
 var import_react18 = require("react");
@@ -70,25 +223,11 @@ var import_lucide_react12 = require("lucide-react");
 
 // src/components/chatbot.tsx
 var import_react17 = require("react");
-
-// src/contexts/scroll-context.tsx
-var import_react = require("react");
-var import_jsx_runtime = require("react/jsx-runtime");
-var ScrollContext = (0, import_react.createContext)(void 0);
-var useScrollContext = () => {
-  const context = (0, import_react.useContext)(ScrollContext);
-  if (!context) {
-    throw new Error("useScrollContext must be used within a ScrollProvider");
-  }
-  return context;
-};
-
-// src/components/chatbot.tsx
 var import_framer_motion13 = require("framer-motion");
 var import_lucide_react11 = require("lucide-react");
 
 // src/hooks/use-auto-maximize.ts
-var import_react2 = require("react");
+var import_react3 = require("react");
 
 // src/constants/constants.ts
 var NEWS_REACTIONS = [
@@ -198,8 +337,8 @@ var useAutoMaximize = ({
   externalIsMaximized,
   setInternalIsMaximized
 }) => {
-  const lastMaximizeTime = (0, import_react2.useRef)(0);
-  const triggerAutoMaximize = (0, import_react2.useCallback)(() => {
+  const lastMaximizeTime = (0, import_react3.useRef)(0);
+  const triggerAutoMaximize = (0, import_react3.useCallback)(() => {
     const now = Date.now();
     if (now - lastMaximizeTime.current < TIMING.MAXIMIZE_DEBOUNCE_MS) {
       return;
@@ -212,7 +351,7 @@ var useAutoMaximize = ({
       setInternalIsMaximized(newMaximized);
     }
   }, [onMaximizeChange, externalIsMaximized, setInternalIsMaximized]);
-  const shouldAutoMaximize = (0, import_react2.useCallback)(
+  const shouldAutoMaximize = (0, import_react3.useCallback)(
     (context) => {
       return context.isDetailsView && (context.navigatedFromHomepage || context.cameFromSearch);
     },
@@ -226,22 +365,6 @@ var useAutoMaximize = ({
 
 // src/components/help.tsx
 var import_react9 = require("react");
-
-// src/contexts/article-navigation-context.tsx
-var import_react3 = require("react");
-var import_jsx_runtime2 = require("react/jsx-runtime");
-var ArticleNavigationContext = (0, import_react3.createContext)(void 0);
-var useArticleNavigation = () => {
-  const context = (0, import_react3.useContext)(ArticleNavigationContext);
-  if (context === void 0) {
-    throw new Error(
-      "useArticleNavigation must be used within an ArticleNavigationProvider"
-    );
-  }
-  return context;
-};
-
-// src/components/help.tsx
 var import_framer_motion4 = require("framer-motion");
 
 // src/hooks/use-debounce.ts
@@ -4498,6 +4621,27 @@ var ChatbotLauncher = ({}) => {
       "chatbot-container"
     ) })
   ] });
+};
+
+// src/components/chatbot-with-providers.tsx
+var import_jsx_runtime27 = require("react/jsx-runtime");
+var ChatbotWithProviders = () => {
+  const [queryClient] = (0, import_react19.useState)(
+    () => new import_react_query10.QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 60 * 1e3,
+          // 1 minute
+          retry: 2,
+          refetchOnWindowFocus: false
+        },
+        mutations: {
+          retry: 1
+        }
+      }
+    })
+  );
+  return /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(import_react_query10.QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ScrollProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ArticleNavigationProvider, { children: /* @__PURE__ */ (0, import_jsx_runtime27.jsx)(ChatbotLauncher, {}) }) }) });
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

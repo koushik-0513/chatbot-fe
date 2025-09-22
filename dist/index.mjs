@@ -30,6 +30,159 @@ var __objRest = (source, exclude) => {
   return target;
 };
 
+// src/components/chatbot-with-providers.tsx
+import { useState as useState14 } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// src/contexts/article-navigation-context.tsx
+import { createContext, useContext, useState } from "react";
+import { jsx } from "react/jsx-runtime";
+var ArticleNavigationContext = createContext(void 0);
+var ArticleNavigationProvider = ({
+  children
+}) => {
+  const [selectedArticleId, setSelectedArticleId] = useState(
+    null
+  );
+  const [selectedArticle, setSelectedArticle] = useState(
+    null
+  );
+  const [isArticleDetailsOpen, setIsArticleDetailsOpen] = useState(false);
+  const [articleDetailsData, setArticleDetailsData] = useState(void 0);
+  const [isLoadingArticle, setIsLoadingArticle] = useState(false);
+  const [articleError, setArticleError] = useState(null);
+  const openArticleDetails = (article) => {
+    setSelectedArticle(article);
+    setSelectedArticleId(article.id);
+    setIsArticleDetailsOpen(true);
+  };
+  const closeArticleDetails = () => {
+    setSelectedArticle(null);
+    setSelectedArticleId(null);
+    setIsArticleDetailsOpen(false);
+    setArticleDetailsData(void 0);
+    setIsLoadingArticle(false);
+    setArticleError(null);
+  };
+  const resetArticleNavigation = () => {
+    setSelectedArticle(null);
+    setSelectedArticleId(null);
+    setIsArticleDetailsOpen(false);
+    setArticleDetailsData(void 0);
+    setIsLoadingArticle(false);
+    setArticleError(null);
+  };
+  return /* @__PURE__ */ jsx(
+    ArticleNavigationContext.Provider,
+    {
+      value: {
+        selectedArticleId,
+        selectedArticle,
+        isArticleDetailsOpen,
+        articleDetailsData,
+        isLoadingArticle,
+        articleError,
+        openArticleDetails,
+        closeArticleDetails,
+        resetArticleNavigation,
+        setArticleDetailsData,
+        setLoadingArticle: setIsLoadingArticle,
+        setArticleError
+      },
+      children
+    }
+  );
+};
+var useArticleNavigation = () => {
+  const context = useContext(ArticleNavigationContext);
+  if (context === void 0) {
+    throw new Error(
+      "useArticleNavigation must be used within an ArticleNavigationProvider"
+    );
+  }
+  return context;
+};
+
+// src/contexts/scroll-context.tsx
+import { createContext as createContext2, useCallback, useContext as useContext2, useRef } from "react";
+import { jsx as jsx2 } from "react/jsx-runtime";
+var ScrollContext = createContext2(void 0);
+var useScrollContext = () => {
+  const context = useContext2(ScrollContext);
+  if (!context) {
+    throw new Error("useScrollContext must be used within a ScrollProvider");
+  }
+  return context;
+};
+var ScrollProvider = ({ children }) => {
+  const scrollableElementsRef = useRef(/* @__PURE__ */ new Set());
+  const resetAllScroll = useCallback(() => {
+    window.scrollTo(0, 0);
+    scrollableElementsRef.current.forEach((element) => {
+      if (element && element.scrollTop !== void 0) {
+        element.scrollTop = 0;
+      }
+      if (element && element.scrollLeft !== void 0) {
+        element.scrollLeft = 0;
+      }
+    });
+    const scrollableElements = document.querySelectorAll(
+      '[class*="overflow-y-auto"], [class*="overflow-y-scroll"], [class*="overflow-auto"], [class*="scrollbar"], .scroll-container, .scrollable-content, .flex-1.overflow-y-auto'
+    );
+    scrollableElements.forEach((element) => {
+      const htmlElement = element;
+      if (htmlElement && htmlElement.scrollTop !== void 0) {
+        htmlElement.scrollTop = 0;
+      }
+      if (htmlElement && htmlElement.scrollLeft !== void 0) {
+        htmlElement.scrollLeft = 0;
+      }
+    });
+    const chatbotContent = document.querySelector(".flex-1.overflow-y-auto");
+    if (chatbotContent) {
+      chatbotContent.scrollTop = 0;
+    }
+  }, []);
+  const resetScrollToElement = useCallback(
+    (elementRef) => {
+      if (elementRef.current) {
+        elementRef.current.scrollTop = 0;
+        elementRef.current.scrollLeft = 0;
+      }
+    },
+    []
+  );
+  const registerScrollableElement = useCallback((element) => {
+    scrollableElementsRef.current.add(element);
+  }, []);
+  const unregisterScrollableElement = useCallback((element) => {
+    scrollableElementsRef.current.delete(element);
+  }, []);
+  const resetAllScrollWithDelay = useCallback(
+    (delay = 100) => {
+      resetAllScroll();
+      setTimeout(() => {
+        resetAllScroll();
+      }, delay);
+      setTimeout(() => {
+        resetAllScroll();
+      }, delay * 2);
+      setTimeout(() => {
+        resetAllScroll();
+      }, delay * 3);
+    },
+    [resetAllScroll]
+  );
+  const value = {
+    resetAllScroll,
+    resetScrollToElement,
+    registerScrollableElement,
+    unregisterScrollableElement,
+    resetAllScrollWithDelay
+  };
+  return /* @__PURE__ */ jsx2(ScrollContext.Provider, { value, children });
+};
+
 // src/components/chat-bot-launcher.tsx
 import { useState as useState13 } from "react";
 import { AnimatePresence as AnimatePresence4, motion as motion14 } from "framer-motion";
@@ -37,20 +190,6 @@ import { Bot, ChevronDown } from "lucide-react";
 
 // src/components/chatbot.tsx
 import { useEffect as useEffect9, useRef as useRef8, useState as useState12 } from "react";
-
-// src/contexts/scroll-context.tsx
-import { createContext, useCallback, useContext, useRef } from "react";
-import { jsx } from "react/jsx-runtime";
-var ScrollContext = createContext(void 0);
-var useScrollContext = () => {
-  const context = useContext(ScrollContext);
-  if (!context) {
-    throw new Error("useScrollContext must be used within a ScrollProvider");
-  }
-  return context;
-};
-
-// src/components/chatbot.tsx
 import { AnimatePresence as AnimatePresence3, motion as motion13 } from "framer-motion";
 import {
   ArrowLeft as ArrowLeft2,
@@ -202,22 +341,6 @@ var useAutoMaximize = ({
 
 // src/components/help.tsx
 import { useCallback as useCallback5, useEffect as useEffect4, useState as useState6 } from "react";
-
-// src/contexts/article-navigation-context.tsx
-import { createContext as createContext2, useContext as useContext2, useState } from "react";
-import { jsx as jsx2 } from "react/jsx-runtime";
-var ArticleNavigationContext = createContext2(void 0);
-var useArticleNavigation = () => {
-  const context = useContext2(ArticleNavigationContext);
-  if (context === void 0) {
-    throw new Error(
-      "useArticleNavigation must be used within an ArticleNavigationProvider"
-    );
-  }
-  return context;
-};
-
-// src/components/help.tsx
 import { AnimatePresence, motion as motion4 } from "framer-motion";
 
 // src/hooks/use-debounce.ts
@@ -4475,6 +4598,27 @@ var ChatbotLauncher = ({}) => {
     ) })
   ] });
 };
+
+// src/components/chatbot-with-providers.tsx
+import { jsx as jsx27 } from "react/jsx-runtime";
+var ChatbotWithProviders = () => {
+  const [queryClient] = useState14(
+    () => new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 60 * 1e3,
+          // 1 minute
+          retry: 2,
+          refetchOnWindowFocus: false
+        },
+        mutations: {
+          retry: 1
+        }
+      }
+    })
+  );
+  return /* @__PURE__ */ jsx27(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsx27(ScrollProvider, { children: /* @__PURE__ */ jsx27(ArticleNavigationProvider, { children: /* @__PURE__ */ jsx27(ChatbotLauncher, {}) }) }) });
+};
 export {
-  ChatbotLauncher
+  ChatbotWithProviders as ChatbotLauncher
 };
