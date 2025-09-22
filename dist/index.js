@@ -503,7 +503,7 @@ var import_react_query = require("@tanstack/react-query");
 
 // src/config/env.ts
 var env = {
-  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || ""
+  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000/api/v1"
 };
 var env_default = env;
 
