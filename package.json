@@ -9,10 +9,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./styles": "./dist/styles.css"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json",
+    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && cp src/styles/globals.css dist/styles.css",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
