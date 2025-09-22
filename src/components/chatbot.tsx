@@ -247,11 +247,10 @@ export const Chatbot = ({
           <button
             key={item.id}
             onClick={() => handlePageChange(item.id)}
-            className={`flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-md p-2 transition-colors ${
-              isActive
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+            className={`flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-md p-2 transition-colors ${isActive
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
           >
             <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
             <span
@@ -327,7 +326,7 @@ export const Chatbot = ({
   if (activePage === "message" && showActiveChat) {
     return (
       <motion.div
-        className={`border-border bg-background flex flex-col rounded-lg border shadow-2xl`}
+        className={`chatbot-container border-border bg-background flex flex-col rounded-lg border shadow-2xl`}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{
           opacity: 1,
@@ -355,11 +354,10 @@ export const Chatbot = ({
   // Main layout for all other views
   return (
     <motion.div
-      className={`border-border flex flex-col border shadow-2xl ${
-        isMaximized
-          ? "h-[calc(95vh-3rem)] w-[calc(40vw-3rem)] rounded-lg"
-          : "h-[800px] w-100 rounded-lg"
-      } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
+      className={`chatbot-container border-border flex flex-col border shadow-2xl ${isMaximized
+        ? "h-[calc(95vh-3rem)] w-[calc(40vw-3rem)] rounded-lg"
+        : "h-[800px] w-100 rounded-lg"
+        } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{
         opacity: 1,

@@ -1,14 +1,22 @@
 {
-  "name": "my-app",
+  "name": "my-chatbot-widget",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/styles/chatbot.css"
+  ],
   "scripts": {
     "build": "next build --turbopack",
+    "build:lib": "tsc --build tsconfig.lib.json",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
     "objectid": "node scripts/generate-objectid.js",
-    "start": "next start"
+    "start": "next start",
+    "prepublishOnly": "npm run build:lib"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
