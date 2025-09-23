@@ -1,6 +1,6 @@
 {
   "name": "chatbot-launcher",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "main": "dist/index.js",
   "./styles": "./dist/styles.css",
   "module": "dist/index.mjs",
