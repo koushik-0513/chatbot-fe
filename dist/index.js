@@ -59,11 +59,11 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.tsx
 var index_exports = {};
 __export(index_exports, {
-  ChatbotLauncher: () => ChatbotWithProviders
+  Chatbot: () => Chatbot2
 });
 module.exports = __toCommonJS(index_exports);
 
-// src/components/chatbot-with-providers.tsx
+// src/providers/chatbot-with-providers.tsx
 var import_react19 = require("react");
 var import_react_query10 = require("@tanstack/react-query");
 
@@ -2681,7 +2681,7 @@ var Home = ({
           import_framer_motion7.motion.button,
           {
             onClick: onClose,
-            className: "fixed top-45 right-11 z-50 cursor-pointer transition-colors",
+            className: "fixed top-25 right-11 z-50 cursor-pointer transition-colors",
             initial: { opacity: 0, scale: 0.8 },
             animate: { opacity: 1, scale: 1 },
             transition: { duration: 0.4, delay: 0.8 },
@@ -4623,9 +4623,9 @@ var ChatbotLauncher = ({}) => {
   ] });
 };
 
-// src/components/chatbot-with-providers.tsx
+// src/providers/chatbot-with-providers.tsx
 var import_jsx_runtime27 = require("react/jsx-runtime");
-var ChatbotWithProviders = () => {
+var Chatbot2 = () => {
   const [queryClient] = (0, import_react19.useState)(
     () => new import_react_query10.QueryClient({
       defaultOptions: {
@@ -4645,5 +4645,5 @@ var ChatbotWithProviders = () => {
 };
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  ChatbotLauncher
+  Chatbot
 });

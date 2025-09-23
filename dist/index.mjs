@@ -30,7 +30,7 @@ var __objRest = (source, exclude) => {
   return target;
 };
 
-// src/components/chatbot-with-providers.tsx
+// src/providers/chatbot-with-providers.tsx
 import { useState as useState14 } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -2657,7 +2657,7 @@ var Home = ({
           motion7.button,
           {
             onClick: onClose,
-            className: "fixed top-45 right-11 z-50 cursor-pointer transition-colors",
+            className: "fixed top-25 right-11 z-50 cursor-pointer transition-colors",
             initial: { opacity: 0, scale: 0.8 },
             animate: { opacity: 1, scale: 1 },
             transition: { duration: 0.4, delay: 0.8 },
@@ -4599,9 +4599,9 @@ var ChatbotLauncher = ({}) => {
   ] });
 };
 
-// src/components/chatbot-with-providers.tsx
+// src/providers/chatbot-with-providers.tsx
 import { jsx as jsx27 } from "react/jsx-runtime";
-var ChatbotWithProviders = () => {
+var Chatbot2 = () => {
   const [queryClient] = useState14(
     () => new QueryClient({
       defaultOptions: {
@@ -4620,5 +4620,5 @@ var ChatbotWithProviders = () => {
   return /* @__PURE__ */ jsx27(QueryClientProvider, { client: queryClient, children: /* @__PURE__ */ jsx27(ScrollProvider, { children: /* @__PURE__ */ jsx27(ArticleNavigationProvider, { children: /* @__PURE__ */ jsx27(ChatbotLauncher, {}) }) }) });
 };
 export {
-  ChatbotWithProviders as ChatbotLauncher
+  Chatbot2 as Chatbot
 };
