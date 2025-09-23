@@ -64,7 +64,7 @@ export const Home = ({
       {onClose && (
         <motion.button
           onClick={onClose}
-          className="fixed top-45 right-11 z-50 cursor-pointer transition-colors"
+          className="fixed top-25 right-11 z-50 cursor-pointer transition-colors"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.8 }}

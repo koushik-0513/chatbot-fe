@@ -1,1 +1,1 @@
-export { ChatbotWithProviders as ChatbotLauncher } from "@/components/chatbot-with-providers";
+export { Chatbot } from "@/providers/chatbot-with-providers";

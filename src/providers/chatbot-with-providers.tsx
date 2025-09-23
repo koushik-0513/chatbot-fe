@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ArticleNavigationProvider } from "@/contexts/article-navigation-context";
 import { ScrollProvider } from "@/contexts/scroll-context";
-import { ChatbotLauncher } from "./chat-bot-launcher";
+import { ChatbotLauncher } from "../components/chat-bot-launcher";
 
-export const ChatbotWithProviders = () => {
+export const Chatbot = () => {
   const [queryClient] = useState(
     () =>
       new QueryClient({
