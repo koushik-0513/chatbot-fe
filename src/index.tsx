@@ -1,4 +1,4 @@
 // Import styles for development
-import "../dist/styles.css";
+import "../styles/globals.css";
 
 export { Chatbot } from "@/providers/chatbot-with-providers";
