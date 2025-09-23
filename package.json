@@ -2,7 +2,6 @@
   "name": "chatbot-launcher",
   "version": "0.1.10",
   "main": "dist/index.js",
-  "./styles": "./dist/styles.css",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
@@ -12,6 +11,9 @@
       "require": "./dist/index.js"
     }
   },
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && tailwindcss -c tailwind.config.build.js -i src/styles/globals.css -o dist/styles.css --minify",
     "dev": "next dev --turbopack",
