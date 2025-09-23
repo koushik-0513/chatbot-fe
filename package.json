@@ -1,6 +1,6 @@
 {
-  "name": "chatbot-launcher",
-  "version": "0.1.12",
+  "name": "chatbot",
+  "version": "0.1.0",
   "main": "dist/index.js",
   "./styles": "./dist/styles.css",
   "module": "dist/index.mjs",
@@ -10,10 +10,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./styles": "./dist/styles.css"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && tailwindcss -c tailwind.config.build.js -i src/styles/globals.css -o dist/styles.css --minify",
+    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && tailwindcss -c tailwind.config.build.js -i src/styles/global.css -o dist/styles.css --minify",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
