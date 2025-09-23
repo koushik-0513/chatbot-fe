@@ -16,7 +16,7 @@
     "./wrappers/svelte-wrapper": "./src/wrappers/svelte-wrapper.svelte"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && tailwindcss -c tailwind.config.build.js -i src/styles/globals.css -o dist/styles.css --minify",
+    "build": "next build --turbopack",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
