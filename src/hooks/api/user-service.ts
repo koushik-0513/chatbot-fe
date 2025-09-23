@@ -23,7 +23,7 @@ export const useCreateUser = (options?: TMutationOpts<TCreateUserRequest>) => {
   return useMutation({
     mutationKey: ["useCreateUser"],
     mutationFn: createUser,
-    onError: (error) => {
+    onError: () => {
 
     },
     onSuccess: (data) => {

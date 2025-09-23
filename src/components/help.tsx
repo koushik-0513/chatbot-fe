@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { UI_MESSAGES } from "@/constants/constants";
 import { useArticleNavigation } from "@/contexts/article-navigation-context";
 import { useScrollContext } from "@/contexts/scroll-context";
 import { AnimatePresence, motion } from "framer-motion";
@@ -309,6 +308,7 @@ export const Help = ({
       onTitleChange?.("Help");
     }
   }, [
+    getCurrentTitle,
     pageState.currentView,
     pageState.selectedArticle,
     showTitle,

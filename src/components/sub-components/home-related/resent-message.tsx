@@ -22,7 +22,7 @@ type Props = {
 export const ResentMessage = ({ onOpenChat }: Props) => {
   const { user_id, is_new_user } = useUserId();
 
-  const { data: history, isLoading: isHistoryLoading, error: historyError } = useGetChatHistory(
+  const { data: history, isLoading: isHistoryLoading } = useGetChatHistory(
     { user_id: user_id || "", page: 1, limit: 1 },
     { enabled: !!user_id }
   );

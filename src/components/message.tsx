@@ -1,7 +1,7 @@
 import { UI_MESSAGES } from "@/constants/constants";
 import { TChatHistoryItem } from "@/types/component-types/chat-types";
+import { TApiError } from "@/types/api";
 import { formatChatTime, formatDayOrDate } from "@/utils/date-time";
-import { ObjectId } from "bson";
 import { motion } from "framer-motion";
 import { MessageCircleQuestionMark } from "lucide-react";
 
@@ -68,7 +68,7 @@ export const Message = ({
   }
 
   // Error state - but treat 404 as empty state
-  if (error && (error as any)?.status_code !== 404) {
+  if (error && (error as TApiError)?.status_code !== 404) {
     return (
       <motion.div
         className="flex h-full flex-col items-center justify-center"
@@ -87,7 +87,7 @@ export const Message = ({
   // Extract the data array from the response
   // If there's a 404 error, treat it as empty data
   const chatHistoryDataRaw: TChatHistoryItem[] = 
-    (error as any)?.status_code === 404 ? [] : (chatHistoryResponse?.data || []);
+    (error as TApiError)?.status_code === 404 ? [] : (chatHistoryResponse?.data || []);
   const chatHistoryData = [...chatHistoryDataRaw].sort(
     (a: TChatHistoryItem, b: TChatHistoryItem) => {
       const getTs = (x: TChatHistoryItem) => new Date(x.updatedAt).getTime();

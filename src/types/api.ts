@@ -20,3 +20,10 @@ export type TPaginationQParams = {
   page?: number;
   limit?: number;
 };
+
+// API Error type
+export type TApiError = {
+  status_code?: number;
+  message?: string;
+  error?: string;
+};

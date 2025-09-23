@@ -1,5 +1,5 @@
 import env from "@/config/env";
-import { API_ERROR_MESSAGES, API_HEADERS } from "@/constants/constants";
+import { API_HEADERS } from "@/constants/constants";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 
 // Custom Axios instance with common configurations
