@@ -13,7 +13,7 @@
     "./styles": "./dist/styles.css"
   },
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && cp src/styles/globals.css dist/styles.css",
+    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && tailwindcss -c tailwind.config.ts -i src/styles/globals.css -o dist/styles.css --minify",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",

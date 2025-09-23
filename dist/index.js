@@ -4405,7 +4405,7 @@ var Chatbot = ({
     return /* @__PURE__ */ (0, import_jsx_runtime25.jsx)(
       import_framer_motion13.motion.div,
       {
-        className: `border-border bg-background flex flex-col rounded-lg border shadow-2xl`,
+        className: `chatbot-container border-border bg-background flex flex-col rounded-lg border shadow-2xl`,
         initial: { opacity: 0, scale: 0.9 },
         animate: {
           opacity: 1,
@@ -4434,7 +4434,7 @@ var Chatbot = ({
   return /* @__PURE__ */ (0, import_jsx_runtime25.jsxs)(
     import_framer_motion13.motion.div,
     {
-      className: `border-border flex flex-col border shadow-2xl ${isMaximized ? "h-[calc(95vh-3rem)] w-[calc(40vw-3rem)] rounded-lg" : "h-[800px] w-100 rounded-lg"} ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`,
+      className: `chatbot-container border-border flex flex-col border shadow-2xl ${isMaximized ? "h-[calc(95vh-3rem)] w-[calc(40vw-3rem)] rounded-lg" : "h-[800px] w-100 rounded-lg"} ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`,
       initial: { opacity: 0, scale: 0.9 },
       animate: {
         opacity: 1,
