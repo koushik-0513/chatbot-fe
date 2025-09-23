@@ -1,6 +1,6 @@
 {
-  "name": "chat-bot-fe",
-  "version": "1.0.0",
+  "name": "chatbot",
+  "version": "0.1.0",
   "main": "tailwind.config.build.js",
   "directories": {
     "example": "examples"
