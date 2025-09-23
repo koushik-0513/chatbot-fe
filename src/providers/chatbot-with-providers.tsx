@@ -6,6 +6,9 @@ import { ArticleNavigationProvider } from "@/contexts/article-navigation-context
 import { ScrollProvider } from "@/contexts/scroll-context";
 import { ChatbotLauncher } from "../components/chat-bot-launcher";
 
+// Import the CSS styles directly
+import "../styles/globals.css";
+
 export const Chatbot = () => {
   const [queryClient] = useState(
     () =>

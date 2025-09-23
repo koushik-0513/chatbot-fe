@@ -10,13 +10,10 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./styles": "./dist/styles.css",
-    "./wrappers/vue-wrapper": "./src/wrappers/vue-wrapper.vue",
-    "./wrappers/angular-wrapper": "./src/wrappers/angular-wrapper.ts",
-    "./wrappers/svelte-wrapper": "./src/wrappers/svelte-wrapper.svelte"
+    "./styles": "./dist/styles.css"
   },
   "scripts": {
-    "build": "next build --turbopack",
+    "build": "tsup src/index.tsx --format esm,cjs --dts --tsconfig tsconfig.build.json && tailwindcss -c tailwind.config.build.js -i src/styles/globals.css -o dist/styles.css --minify",
     "dev": "next dev --turbopack",
     "format": "prettier --write .",
     "lint": "eslint",
