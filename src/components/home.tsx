@@ -64,7 +64,7 @@ export const Home = ({
       {onClose && (
         <motion.button
           onClick={onClose}
-          className="fixed top-25 right-11 z-50 cursor-pointer transition-colors"
+          className="absolute top-0 right-0 z-50 cursor-pointer transition-colors"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.8 }}
@@ -72,7 +72,7 @@ export const Home = ({
           whileTap={{ scale: 0.95 }}
           aria-label="Close"
         >
-          <X className="text-muted-foreground h-5 w-5" />
+          <X className="fixed top-0 right-0 text-muted-foreground h-5 w-5" />
         </motion.button>
       )}
       <motion.div

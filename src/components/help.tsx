@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { UI_MESSAGES } from "@/constants/constants";
 import { useArticleNavigation } from "@/contexts/article-navigation-context";
@@ -80,21 +80,50 @@ export const Help = ({
     setArticleError,
   } = useArticleNavigation();
 
+  const lastPropArticleIdRef = useRef<string | null>(null);
+
+  // Centralized navigation stack management
+  const {
+    push: pushNavigationItem,
+    pop: popNavigationItem,
+    clear: clearNavigationStack,
+    hasItems: navigationStackHasItems,
+  } = useNavigationStack({ maxSize: 20 });
+
   // Set selectedArticleId when propSelectedArticleId changes (from home page navigation)
   useEffect(() => {
-    if (propSelectedArticleId && propSelectedArticleId !== selectedArticleId) {
-      // Create a minimal article object for navigation
-      const article = {
-        id: propSelectedArticleId,
-        title: "Loading...",
-        description: "",
-        content: "",
-        author: "Anonymous",
-        related_articles: [],
-      };
-      openArticleDetails(article);
+    if (!propSelectedArticleId) {
+      lastPropArticleIdRef.current = null;
+      return;
     }
-  }, [propSelectedArticleId, selectedArticleId, openArticleDetails]);
+
+    if (propSelectedArticleId === lastPropArticleIdRef.current) {
+      return;
+    }
+
+    lastPropArticleIdRef.current = propSelectedArticleId;
+
+    if (propSelectedArticleId === selectedArticleId) {
+      return;
+    }
+
+    const article = {
+      id: propSelectedArticleId,
+      title: "Loading...",
+      description: "",
+      content: "",
+      author: "Anonymous",
+      related_articles: [],
+    };
+
+    openArticleDetails(article);
+    clearNavigationStack();
+  }, [
+    propSelectedArticleId,
+    selectedArticleId,
+    openArticleDetails,
+    clearNavigationStack,
+  ]);
 
   // Fetch article details when an article is selected
   const {
@@ -133,15 +162,6 @@ export const Help = ({
     null
   );
   const [showTitle, setShowTitle] = useState(false);
-
-  // Centralized navigation stack management
-  const {
-    push: pushNavigationItem,
-    pop: popNavigationItem,
-    clear: clearNavigationStack,
-    hasItems: navigationStackHasItems,
-  } = useNavigationStack({ maxSize: 20 });
-
   // Fetch collection details when a collection is selected
   const {
     data: collectionDetailsData,
@@ -399,7 +419,10 @@ export const Help = ({
         pushNavigationItem({
           id: selectedArticleId,
           type: "article",
-          data: { collectionId: pageState.selectedCollection?.id },
+          data: { 
+            collectionId: pageState.selectedCollection?.id,
+            navigatedFromHomepage: navigatedFromHomepage 
+          },
         });
       }
 
@@ -425,6 +448,7 @@ export const Help = ({
     [
       selectedArticleId,
       pageState.selectedCollection,
+      navigatedFromHomepage,
       resetAllScrollWithDelay,
       pushNavigationItem,
       openArticleDetails,
@@ -592,9 +616,13 @@ export const Help = ({
           related_articles: [],
         };
         openArticleDetails(previousArticle);
+        
+        // Check if the previous article was navigated from homepage
+        const wasFromHomepage = previousItem.data?.navigatedFromHomepage;
+        
         setPageState({
           currentView: currentView.ARTICLE,
-          selectedCollection: pageState.selectedCollection,
+          selectedCollection: wasFromHomepage ? null : pageState.selectedCollection,
           selectedArticle: null, // Will be populated by the useEffect when article loads
         });
 
@@ -604,7 +632,14 @@ export const Help = ({
       }
     }
 
-    // No previous articles in stack, go back to collection
+    // No previous articles in stack, check if we should go back to home page or collection
+    if (navigatedFromHomepage) {
+      // If we came from homepage, go back to homepage
+      onBackFromDetails?.(); // This will trigger navigation back to home page
+      return;
+    }
+
+    // Otherwise go back to collection
     setPageState({
       currentView: currentView.COLLECTION,
       selectedCollection: pageState.selectedCollection,
@@ -627,8 +662,11 @@ export const Help = ({
     popNavigationItem,
     clearNavigationStack,
     pageState.selectedCollection,
+    navigatedFromHomepage,
     onShowDetails,
     onMinimizeOnly,
+    onBackFromDetails,
+    onTitleChange,
     resetAllScrollWithDelay,
     openArticleDetails,
   ]);

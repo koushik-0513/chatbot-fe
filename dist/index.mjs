@@ -2657,14 +2657,14 @@ var Home = ({
           motion7.button,
           {
             onClick: onClose,
-            className: "fixed top-25 right-11 z-50 cursor-pointer transition-colors",
+            className: "absolute top-0 right-0 z-50 cursor-pointer transition-colors",
             initial: { opacity: 0, scale: 0.8 },
             animate: { opacity: 1, scale: 1 },
             transition: { duration: 0.4, delay: 0.8 },
             whileHover: { scale: 1.1 },
             whileTap: { scale: 0.95 },
             "aria-label": "Close",
-            children: /* @__PURE__ */ jsx17(X2, { className: "text-muted-foreground h-5 w-5" })
+            children: /* @__PURE__ */ jsx17(X2, { className: "fixed top-0 right-0 text-muted-foreground h-5 w-5" })
           }
         ),
         /* @__PURE__ */ jsx17(

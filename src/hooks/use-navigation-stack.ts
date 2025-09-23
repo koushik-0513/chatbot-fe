@@ -8,6 +8,7 @@ export type NavigationStackItem = {
     newsId?: string;
     searchQuery?: string;
     searchResults?: unknown[];
+    navigatedFromHomepage?: boolean;
   };
 };
 
