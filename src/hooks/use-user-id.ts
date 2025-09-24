@@ -37,7 +37,7 @@ export const useUserId = () => {
         if (!user_created_on_backend) {
           // User hasn't been created on backend yet
           should_create_user = true;
-          
+
           // Check if we have a valid ID
           if (!isValidUserId(id)) {
             // Generate a new ID if current one is invalid

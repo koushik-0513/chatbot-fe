@@ -57,9 +57,14 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
 
   return (
     <div>
-      <Card onClick={is_new_user ? handleNewChat : handleOpen} className="cursor-pointer">
+      <Card
+        onClick={is_new_user ? handleNewChat : handleOpen}
+        className="cursor-pointer"
+      >
         <CardHeader>
-          <CardTitle>{is_new_user ? "Start New Chat" : "Recent Message"}</CardTitle>
+          <CardTitle>
+            {is_new_user ? "Start New Chat" : "Recent Message"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="-mt-6">
           {isHistoryLoading ? (
@@ -69,7 +74,8 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
           ) : is_new_user ? (
             <div>
               <div className="text-foreground my-2 text-sm">
-                Welcome! Start a new conversation to get help with your questions.
+                Welcome! Start a new conversation to get help with your
+                questions.
               </div>
               <div className="text-muted-foreground mb-2 text-xs">
                 Click to begin chatting

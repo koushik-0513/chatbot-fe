@@ -1,36 +1,38 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chatbot Launcher - Vanilla HTML Example</title>
     <!-- Include the chatbot styles -->
-    <link rel="stylesheet" href="https://unpkg.com/chatbot-launcher@latest/dist/styles.css">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/chatbot-launcher@latest/dist/styles.css"
+    />
+  </head>
+  <body>
     <h1>My Website</h1>
     <p>This is a vanilla HTML page with the chatbot launcher.</p>
-    
+
     <!-- Container for the chatbot -->
     <div id="chatbot-container"></div>
 
     <script type="module">
-        // Import React and ReactDOM from CDN
-        import React from 'https://unpkg.com/react@18/index.js';
-        import ReactDOM from 'https://unpkg.com/react-dom@18/client.js';
-        
-        // Import the chatbot component
-        import { ChatbotWithProviders } from 'https://unpkg.com/chatbot-launcher@latest/dist/index.mjs';
-        
-        // Initialize the chatbot when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get the chatbot container
-            const container = document.getElementById('chatbot-container');
-            
-            // Create React root and render the chatbot
-            const root = ReactDOM.createRoot(container);
-            root.render(React.createElement(ChatbotWithProviders));
-        });
+      // Import React and ReactDOM from CDN
+      // Import the chatbot component
+      import { ChatbotWithProviders } from "https://unpkg.com/chatbot-launcher@latest/dist/index.mjs";
+      import ReactDOM from "https://unpkg.com/react-dom@18/client.js";
+      import React from "https://unpkg.com/react@18/index.js";
+
+      // Initialize the chatbot when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        // Get the chatbot container
+        const container = document.getElementById("chatbot-container");
+
+        // Create React root and render the chatbot
+        const root = ReactDOM.createRoot(container);
+        root.render(React.createElement(ChatbotWithProviders));
+      });
     </script>
-</body>
+  </body>
 </html>

@@ -14,7 +14,7 @@ const createUser = (
   console.log("Creating user with payload:", payload);
   const { userId, ...preferences } = payload;
   return api.post("/user", preferences, {
-    params: { user_id: userId }
+    params: { user_id: userId },
   });
 };
 
@@ -23,9 +23,7 @@ export const useCreateUser = (options?: TMutationOpts<TCreateUserRequest>) => {
   return useMutation({
     mutationKey: ["useCreateUser"],
     mutationFn: createUser,
-    onError: () => {
-
-    },
+    onError: () => {},
     onSuccess: (data) => {
       console.log(UI_MESSAGES.SUCCESS.USER_CREATED, data);
     },

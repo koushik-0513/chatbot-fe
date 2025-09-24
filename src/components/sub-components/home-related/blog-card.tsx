@@ -1,5 +1,5 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 import { motion } from "framer-motion";
 
@@ -61,7 +61,7 @@ export const BlogCard = ({
             className="h-48 w-full object-cover"
           />
         </div>
-        <Link href={link}>
+        <Link href={link} target="_blank">
           <div>
             <CardHeader className="border-border hover:bg-muted border-t p-4 transition-colors">
               <CardTitle className="text-card-foreground mb-2 text-lg font-bold">

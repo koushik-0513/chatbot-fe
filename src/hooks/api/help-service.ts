@@ -30,7 +30,6 @@ type TGetHelpQParams = {
   limit?: number;
 };
 
-
 // Help Services
 const getCollections = (
   params: TGetCollectionsParams = { page: 1, limit: 10 }
@@ -44,8 +43,8 @@ const getCollectionDetails = ({
   user_id,
   ...params
 }: TGetCollectionDetailsQParams): TApiPromise<THelpCollectionDetailResponse> => {
-  return api.get(`/collection/${collection_id}`, { 
-    params: { user_id, ...params } 
+  return api.get(`/collection/${collection_id}`, {
+    params: { user_id, ...params },
   });
 };
 
@@ -54,8 +53,8 @@ const getArticleDetails = ({
   user_id,
   ...params
 }: TGetArticleDetailsQParams): TApiPromise<THelpArticleDetailResponse> => {
-  return api.get(`/article/${article_id}`, { 
-    params: { user_id, ...params } 
+  return api.get(`/article/${article_id}`, {
+    params: { user_id, ...params },
   });
 };
 

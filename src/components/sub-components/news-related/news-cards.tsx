@@ -1,6 +1,7 @@
+import Image from "next/image";
+
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
-import Image from "next/image";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 

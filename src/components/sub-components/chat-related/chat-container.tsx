@@ -46,7 +46,7 @@ export const ChatContainer = ({
   onClose,
 }: TChatContainerProps) => {
   const { user_id } = useUserId();
-  
+
   // State - initialize before hooks
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
   const [newMessage, setNewMessage] = useState("");
@@ -283,7 +283,9 @@ export const ChatContainer = ({
         setIsStreaming(false);
 
         // Update sidebar only (not current conversation to avoid re-render)
-        queryClient.invalidateQueries({ queryKey: ["useGetChatHistory", { user_id }] });
+        queryClient.invalidateQueries({
+          queryKey: ["useGetChatHistory", { user_id }],
+        });
 
         // Final scroll to bottom
         setTimeout(() => scrollToBottom(), 50);

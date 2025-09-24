@@ -31,6 +31,7 @@ const navigationItems: TNavigationItem[] = [
 ];
 
 export const Chatbot = ({
+  user_id,
   onClose,
   isMaximized: externalIsMaximized,
   onMaximizeChange,
@@ -247,10 +248,11 @@ export const Chatbot = ({
           <button
             key={item.id}
             onClick={() => handlePageChange(item.id)}
-            className={`flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-md p-2 transition-colors ${isActive
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+            className={`flex flex-1 cursor-pointer flex-col items-center gap-1 rounded-md p-2 transition-colors ${
+              isActive
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
           >
             <Icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
             <span
@@ -293,7 +295,7 @@ export const Chatbot = ({
       >
         {title}
       </motion.h2>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="mr-8 ml-auto flex items-center gap-2">
         {shouldShowMaximizeButton() && (
           <button
             onClick={() => {
@@ -313,12 +315,12 @@ export const Chatbot = ({
             )}
           </button>
         )}
-        <button
+        {/* <button
           onClick={onClose}
           className="hover:bg-muted cursor-pointer rounded-full p-1 transition-colors"
         >
           <X className="text-muted-foreground h-5 w-5" />
-        </button>
+        </button> */}
       </div>
     </motion.div>
   );
@@ -354,16 +356,15 @@ export const Chatbot = ({
   // Main layout for all other views
   return (
     <motion.div
-      className={`chatbot-container border-border flex flex-col border shadow-2xl ${isMaximized
-        ? "h-[calc(95vh-3rem)] w-[calc(40vw-3rem)] rounded-lg"
-        : "h-[800px] w-100 rounded-lg"
-        } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
+      className={`chatbot-container flex flex-col shadow-2xl ${
+        isMaximized ? "h-100% w-100% rounded-lg" : "h-[800px] w-100 rounded-lg"
+      } ${activePage === "homepage" ? "homepage-gradient" : "bg-background"}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{
         opacity: 1,
         scale: 1,
-        height: isMaximized ? "calc(95vh - 3rem)" : "700px",
-        width: isMaximized ? "calc(40vw - 3rem)" : "400px",
+        height: isMaximized ? "100%" : "700px",
+        width: isMaximized ? "100%" : "400px",
       }}
       transition={{
         duration: 0.8,
@@ -434,7 +435,6 @@ export const Chatbot = ({
                   setShowChatHistory(true);
                   setShowActiveChat(false);
                 }}
-                onClose={onClose}
               />
             </motion.div>
           )}

@@ -130,9 +130,9 @@ export const Help = ({
     isLoading: isFetchingArticle,
     error: fetchArticleError,
   } = useGetArticleDetails(
-    { 
+    {
       article_id: selectedArticleId || "",
-      user_id: user_id || ""
+      user_id: user_id || "",
     },
     { enabled: !!selectedArticleId && !!user_id }
   );
@@ -167,9 +167,9 @@ export const Help = ({
     isLoading: isLoadingDetails,
     error: detailsError,
   } = useGetCollectionDetails(
-    { 
+    {
       collection_id: selectedCollectionId || "",
-      user_id: user_id || ""
+      user_id: user_id || "",
     },
     { enabled: !!selectedCollectionId && !!user_id }
   );
@@ -419,9 +419,9 @@ export const Help = ({
         pushNavigationItem({
           id: selectedArticleId,
           type: "article",
-          data: { 
+          data: {
             collectionId: pageState.selectedCollection?.id,
-            navigatedFromHomepage: navigatedFromHomepage 
+            navigatedFromHomepage: navigatedFromHomepage,
           },
         });
       }
@@ -616,13 +616,15 @@ export const Help = ({
           related_articles: [],
         };
         openArticleDetails(previousArticle);
-        
+
         // Check if the previous article was navigated from homepage
         const wasFromHomepage = previousItem.data?.navigatedFromHomepage;
-        
+
         setPageState({
           currentView: currentView.ARTICLE,
-          selectedCollection: wasFromHomepage ? null : pageState.selectedCollection,
+          selectedCollection: wasFromHomepage
+            ? null
+            : pageState.selectedCollection,
           selectedArticle: null, // Will be populated by the useEffect when article loads
         });
 

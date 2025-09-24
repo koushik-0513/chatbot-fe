@@ -1,7 +1,30 @@
 "use client";
 
-import { Chatbot } from "@/providers/chatbot-with-providers";
+import React, { useState } from "react";
+
+import { Bot, ChevronDown } from "lucide-react";
+
+import { Chatbot } from "@/components/chatbot";
+
+import { useUserId } from "@/hooks/use-user-id";
 
 export default function Home() {
-  return <Chatbot />;
+  const [isChatbotopen, setIsChatbotOpen] = useState(false);
+  const { user_id } = useUserId();
+  return (
+    <div className="bg-card min-h-screen">
+      <button
+        onClick={() => setIsChatbotOpen(!isChatbotopen)}
+        className="bg-primary text-primary-foreground hover:bg-primary/90 fixed right-6 bottom-6 z-50 cursor-pointer rounded-lg px-4 py-3 font-medium transition-colors"
+      >
+        {isChatbotopen ? <ChevronDown /> : <Bot />}
+      </button>
+
+      {isChatbotopen && user_id && (
+        <div key="chatbot-container" className="fixed right-6 bottom-20 z-50">
+          <Chatbot user_id={user_id} onClose={() => setIsChatbotOpen(false)} />
+        </div>
+      )}
+    </div>
+  );
 }

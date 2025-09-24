@@ -1,6 +1,4 @@
 import { UI_MESSAGES } from "@/constants/constants";
-import { motion } from "framer-motion";
-import { X } from "lucide-react";
 
 import { useGetTopArticles } from "../hooks/api/help-service";
 import { useGetPosts } from "../hooks/api/posts-service";
@@ -13,14 +11,12 @@ type THomepageProps = {
   onNavigateToHelp?: (articleId?: string) => void;
   onOpenChat?: (conversationId: string | null, title?: string) => void;
   onAskQuestion?: () => void;
-  onClose?: () => void;
 };
 
 export const Home = ({
   onNavigateToHelp,
   onOpenChat,
   onAskQuestion,
-  onClose,
 }: THomepageProps) => {
   // Fetch top articles
   const {
@@ -48,96 +44,45 @@ export const Home = ({
   const hasError = articlesError || postsError;
 
   return (
-    <motion.div
-      className="dark space-y-4 pt-40"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.27 }}
-    >
+    <div className="dark space-y-4">
       <div className="text-foreground p-2">
         <h2 className="text-tertiary text-2xl font-bold">Hello</h2>
         <h3 className="text-tertiary text-2xl font-bold">
           How can I help you today?
         </h3>
       </div>
-      {/* Close button */}
-      {onClose && (
-        <motion.button
-          onClick={onClose}
-          className="absolute top-0 right-0 z-50 cursor-pointer transition-colors"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.8 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          aria-label="Close"
-        >
-          <X className="fixed top-0 right-0 text-muted-foreground h-5 w-5" />
-        </motion.button>
-      )}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
+      <div>
         <AskQuestion onAsk={onAskQuestion} />
-      </motion.div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
+      <div>
         <ResentMessage onOpenChat={onOpenChat} />
-      </motion.div>
+      </div>
 
       {/* Loading state */}
       {isLoading && (
-        <motion.div
-          className="flex items-center justify-center py-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            className="text-muted-foreground text-sm"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
+        <div className="flex items-center justify-center py-8">
+          <div className="text-muted-foreground text-sm">
             {UI_MESSAGES.LOADING.ARTICLES}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
 
       {/* Error state */}
       {hasError && (
-        <motion.div
-          className="bg-destructive/10 rounded-lg p-4"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="bg-destructive/10 rounded-lg p-4">
           <p className="text-destructive text-sm">
             {UI_MESSAGES.ERROR.NEWS_LOAD_FAILED}
           </p>
-        </motion.div>
+        </div>
       )}
 
       {/* Posts Section */}
       {!isLoadingPosts && !postsError && display_posts.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-        >
+        <div>
           <div className="space-y-4">
             {display_posts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
-              >
+              <div key={post.id}>
                 <BlogCard
                   id={post.id}
                   title={post.title}
@@ -145,34 +90,25 @@ export const Home = ({
                   imageurl={post.image_url}
                   link={post.link_url}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 + 0.1 }}
-      >
+      <div>
         <SearchComponent onNavigateToHelp={onNavigateToHelp} />
-      </motion.div>
+      </div>
       {/* No content state */}
       {!isLoading &&
         !hasError &&
         display_articles.length === 0 &&
         display_posts.length === 0 && (
-          <motion.div
-            className="flex items-center justify-center py-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div className="flex items-center justify-center py-8">
             <div className="text-muted-foreground text-sm">
               No content available
             </div>
-          </motion.div>
+          </div>
         )}
-    </motion.div>
+    </div>
   );
 };
