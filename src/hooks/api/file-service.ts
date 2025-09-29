@@ -1,91 +1,38 @@
-import { UI_MESSAGES } from "@/constants/constants";
-import type { TUploadOptions } from "@/types/component-types/chat-types";
+import type { TApiPromise, TMutationOpts } from "@/types/api";
+import { useMutation } from "@tanstack/react-query";
 
-// File Upload Types
-export type UploadResult<T = unknown> = {
-  success: boolean;
-  data?: T;
-  error?: string;
-  progress?: number;
+import { api } from "@/lib/api";
+
+// Base URL: /api/v1/file/...
+
+// File Types
+type TUploadFilePayload = {
+  file: File;
+  userId: string;
 };
 
-// File Upload Service
-export function uploadFile<T = unknown>({
-  file,
-  userId,
-  onProgress,
-  signal,
-}: TUploadOptions): Promise<UploadResult<T>> {
-  return new Promise((resolve, reject) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("userId", userId);
+// File Services
+const uploadFile = (payload: TUploadFilePayload): TApiPromise => {
+  const { file, userId: user_id } = payload;
+  const formData = new FormData();
+  formData.append("file", file);
 
-    const xhr = new XMLHttpRequest();
-
-    // Handle progress
-    if (onProgress) {
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percentComplete = (event.loaded / event.total) * 100;
-          onProgress(percentComplete);
-        }
-      });
+  return api.post(
+    `/file/upload?user_id=${encodeURIComponent(user_id)}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
     }
+  );
+};
 
-    // Handle abort signal
-    if (signal) {
-      signal.addEventListener("abort", () => {
-        xhr.abort();
-        reject(new Error(UI_MESSAGES.ERROR.UPLOAD_ABORTED));
-      });
-    }
-
-    // Handle response
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          resolve({
-            success: true,
-            data: response,
-          });
-        } catch {
-          resolve({
-            success: false,
-            error: UI_MESSAGES.ERROR.PARSE_RESPONSE_FAILED,
-          });
-        }
-      } else {
-        resolve({
-          success: false,
-          error: `Upload failed with status: ${xhr.status}`,
-        });
-      }
-    });
-
-    // Handle errors
-    xhr.addEventListener("error", () => {
-      resolve({
-        success: false,
-        error: "Network error occurred during upload",
-      });
-    });
-
-    // Handle abort
-    xhr.addEventListener("abort", () => {
-      reject(new Error(UI_MESSAGES.ERROR.UPLOAD_ABORTED));
-    });
-
-    // Start upload
-    xhr.open("POST", "/api/v1/upload"); // This would need to be configured with your actual API base URL
-    xhr.send(formData);
+// File Hooks
+export const useUploadFile = (options?: TMutationOpts<TUploadFilePayload>) => {
+  return useMutation({
+    mutationKey: ["useUploadFile"],
+    mutationFn: uploadFile,
+    ...options,
   });
-}
-
-// File Upload Hook (if you want to use it with React Query)
-export const useFileUpload = () => {
-  return {
-    uploadFile,
-  };
 };

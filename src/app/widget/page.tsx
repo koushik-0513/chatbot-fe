@@ -2,49 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-import { Bot, ChevronDown, X } from "lucide-react";
+import {
+  COLLAPSED_IFRAME_STYLES,
+  DEFAULT_IFRAME_STYLES,
+  MAXIMIZED_IFRAME_STYLES,
+  START_TEST,
+} from "@/constants/styles";
+import { TStarttest } from "@/types/types";
+import { Bot, X } from "lucide-react";
 
-import { Chatbot } from "@/components/chatbot";
+import { Chatbot } from "@/components/chat-bot";
 
-import { useUserId } from "@/hooks/use-user-id";
-
-const COLLAPSED_IFRAME_STYLES = {
-  width: "60px",
-  height: "60px",
-  maxWidth: "none",
-  maxHeight: "none",
-};
-
-const DEFAULT_IFRAME_STYLES = {
-  width: "400px",
-  height: "700px",
-  borderRadius: "12px",
-  maxWidth: "90vw",
-  maxHeight: "90vh",
-};
-
-const START_TEST = {
-  width: "60px",
-  height: "60px",
-  zIndex: 9999,
-  borderRadius: "12px",
-  position: "fixed",
-};
-
-const MAXIMIZED_IFRAME_STYLES = {
-  width: "600px",
-  height: "900px",
-  borderRadius: "12px",
-  maxWidth: "100%",
-  maxHeight: "100%",
-};
+import { useUserId } from "@/hooks/custom/use-user-id";
 
 export default function WidgetPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isEmbedded, setIsEmbedded] = useState(false);
-  const { user_id } = useUserId();
-  const [config, setConfig] = useState({
+  const { userId } = useUserId();
+  const [, setConfig] = useState({
     primaryColor: "#2563eb",
     customerId: "demo",
     position: "bottom-right",
@@ -73,7 +49,7 @@ export default function WidgetPage() {
       // Apply initial positioning and sizing based on config
       const position = newConfig.position;
       console.log("position", position);
-      let initialStyles: any = { ...START_TEST };
+      let initialStyles: TStarttest = { ...START_TEST };
 
       // Apply position-specific styles
       switch (position) {
@@ -122,7 +98,7 @@ export default function WidgetPage() {
   }, []);
 
   // Resize the iframe from inside
-  const resizeIframe = (styles: any) => {
+  const resizeIframe = (styles: TStarttest) => {
     if (isEmbedded) {
       window.parent.postMessage(
         {
@@ -195,14 +171,14 @@ export default function WidgetPage() {
       <>
         <button
           onClick={handleClose}
-          className="absolute top-6 right-6 z-100 cursor-pointer rounded-lg text-white transition-all duration-200 hover:scale-105 hover:bg-white/20"
+          className="fixed top-5 right-6 z-100 cursor-pointer rounded-lg text-white transition-all duration-200 hover:scale-105 hover:bg-white/20"
           title="Close"
         >
           <X className="h-4 w-4" />
         </button>
         <Chatbot
-          user_id={user_id ?? ""}
-          onClose={() => handleClose()}
+          user_id={userId ?? ""}
+          onClose={() => handleClose}
           isMaximized={isMaximized}
           onMaximizeChange={handleMaximizeChange}
         />

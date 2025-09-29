@@ -5,6 +5,8 @@ import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import { cn } from "@/lib/utils";
+
 type SearchBarProps = {
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -27,25 +29,33 @@ export const SearchBar = ({
   };
 
   return (
-    <div className="relative mb-4">
+    <div className={cn("relative mb-4")}>
       <Input
         type="text"
         placeholder="Search for help"
         value={searchQuery}
         onChange={handleInputChange}
-        className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none"
+        className={cn(
+          "border-input bg-background text-foreground placeholder:text-muted-foreground focus:border-ring focus:ring-ring w-full rounded-lg border py-3 pr-12 pl-4 text-sm focus:ring-2 focus:outline-none"
+        )}
       />
       {isSearching && searchQuery ? (
         <Button
           variant="ghost"
           size="sm"
           onClick={handleClearClick}
-          className="hover:bg-muted absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0"
+          className={cn(
+            "hover:bg-muted absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0"
+          )}
         >
-          <X className="h-4 w-4" />
+          <X className={cn("h-4 w-4")} />
         </Button>
       ) : (
-        <Search className="text-muted-foreground absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2" />
+        <Search
+          className={cn(
+            "text-muted-foreground absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2"
+          )}
+        />
       )}
     </div>
   );

@@ -1,10 +1,7 @@
-import {
-  NEWS_REACTIONS,
-  NEWS_REACTION_EMOJI_MAP,
-  TNewsReaction,
-} from "@/constants/constants";
+import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
 import type { TApiPromise, TMutationOpts } from "@/types/api";
 import type { TNewsReactionResponse } from "@/types/component-types/news-types";
+import { TNewsReaction } from "@/types/component-types/news-types";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";

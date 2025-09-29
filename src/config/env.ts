@@ -1,4 +1,6 @@
-import { TEnv } from "@/types/types";
+type TEnv = {
+  backendUrl: string;
+};
 
 const env: TEnv = {
   backendUrl:

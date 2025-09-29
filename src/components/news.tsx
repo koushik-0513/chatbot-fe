@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { UI_MESSAGES } from "@/constants/constants";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { TNews } from "@/types/component-types/news-types";
+import { AnimatePresence, motion } from "framer-motion";
 
-import { useNavigationStack } from "@/hooks/use-navigation-stack";
-import { useUserId } from "@/hooks/use-user-id";
+import { cn } from "@/lib/utils";
 
-import { useGetNews, useGetNewsById } from "../hooks/api/news-service";
-import { TNews } from "../types/component-types/news-types";
+import { useGetInfiniteScrollNews } from "@/hooks/api/news-service";
+import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
+
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
 
@@ -16,8 +17,8 @@ type TNewsProps = {
   backButtonTrigger: number;
   activePage: string;
   onShowDetails?: (show: boolean) => void;
-  onBackFromDetails?: () => void;
   onAutoMaximize?: () => void;
+  onAutoMinimize?: () => void;
 };
 
 export const News = ({
@@ -25,26 +26,29 @@ export const News = ({
   backButtonTrigger,
   activePage,
   onShowDetails,
-  onBackFromDetails,
   onAutoMaximize,
+  onAutoMinimize,
 }: TNewsProps) => {
   const [selectedNewsId, setSelectedNewsId] = useState<string | null>(null);
-  const { resetAllScroll, resetAllScrollWithDelay } = useScrollContext();
-  const { user_id } = useUserId();
-  const navigationStack = useNavigationStack({ maxSize: 10 });
+  const { resetAllScroll } = useScrollContext();
   const {
-    data: news_data,
-    isLoading,
-    error,
-  } = useGetNews({ page: 1, limit: 10 });
-  const {
-    data: detailed_news,
-    isLoading: isDetailedLoading,
-    error: detailedError,
-  } = useGetNewsById(
-    { news_id: selectedNewsId || "", user_id: user_id || "" },
-    { enabled: !!selectedNewsId && !!user_id }
-  );
+    data: infiniteNewsData,
+    isLoading: isNewsLoading,
+    error: newsError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useGetInfiniteScrollNews({ limit: 5 });
+
+  // Flatten all pages of news data
+  const allNews = infiniteNewsData?.pages.flatMap((page) => page.data) || [];
+
+  // Infinite scroll hook
+  const { lastElementRef } = useInfiniteScroll({
+    hasNextPage: !!hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   // Reset internal navigation state when component mounts or when switching away from news
   useEffect(() => {
@@ -52,126 +56,136 @@ export const News = ({
     if (activePage === "news") {
       setSelectedNewsId(null);
       onShowBackButton(false);
-      navigationStack.clear(); // Clear navigation stack
 
       // Force scroll reset for this component
-      resetAllScrollWithDelay(100);
+      resetAllScroll();
     } else {
       // Reset state when switching away from news
       setSelectedNewsId(null);
       onShowBackButton(false);
-      navigationStack.clear(); // Clear navigation stack
     }
-  }, [activePage, resetAllScroll, resetAllScrollWithDelay]); // Remove navigationStack from dependencies
+  }, [activePage, resetAllScroll]); // Remove navigationStack from dependencies
 
   // Handle back button trigger from navbar
   useEffect(() => {
     if (backButtonTrigger > 0 && selectedNewsId) {
-      handle_back_click();
+      handleBackClick();
     }
   }, [backButtonTrigger]);
 
-  const handle_news_click = (news: TNews) => {
-    // Add current news to stack if we're viewing a news item
-    if (selectedNewsId) {
-      navigationStack.push({
-        id: selectedNewsId,
-        type: "article", // Using article type for news items
-        data: { newsId: selectedNewsId },
-      });
-    }
-
+  const handleNewsClick = (news: TNews) => {
     setSelectedNewsId(news.id.toString());
     onShowBackButton(true);
     onShowDetails?.(true);
     // Ensure the widget is maximized when opening a news item
     onAutoMaximize?.();
     // Reset scroll when navigating to news details
-    resetAllScrollWithDelay(100);
+    resetAllScroll();
   };
 
-  const handle_back_click = () => {
-    // Check if we have items in the navigation stack
-    if (navigationStack.hasItems) {
-      // Go back to the previous news item in the stack
-      const previousItem = navigationStack.navigateBack();
-
-      if (previousItem && previousItem.type === "article") {
-        setSelectedNewsId(previousItem.id);
-        onShowBackButton(true);
-        onShowDetails?.(true);
-        onAutoMaximize?.();
-        resetAllScrollWithDelay(100);
-        return;
-      }
-    }
-
+  const handleBackClick = () => {
     // No previous items in stack, go back to news list
     setSelectedNewsId(null);
     onShowBackButton(false);
     onShowDetails?.(false);
-    onBackFromDetails?.(); // Call the callback to auto-minimize
-
+    onAutoMinimize?.();
     // Reset scroll when going back to news list
-    resetAllScrollWithDelay(100);
+    resetAllScroll();
   };
 
   return (
-    <div className="h-full w-full">
-      {selectedNewsId && detailed_news?.data && (
-        <div key="news-details" className="w-full">
-          <NewsDetails
-            news={detailed_news.data}
-            onBack={handle_back_click}
-            onAutoMaximize={onAutoMaximize}
-          />
-        </div>
-      )}
+    <div className={"h-full w-full"}>
+      <AnimatePresence mode="wait">
+        {selectedNewsId && (
+          <motion.div
+            key="news-details"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className={cn("h-full w-full")}
+          >
+            <NewsDetails
+              newsId={selectedNewsId}
+              onBack={handleBackClick}
+              onAutoMaximize={onAutoMaximize}
+            />
+          </motion.div>
+        )}
 
-      {!selectedNewsId && isLoading && (
-        <div key="loading-list" className="w-full">
-          <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground text-sm">Loading news...</div>
-          </div>
-        </div>
-      )}
+        {!selectedNewsId && isNewsLoading && (
+          <motion.div
+            key="loading-list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className={cn(
+              "text-muted-foreground flex w-full items-center justify-center py-8 text-sm"
+            )}
+          >
+            Loading news...
+          </motion.div>
+        )}
 
-      {!selectedNewsId && error && (
-        <div key="error-list" className="w-full">
-          <div className="bg-destructive/10 rounded-lg p-4">
-            <p className="text-destructive text-sm">
+        {!selectedNewsId && newsError && (
+          <motion.div
+            key="error-list"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className={cn("bg-destructive/10 w-full rounded-lg p-4")}
+          >
+            <p className={cn("text-destructive text-sm")}>
               Failed to load news. Please try again later.
             </p>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
 
-      {!selectedNewsId &&
-        !isLoading &&
-        !error &&
-        news_data &&
-        news_data.data &&
-        news_data.data.length > 0 && (
-          <div key="news-list" className="w-full">
-            <div className="mb-4 px-1">
-              <div>
-                <h1 className="text-card-foreground text-xl font-bold">
+        {!selectedNewsId &&
+          !isNewsLoading &&
+          !newsError &&
+          allNews &&
+          allNews.length > 0 && (
+            <motion.div
+              key="news-list"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className={cn("w-full")}
+            >
+              <div className={cn("mb-4 px-1")}>
+                <h1 className={cn("text-card-foreground text-xl font-bold")}>
                   Latest
                 </h1>
-                <p className="text-muted-foreground text-sm">
+                <p className={cn("text-muted-foreground text-sm")}>
                   From Team Prodgain
                 </p>
               </div>
-            </div>
-            <div className="space-y-4">
-              {news_data.data.map((news, index) => (
-                <div key={news.id}>
-                  <NewsCard news={news} onClick={handle_news_click} />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+              <div className={cn("space-y-4")}>
+                {allNews.map((news, index) => (
+                  <div
+                    key={news.id}
+                    ref={index === allNews.length - 1 ? lastElementRef : null}
+                  >
+                    <NewsCard news={news as TNews} onClick={handleNewsClick} />
+                  </div>
+                ))}
+                {isFetchingNextPage && (
+                  <div
+                    className={cn(
+                      "text-muted-foreground flex w-full items-center justify-center py-4 text-sm"
+                    )}
+                  >
+                    Loading more news...
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+      </AnimatePresence>
     </div>
   );
 };

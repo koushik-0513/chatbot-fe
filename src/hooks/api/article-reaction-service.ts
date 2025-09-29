@@ -1,10 +1,9 @@
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
-  TArticleReaction,
-} from "@/constants/constants";
+} from "@/constants/reaction";
 import type { TApiPromise, TMutationOpts } from "@/types/api";
-import type { TArticleReactionResponse } from "@/types/component-types/help-types";
+import { TArticleReaction } from "@/types/component-types/help-types";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -21,7 +20,7 @@ type TSubmitArticleReactionPayload = {
 // Article Reaction Services
 const submitArticleReaction = (
   payload: TSubmitArticleReactionPayload
-): TApiPromise<TArticleReactionResponse> => {
+): TApiPromise<TArticleReaction> => {
   const { articleId, reaction, userId } = payload;
   return api.post(
     `/article/${articleId}/reaction`,

@@ -1,19 +1,17 @@
 import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
-  TGetCollectionsParams,
+  TGetInfiniteScrollCollectionsParams,
   THelpArticleDetailResponse,
   THelpCollectionDetailResponse,
-  THelpCollectionsResponse,
-  THelpResponse,
+  TInfiniteScrollCollectionsResponse,
   TTopArticlesResponse,
 } from "@/types/component-types/help-types";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
-// Base URL: /api/v1/collection/...
-
 // Help Types
+
 type TGetCollectionDetailsQParams = {
   collection_id: string;
   user_id: string;
@@ -26,16 +24,13 @@ type TGetArticleDetailsQParams = {
 
 type TGetHelpQParams = {
   collection_id: string;
-  page?: number;
-  limit?: number;
 };
 
-// Help Services
-const getCollections = (
-  params: TGetCollectionsParams = { page: 1, limit: 10 }
-): TApiPromise<THelpCollectionsResponse> => {
-  const { page = 1, limit = 10 } = params;
-  return api.get("/collection", { params: { page, limit } });
+type TInfiniteScrollCollectionsOptions = {
+  retry: number;
+  staleTime: number;
+  refetchOnWindowFocus: boolean;
+  enabled: boolean;
 };
 
 const getCollectionDetails = ({
@@ -60,31 +55,23 @@ const getArticleDetails = ({
 
 const getHelp = ({
   collection_id,
-  ...params
-}: TGetHelpQParams): TApiPromise<THelpResponse> => {
-  const { page = 1, limit = 10 } = params;
-  return api.get(`/collection/${collection_id}`, {
-    params: { page, limit },
-  });
+}: TGetHelpQParams): TApiPromise<THelpCollectionDetailResponse> => {
+  return api.get(`/collection/${collection_id}`, {});
 };
 
 const getTopArticles = (): TApiPromise<TTopArticlesResponse> => {
   return api.get("/article/top");
 };
 
-// Help Hooks
-export const useGetCollections = (
-  params: TGetCollectionsParams = { page: 1, limit: 10 },
-  options?: TQueryOpts<THelpCollectionsResponse>
-) => {
-  return useQuery({
-    queryKey: ["useGetCollections", params],
-    queryFn: () => getCollections(params),
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
-    ...options,
-  });
+const getInfiniteScrollCollections = (
+  params: TGetInfiniteScrollCollectionsParams
+): TApiPromise<TInfiniteScrollCollectionsResponse> => {
+  const { limit = 5, cursor } = params;
+  const queryParams: Record<string, string | number> = { limit };
+  if (cursor) {
+    queryParams.cursor = cursor;
+  }
+  return api.get("/collection", { params: queryParams });
 };
 
 export const useGetCollectionDetails = (
@@ -94,7 +81,7 @@ export const useGetCollectionDetails = (
   return useQuery({
     queryKey: ["useGetCollectionDetails", params],
     queryFn: () => getCollectionDetails(params),
-    enabled: !!params.collection_id,
+    enabled: !!params.collection_id && !!params.user_id,
     retry: 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -109,7 +96,7 @@ export const useGetArticleDetails = (
   return useQuery({
     queryKey: ["useGetArticleDetails", params],
     queryFn: () => getArticleDetails(params),
-    enabled: !!params.article_id,
+    enabled: !!params.article_id && !!params.user_id,
     retry: 2,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
@@ -119,7 +106,7 @@ export const useGetArticleDetails = (
 
 export const useGetHelp = (
   params: TGetHelpQParams,
-  options?: TQueryOpts<THelpResponse>
+  options?: TQueryOpts<THelpCollectionDetailResponse>
 ) => {
   return useQuery({
     queryKey: ["useGetHelp", params],
@@ -142,5 +129,26 @@ export const useGetTopArticles = (
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     ...options,
+  });
+};
+
+// Infinite scroll collections hook
+export const useGetInfiniteScrollCollections = (
+  params: TGetInfiniteScrollCollectionsParams,
+  options?: TInfiniteScrollCollectionsOptions
+) => {
+  return useInfiniteQuery({
+    queryKey: ["useGetInfiniteScrollCollections", params.limit],
+    queryFn: ({ pageParam }: { pageParam: string | null }) =>
+      getInfiniteScrollCollections({ ...params, cursor: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.infinite_scroll.has_more
+        ? lastPage.infinite_scroll.next_cursor
+        : undefined,
+    retry: options?.retry ?? 2,
+    staleTime: options?.staleTime ?? 5 * 60 * 1000,
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
+    enabled: options?.enabled,
   });
 };

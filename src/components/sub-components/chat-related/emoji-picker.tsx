@@ -5,12 +5,10 @@ import { createElement } from "react";
 
 import dynamic from "next/dynamic";
 
-import { UI_MESSAGES } from "@/constants/constants";
-
-export interface TEmojiPickerProps {
+export type TEmojiPickerProps = {
   onEmojiSelect: (emoji: string) => void;
   onClose: () => void;
-}
+};
 
 const EmojiPickerComponent = ({
   onEmojiSelect,
@@ -34,7 +32,7 @@ const EmojiPickerComponent = ({
         await import("emoji-picker-element");
         setIsLoaded(true);
       } catch (error) {
-        console.error(UI_MESSAGES.ERROR.USER_ID_REQUIRED, error);
+        console.error(error);
       }
     };
 
@@ -62,10 +60,8 @@ const EmojiPickerComponent = ({
 
   if (!isClient || !isLoaded) {
     return (
-      <div className="absolute bottom-16 left-0 z-50 w-80 rounded-lg border border-gray-200 bg-white shadow-lg">
-        <div className="flex items-center justify-center p-8">
-          <div className="text-sm text-gray-500">Loading emoji picker...</div>
-        </div>
+      <div className="absolute bottom-16 left-0 z-50 flex w-80 items-center justify-center rounded-lg border border-gray-200 bg-white p-8 shadow-lg">
+        <div className="text-sm text-gray-500">Loading emoji picker...</div>
       </div>
     );
   }
@@ -117,10 +113,8 @@ export const EmojiPicker = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="absolute bottom-16 left-0 z-50 w-80 rounded-lg border border-gray-200 bg-white shadow-lg">
-        <div className="flex items-center justify-center p-8">
-          <div className="text-sm text-gray-500">Loading emoji picker...</div>
-        </div>
+      <div className="absolute bottom-16 left-0 z-50 flex w-80 items-center justify-center rounded-lg border border-gray-200 bg-white p-8 shadow-lg">
+        <div className="text-sm text-gray-500">Loading emoji picker...</div>
       </div>
     ),
   }

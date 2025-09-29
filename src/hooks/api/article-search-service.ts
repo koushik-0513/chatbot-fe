@@ -13,9 +13,9 @@ import { api } from "@/lib/api";
 const searchArticles = (
   params: TArticleSearchParams
 ): TApiPromise<TArticleSearchResponse> => {
-  const { query, page = 1, limit = 10 } = params;
+  const { query } = params;
   return api.get("/article", {
-    params: { search: query, page, limit },
+    params: { search: query },
   });
 };
 

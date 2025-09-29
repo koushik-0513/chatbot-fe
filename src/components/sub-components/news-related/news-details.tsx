@@ -3,50 +3,59 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import {
-  NEWS_REACTIONS,
-  NEWS_REACTION_EMOJI_MAP,
-  TNewsReaction,
-  UI_MESSAGES,
-} from "@/constants/constants";
+  CONTAINER_VARIANTS,
+  ITEM_VARIANTS,
+  SCALE_VARIANTS,
+} from "@/constants/animations";
+import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { TNewsReaction } from "@/types/component-types/news-types";
+import { getRelativeTime } from "@/utils/date-time";
 import { motion } from "framer-motion";
 
-import { useSubmitNewsReaction } from "../../../hooks/api/news-reaction-service";
-import { useUserId } from "../../../hooks/use-user-id";
-import { TNews } from "../../../types/component-types/news-types";
-import { MarkdownRenderer } from "../../ui/markdown-renderer";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+import { useSubmitNewsReaction } from "@/hooks/api/news-reaction-service";
+import { useGetNewsById } from "@/hooks/api/news-service";
+import { useUserId } from "@/hooks/custom/use-user-id";
 
 type TNewsDetailsProps = {
-  news: TNews;
+  newsId: string;
   onBack: () => void;
   onAutoMaximize?: () => void;
 };
 
-// Type guard to safely convert string to TNewsReaction
-const isValidNewsReaction = (reaction: string): TNewsReaction | null => {
-  if (!reaction) return null;
-  return NEWS_REACTIONS.includes(reaction as TNewsReaction)
-    ? (reaction as TNewsReaction)
-    : null;
-};
-
-export const NewsDetails = ({ news }: TNewsDetailsProps) => {
-  const { resetAllScrollWithDelay } = useScrollContext();
+export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
+  const { resetAllScroll } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
-  const { user_id } = useUserId();
+  const { userId } = useUserId();
+
+  // Fetch news details
+  const {
+    data: newsData,
+    isLoading,
+    error,
+  } = useGetNewsById({ news_id: newsId, user_id: userId || "" });
+
+  const news = newsData?.data;
 
   // Reaction state - initialize from news data if available
   const [selectedReaction, setSelectedReaction] =
-    useState<TNewsReaction | null>(() => {
-      return isValidNewsReaction(news?.reaction?.reaction);
-    });
+    useState<TNewsReaction | null>();
 
   // News reaction mutation
   const submitReactionMutation = useSubmitNewsReaction();
 
+  // Initialize reaction state when news data is loaded
+  useEffect(() => {
+    if (news?.reaction?.reaction) {
+      setSelectedReaction(news.reaction.reaction);
+    }
+  }, [news]);
+
   // Handle reaction submission
   const handleReactionSubmit = async (reaction: TNewsReaction) => {
-    if (!user_id || submitReactionMutation.isPending) return;
+    if (!userId || submitReactionMutation.isPending) return;
 
     // Don't make API call if the same reaction is already selected
     if (selectedReaction === reaction) {
@@ -55,131 +64,71 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
 
     try {
       await submitReactionMutation.mutateAsync({
-        newsId: news.id,
+        newsId: news?.id || "",
         reaction: reaction,
-        userId: user_id,
+        userId: userId,
       });
       setSelectedReaction(reaction);
     } catch (error) {
-      console.error(UI_MESSAGES.ERROR.REACTION_SUBMIT_FAILED, error);
+      console.error(error);
     }
   };
 
   // Reset scroll when component mounts
   useEffect(() => {
-    resetAllScrollWithDelay(100);
+    resetAllScroll();
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [resetAllScrollWithDelay]);
+  }, [resetAllScroll]);
 
-  // Auto-maximize is handled by the parent component
-  // No need to call onAutoMaximize here to avoid duplicate calls
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
+          <p className="text-muted-foreground">Loading news details...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Update selected reaction when news data changes
-  useEffect(() => {
-    const existingReaction = isValidNewsReaction(news?.reaction?.reaction);
-    setSelectedReaction(existingReaction);
-  }, [news]);
+  // Error state
+  if (error || !news) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load news details</p>
+          <button
+            onClick={onBack}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Function to calculate relative time
-  const get_relative_time = (dateString: string | undefined): string => {
-    if (!dateString) return "Recently";
-
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-      const intervals = [
-        { label: "year", seconds: 31536000 },
-        { label: "month", seconds: 2592000 },
-        { label: "week", seconds: 604800 },
-        { label: "day", seconds: 86400 },
-        { label: "hour", seconds: 3600 },
-        { label: "minute", seconds: 60 },
-        { label: "second", seconds: 1 },
-      ];
-
-      for (const interval of intervals) {
-        const count = Math.floor(diffInSeconds / interval.seconds);
-        if (count >= 1) {
-          return count === 1
-            ? `${count} ${interval.label} ago`
-            : `${count} ${interval.label}s ago`;
-        }
-      }
-
-      return "just now";
-    } catch {
-      return "Recently";
-    }
+  // Helper functions (only called after loading/error checks)
+  const getAuthorName = (): string => {
+    return news.author.name || "Anonymous";
   };
 
-  const get_author_name = (): string => {
-    if (news.author && typeof news.author === "object" && news.author.name) {
-      return news.author.name;
-    }
-    return "Anonymous";
-  };
-
-  const get_author_initial = (): string => {
-    const name = get_author_name();
+  const getAuthorInitial = (): string => {
+    const name = getAuthorName();
     return name.charAt(0).toUpperCase();
   };
 
-  const get_author_image = (): string | null => {
-    if (
-      news.author &&
-      typeof news.author === "object" &&
-      news.author.profile_image
-    ) {
-      return news.author.profile_image;
-    }
-    return null;
-  };
-
-  // Animation variants for better performance
-  const container_variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item_variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
-      },
-    },
-  };
-
-  const scale_variants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.3,
-        type: "spring" as const,
-        stiffness: 200,
-      },
-    },
+  const getAuthorImage = (): string => {
+    return news.author.profile_image || "";
   };
 
   return (
     <motion.div
       className="flex flex-col"
-      variants={container_variants}
+      variants={CONTAINER_VARIANTS}
       initial="hidden"
       animate="visible"
     >
@@ -197,7 +146,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
       )}
 
       {/* Content Container */}
-      <div className="space-y-6">
+      <div className="space-y-6 px-4">
         {/* Tags */}
         <div className="flex flex-wrap gap-2">
           {news.tags.map((tag, index) => (
@@ -213,7 +162,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
         {/* Article Title */}
         <motion.h1
           className="text-card-foreground text-xl leading-tight font-bold"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
         >
           {news.title}
         </motion.h1>
@@ -221,35 +170,35 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
         {/* Author and Metadata */}
         <motion.div
           className="flex items-center justify-between"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
         >
           <div className="flex items-center gap-3">
-            {get_author_image() ? (
+            {getAuthorImage() ? (
               <motion.img
-                src={get_author_image()!}
-                alt={get_author_name()}
+                src={getAuthorImage()!}
+                alt={getAuthorName()}
                 className="h-10 w-10 rounded-full object-cover"
-                variants={scale_variants}
+                variants={SCALE_VARIANTS}
               />
             ) : (
               <motion.div
                 className="bg-muted flex h-10 w-10 items-center justify-center rounded-full"
-                variants={scale_variants}
+                variants={SCALE_VARIANTS}
               >
                 <span className="text-primary text-sm font-medium">
-                  {get_author_initial()}
+                  {getAuthorInitial()}
                 </span>
               </motion.div>
             )}
             <motion.div
               className="flex flex-row items-center gap-2"
-              variants={item_variants}
+              variants={ITEM_VARIANTS}
             >
               <p className="text-card-foreground text-sm font-medium">
-                {get_author_name()}
+                {getAuthorName()}
               </p>
               <p className="text-muted-foreground text-xs">
-                {get_relative_time(news.published_at)}
+                {getRelativeTime(news.published_at)}
               </p>
             </motion.div>
           </div>
@@ -258,7 +207,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
         {/* Content */}
         {news.content && (
           <motion.div
-            variants={item_variants}
+            variants={ITEM_VARIANTS}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -270,15 +219,15 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
         {/* Reactions Section */}
         <motion.div
           className="flex flex-col items-center justify-center text-center"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
         >
           <motion.h3
             className="text-card-foreground text-md mb-4 font-semibold"
-            variants={item_variants}
+            variants={ITEM_VARIANTS}
           >
             How do you feel about this news?
           </motion.h3>
-          <motion.div className="flex gap-3" variants={item_variants}>
+          <motion.div className="flex gap-3" variants={ITEM_VARIANTS}>
             {NEWS_REACTIONS.map((reaction, index) => {
               const isSelected = selectedReaction === reaction;
               const isSubmitting = submitReactionMutation.isPending;
@@ -293,7 +242,7 @@ export const NewsDetails = ({ news }: TNewsDetailsProps) => {
                       ? "border-primary bg-primary/10 scale-110"
                       : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
                   } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
-                  variants={scale_variants}
+                  variants={SCALE_VARIANTS}
                   whileHover={!isSubmitting ? { scale: 1.1 } : {}}
                   whileTap={!isSubmitting ? { scale: 0.95 } : {}}
                   transition={{ delay: index * 0.05 }}

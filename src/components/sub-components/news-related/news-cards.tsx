@@ -1,12 +1,11 @@
 import Image from "next/image";
 
+import { TNews } from "@/types/component-types/news-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-import { TNews } from "../../../types/component-types/news-types";
-import { MarkdownRenderer } from "../../ui/markdown-renderer";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 type TNewsCardProps = {
   news: TNews;
@@ -19,7 +18,7 @@ export const NewsCard = ({
   onClick,
   maxTagsToShow = 2,
 }: TNewsCardProps) => {
-  const handle_click = () => {
+  const handleClick = () => {
     onClick(news);
   };
 
@@ -31,19 +30,17 @@ export const NewsCard = ({
     <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
       <Card
         className="mb-4 cursor-pointer overflow-hidden p-0 transition-shadow hover:shadow-lg"
-        onClick={handle_click}
+        onClick={handleClick}
       >
-        <div>
-          <CardContent className="p-0">
-            <Image
-              src={news.image || ""}
-              alt={news.title}
-              width={400}
-              height={192}
-              className="h-48 w-full object-cover"
-            />
-          </CardContent>
-        </div>
+        <CardContent className="p-0">
+          <Image
+            src={news.image || ""}
+            alt={news.title}
+            width={400}
+            height={192}
+            className="h-48 w-full object-cover"
+          />
+        </CardContent>
 
         <CardHeader className="pb-4">
           <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -68,13 +65,11 @@ export const NewsCard = ({
                 {news.title}
               </CardTitle>
               <div className="flex justify-between">
-                <div className="text-muted-foreground flex-1 text-xs leading-relaxed">
-                  <div className="line-clamp-2">
-                    <MarkdownRenderer
-                      content={news.description}
-                      className="prose-p:text-xs prose-p:mb-0.5 prose-p:text-muted-foreground prose-headings:text-xs prose-headings:font-normal prose-headings:text-muted-foreground prose-strong:text-muted-foreground prose-em:text-muted-foreground prose-code:text-xs text-xs"
-                    />
-                  </div>
+                <div className="text-muted-foreground line-clamp-2 flex-1 text-xs leading-relaxed">
+                  <MarkdownRenderer
+                    content={news.content}
+                    className="prose-p:text-xs prose-p:mb-0.5 prose-p:text-muted-foreground prose-headings:text-xs prose-headings:font-normal prose-headings:text-muted-foreground prose-strong:text-muted-foreground prose-em:text-muted-foreground prose-code:text-xs text-xs"
+                  />
                 </div>
                 <motion.div
                   whileHover={{ x: 2 }}

@@ -1,49 +1,66 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 
-import { UI_MESSAGES } from "@/constants/constants";
+import Image from "next/image";
+
+import {
+  CONTAINER_VARIANTS,
+  ITEM_VARIANTS,
+  SCALE_VARIANTS,
+} from "@/constants/animations";
 import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
-  TArticleReaction,
-} from "@/constants/constants";
+} from "@/constants/reaction";
 import { useScrollContext } from "@/contexts/scroll-context";
+import { TArticleReaction } from "@/types/component-types/help-types";
+import { getRelativeTime } from "@/utils/date-time";
 import { motion } from "framer-motion";
 
-import { useSubmitArticleReaction } from "../../../hooks/api/article-reaction-service";
-import { useUserId } from "../../../hooks/use-user-id";
-import { THelpArticleDetailResponse } from "../../../types/component-types/help-types";
-import { MarkdownRenderer } from "../../ui/markdown-renderer";
+import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+import { useSubmitArticleReaction } from "@/hooks/api/article-reaction-service";
+import { useGetArticleDetails } from "@/hooks/api/help-service";
+import { useUserId } from "@/hooks/custom/use-user-id";
 
 type TArticleDetailsProps = {
-  articleDetailsData: THelpArticleDetailResponse | undefined;
+  articleId: string | null;
   onRelatedArticleClick?: (articleId: string) => void;
+  onTitleChange?: (title: string) => void;
 };
 
 // Type guard to safely convert string to TArticleReaction
-const isValidArticleReaction = (
-  reaction: string | undefined
-): TArticleReaction | null => {
+const isValidArticleReaction = (reaction: TArticleReaction | undefined) => {
   if (!reaction) return null;
-  return ARTICLE_REACTIONS.includes(reaction as TArticleReaction)
-    ? (reaction as TArticleReaction)
-    : null;
+  return ARTICLE_REACTIONS.includes(reaction) ? reaction : null;
 };
 
 export const ArticleDetails = ({
-  articleDetailsData,
+  articleId,
   onRelatedArticleClick,
+  onTitleChange,
 }: TArticleDetailsProps) => {
-  const { resetAllScrollWithDelay } = useScrollContext();
+  const { resetAllScroll } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
-  const { user_id } = useUserId();
+  const { userId: user_id } = useUserId();
 
+  // Fetch article details when an article is selected
+  const { data: articleDetailsData, isLoading: isFetchingArticle } =
+    useGetArticleDetails(
+      {
+        article_id: articleId || "",
+        user_id: user_id || "",
+      },
+      { enabled: !!articleId && !!user_id }
+    );
+
+  // using this i want to reduce the other code
+  const article = articleDetailsData?.data.article;
   // Reaction state - initialize from article data if available
-  const [selectedReaction, setSelectedReaction] =
-    useState<TArticleReaction | null>(() => {
-      return isValidArticleReaction(
-        articleDetailsData?.data?.article?.reaction?.reaction
-      );
-    });
+  const [selectedReaction, setSelectedReaction] = useState(() => {
+    return isValidArticleReaction(article?.reaction?.reaction);
+  });
 
   // Article reaction mutation
   const submitReactionMutation = useSubmitArticleReaction();
@@ -57,16 +74,12 @@ export const ArticleDetails = ({
       return;
     }
 
-    try {
-      await submitReactionMutation.mutateAsync({
-        articleId: articleDetailsData?.data?.article?.id || "",
-        reaction: reaction,
-        userId: user_id,
-      });
-      setSelectedReaction(reaction);
-    } catch (error) {
-      console.error(UI_MESSAGES.ERROR.REACTION_SUBMIT_FAILED, error);
-    }
+    await submitReactionMutation.mutateAsync({
+      articleId: article?.id || "",
+      reaction: reaction,
+      userId: user_id,
+    });
+    setSelectedReaction(reaction);
   };
 
   // Handle related article click
@@ -76,117 +89,43 @@ export const ArticleDetails = ({
 
   // Reset scroll when component mounts
   useEffect(() => {
-    resetAllScrollWithDelay(100);
+    resetAllScroll();
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [resetAllScrollWithDelay]);
+  }, [resetAllScroll]);
 
-  // Auto-maximize is handled by the parent component
-  // No need to call onAutoMaximize here to avoid duplicate calls
-
-  // Update selected reaction when article data changes
+  // Notify parent of article title when data is loaded
   useEffect(() => {
-    const existingReaction = isValidArticleReaction(
-      articleDetailsData?.data?.article?.reaction?.reaction
-    );
-    setSelectedReaction(existingReaction);
-  }, [articleDetailsData]);
+    if (article?.title) {
+      onTitleChange?.(article.title);
+    }
+  }, [articleDetailsData, onTitleChange]);
 
   // Function to calculate relative time
-  const get_relative_time = (dateString: string | undefined): string => {
-    if (!dateString) return "Recently";
 
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-      const intervals = [
-        { label: "year", seconds: 31536000 },
-        { label: "month", seconds: 2592000 },
-        { label: "week", seconds: 604800 },
-        { label: "day", seconds: 86400 },
-        { label: "hour", seconds: 3600 },
-        { label: "minute", seconds: 60 },
-        { label: "second", seconds: 1 },
-      ];
-
-      for (const interval of intervals) {
-        const count = Math.floor(diffInSeconds / interval.seconds);
-        if (count >= 1) {
-          return count === 1
-            ? `${count} ${interval.label} ago`
-            : `${count} ${interval.label}s ago`;
-        }
-      }
-
-      return "just now";
-    } catch {
-      return "Recently";
-    }
+  const getAuthorName = (): string => {
+    return articleDetailsData?.data.author.name || "Anonymous";
   };
 
-  const get_author_name = (): string => {
-    if (
-      articleDetailsData?.data?.author &&
-      typeof articleDetailsData.data.author === "object" &&
-      articleDetailsData.data.author.name
-    ) {
-      return articleDetailsData.data.author.name;
-    }
-    return "Anonymous";
+  const getAuthorImage = (): string => {
+    return articleDetailsData?.data.author.profile_image || "";
   };
 
-  const get_author_image = (): string | null => {
-    if (
-      articleDetailsData?.data?.author &&
-      typeof articleDetailsData.data.author === "object" &&
-      articleDetailsData.data.author.profile_image
-    ) {
-      return articleDetailsData.data.author.profile_image;
-    }
-    return null;
-  };
+  if (isFetchingArticle) {
+    return (
+      <motion.div
+        className="flex h-full flex-col items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="text-muted-foreground">Loading article...</div>
+      </motion.div>
+    );
+  }
 
-  // Animation variants for better performance
-  const container_variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        duration: 0.6,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item_variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
-      },
-    },
-  };
-
-  const scale_variants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.3,
-        type: "spring" as const,
-        stiffness: 200,
-      },
-    },
-  };
-
-  if (!articleDetailsData?.data?.article) {
+  if (!article) {
     return (
       <motion.div
         className="flex h-full flex-col items-center justify-center"
@@ -199,58 +138,59 @@ export const ArticleDetails = ({
     );
   }
 
-  const article = articleDetailsData.data.article;
-
   return (
     <motion.div
+      ref={contentRef}
       className="flex flex-col p-4"
-      variants={container_variants}
+      variants={CONTAINER_VARIANTS}
       initial="hidden"
       animate="visible"
+      transition={{ duration: 0.6, staggerChildren: 0.1 }}
     >
       {/* Content Container */}
       <div className="space-y-6">
         {/* Article Title */}
         <motion.h1
           className="text-card-foreground text-xl leading-tight font-bold"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
+          initial="hidden"
+          animate="visible"
         >
-          {article.title}
+          {article?.title}
         </motion.h1>
 
         {/* Author and Metadata */}
         <motion.div
           className="flex items-center justify-between"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
+          initial="hidden"
+          animate="visible"
         >
           <div className="flex items-center gap-3">
-            <motion.img
-              src={get_author_image()!}
-              alt={get_author_name()}
+            <Image
+              src={getAuthorImage()!}
+              alt={getAuthorName()}
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full object-cover"
-              variants={scale_variants}
             />
-            <motion.div
-              className="flex flex-row items-center gap-2"
-              variants={item_variants}
-            >
+            <motion.div className="flex flex-row items-center gap-2">
               <p className="text-card-foreground text-sm font-medium">
-                {get_author_name()}
+                {getAuthorName()}
               </p>
               <p className="text-muted-foreground text-xs">
-                {get_relative_time(article.updated_at)}
+                {getRelativeTime(article?.updated_at)}
               </p>
             </motion.div>
           </div>
         </motion.div>
 
         {/* Content */}
-        {article.content && (
+        {article?.content && (
           <motion.div
-            variants={item_variants}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            variants={ITEM_VARIANTS}
+            initial="hidden"
+            animate="visible"
           >
             <MarkdownRenderer content={article.content} />
           </motion.div>
@@ -258,7 +198,9 @@ export const ArticleDetails = ({
 
         <motion.div
           className="border-primary/20 bg-primary/5 rounded-lg border-t-2 border-b-2 p-4"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
+          initial="hidden"
+          animate="visible"
         >
           <div className="mb-2 flex items-center gap-2">
             <span className="text-2xl">💡</span>
@@ -279,8 +221,13 @@ export const ArticleDetails = ({
           </div>
         </motion.div>
 
-        {article.related_articles && article.related_articles.length > 0 && (
-          <motion.div className="space-y-3" variants={item_variants}>
+        {article?.related_articles && article.related_articles.length > 0 && (
+          <motion.div
+            className="space-y-3"
+            variants={ITEM_VARIANTS}
+            initial="hidden"
+            animate="visible"
+          >
             <h3 className="text-card-foreground text-lg font-semibold">
               Related Articles
             </h3>
@@ -324,15 +271,24 @@ export const ArticleDetails = ({
         {/* Reactions Section */}
         <motion.div
           className="flex flex-col items-center justify-center text-center"
-          variants={item_variants}
+          variants={ITEM_VARIANTS}
+          initial="hidden"
+          animate="visible"
         >
           <motion.h3
             className="text-card-foreground text-md mb-4 font-semibold"
-            variants={item_variants}
+            variants={ITEM_VARIANTS}
+            initial="hidden"
+            animate="visible"
           >
             How helpful was this article?
           </motion.h3>
-          <motion.div className="flex gap-3" variants={item_variants}>
+          <motion.div
+            className="flex gap-3"
+            variants={ITEM_VARIANTS}
+            initial="hidden"
+            animate="visible"
+          >
             {ARTICLE_REACTIONS.map((reaction, index) => {
               const isSelected = selectedReaction === reaction;
               const isSubmitting = submitReactionMutation.isPending;
@@ -347,7 +303,9 @@ export const ArticleDetails = ({
                       ? "border-primary bg-primary/10 scale-110"
                       : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
                   } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
-                  variants={scale_variants}
+                  variants={SCALE_VARIANTS}
+                  initial="hidden"
+                  animate="visible"
                   whileHover={!isSubmitting ? { scale: 1.1 } : {}}
                   whileTap={!isSubmitting ? { scale: 0.95 } : {}}
                   transition={{ delay: index * 0.05 }}

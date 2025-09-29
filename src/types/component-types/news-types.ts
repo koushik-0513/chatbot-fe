@@ -1,3 +1,5 @@
+import { NEWS_REACTIONS } from "@/constants/reaction";
+
 import { TAuthor } from "../types";
 
 export type TNews = {
@@ -5,7 +7,6 @@ export type TNews = {
   title: string;
   slug: string;
   content: string;
-  description: string;
   image: string;
   image_url: string;
   thumbnail_url: string;
@@ -15,32 +16,20 @@ export type TNews = {
   published_at: string;
   is_published: boolean;
   is_featured: boolean;
-  readTime: number;
   reaction: {
-    reaction: string;
+    reaction: TNewsReaction;
     user_id: string;
     _id: string;
   };
 };
 
-export type TNewsItem = {
-  id: string;
-  title: string;
-  slug: string;
-  image: string;
-  tags: string[];
-  description: string;
-};
-
-// News list API response - matches the exact structure from your API
-export type TNewsListResponse = {
+export type TInfiniteScrollNewsResponse = {
   message: string;
-  data: TNewsItem[];
-  pagination: {
-    page: number;
+  data: TNews[];
+  infinite_scroll: {
+    has_more: boolean;
+    next_cursor: string | null;
     limit: number;
-    total_pages: number;
-    total_news: number;
   };
 };
 
@@ -50,16 +39,6 @@ export type TNewsDetailResponse = {
   data: TNews;
 };
 
-// ============================================================================
-// UNIFIED AUTHOR TYPE - Used across Help and News
-// ============================================================================
-
-// Unified Author type for both Help and News (supports both API formats)
-
-// ============================================================================
-// API SERVICE TYPES - Consolidated from various service files
-// ============================================================================
-
 // News API types
 export type TNewsResponse = {
   message: string;
@@ -67,9 +46,10 @@ export type TNewsResponse = {
   total: number;
 };
 
-export type TGetNewsParams = {
-  page: number;
+// Infinite scroll news params
+export type TGetInfiniteScrollNewsParams = {
   limit: number;
+  cursor?: string | null;
 };
 
 // News reaction types
@@ -79,11 +59,7 @@ export type TNewsReactionRequest = {
 };
 
 export type TNewsReactionResponse = {
-  success: boolean;
   message: string;
-  data?: {
-    reaction: string;
-    user_id: string;
-    _id: string;
-  };
 };
+
+export type TNewsReaction = (typeof NEWS_REACTIONS)[number];

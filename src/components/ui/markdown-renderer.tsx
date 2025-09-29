@@ -2,11 +2,13 @@ import ReactMarkdown from "react-markdown";
 
 import remarkGfm from "remark-gfm";
 
-interface MarkdownRendererProps {
+import { cn } from "@/lib/utils";
+
+type MarkdownRendererProps = {
   content: string;
   className?: string;
   invert?: boolean; // Use inverted colors (e.g., on dark or colored bubbles)
-}
+};
 
 export const MarkdownRenderer = ({
   content,
@@ -22,51 +24,51 @@ export const MarkdownRenderer = ({
     className.includes("prose-p:text-xs") || className.includes("text-xs");
 
   return (
-    <div className={`prose prose-lg text-foreground max-w-none ${className}`}>
+    <div className={cn("prose prose-lg text-foreground max-w-none", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           // Custom styling for markdown elements
           h1: ({ children }) => (
             <h1
-              className={
+              className={cn(
                 isSmallText
                   ? "text-card-foreground mb-1 text-xs font-normal"
                   : "text-card-foreground mb-4 text-2xl font-bold"
-              }
+              )}
             >
               {children}
             </h1>
           ),
           h2: ({ children }) => (
             <h2
-              className={
+              className={cn(
                 isSmallText
                   ? "text-card-foreground mb-1 text-xs font-normal"
                   : "text-card-foreground mb-3 text-xl font-semibold"
-              }
+              )}
             >
               {children}
             </h2>
           ),
           h3: ({ children }) => (
             <h3
-              className={
+              className={cn(
                 isSmallText
                   ? "text-card-foreground mb-1 text-xs font-normal"
                   : "text-card-foreground mb-2 text-lg font-semibold"
-              }
+              )}
             >
               {children}
             </h3>
           ),
           p: ({ children }) => (
             <p
-              className={
+              className={cn(
                 isSmallText
                   ? "text-muted-foreground mb-0.5 text-xs leading-relaxed"
                   : "text-foreground mb-4 leading-relaxed"
-              }
+              )}
             >
               {children}
             </p>

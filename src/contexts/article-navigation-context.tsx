@@ -1,37 +1,66 @@
 "use client";
 
-import { ReactNode, createContext, useContext, useState } from "react";
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
 import {
-  THelpArticle,
+  THelpArticleDetail,
   THelpArticleDetailResponse,
 } from "@/types/component-types/help-types";
 
-interface ArticleNavigationContextType {
+// Navigation stack item types
+export type NavigationItemType = "article" | "collection" | "list";
+
+export type NavigationStackItem = {
+  type: NavigationItemType;
+  id: string;
+  title?: string;
+  data?: THelpArticleDetail | unknown;
+  timestamp: number;
+};
+
+type ArticleNavigationContextType = {
   // State for article details navigation from home page
   selectedArticleId: string | null;
-  selectedArticle: THelpArticle | null;
+  selectedArticle: THelpArticleDetail | null;
   isArticleDetailsOpen: boolean;
   articleDetailsData: THelpArticleDetailResponse | undefined;
   isLoadingArticle: boolean;
   articleError: Error | null;
 
+  // Navigation stack state
+  navigationStack: NavigationStackItem[];
+  canGoBack: boolean;
+
   // Actions
-  openArticleDetails: (article: THelpArticle) => void;
+  openArticleDetails: (article: THelpArticleDetail) => void;
   closeArticleDetails: () => void;
   resetArticleNavigation: () => void;
   setArticleDetailsData: (data: THelpArticleDetailResponse | undefined) => void;
   setLoadingArticle: (loading: boolean) => void;
   setArticleError: (error: Error | null) => void;
-}
+
+  // Navigation stack actions
+  pushItem: (item: Omit<NavigationStackItem, "timestamp">) => void;
+  popItem: () => NavigationStackItem | null;
+  goBack: () => void;
+  clearStack: () => void;
+  getCurrentItem: () => NavigationStackItem | null;
+  getPreviousItem: () => NavigationStackItem | null;
+};
 
 const ArticleNavigationContext = createContext<
   ArticleNavigationContextType | undefined
 >(undefined);
 
-interface ArticleNavigationProviderProps {
+type ArticleNavigationProviderProps = {
   children: ReactNode;
-}
+};
 
 export const ArticleNavigationProvider = ({
   children,
@@ -39,9 +68,8 @@ export const ArticleNavigationProvider = ({
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     null
   );
-  const [selectedArticle, setSelectedArticle] = useState<THelpArticle | null>(
-    null
-  );
+  const [selectedArticle, setSelectedArticle] =
+    useState<THelpArticleDetail | null>(null);
   const [isArticleDetailsOpen, setIsArticleDetailsOpen] = useState(false);
   const [articleDetailsData, setArticleDetailsData] = useState<
     THelpArticleDetailResponse | undefined
@@ -49,29 +77,138 @@ export const ArticleNavigationProvider = ({
   const [isLoadingArticle, setIsLoadingArticle] = useState(false);
   const [articleError, setArticleError] = useState<Error | null>(null);
 
-  const openArticleDetails = (article: THelpArticle) => {
-    setSelectedArticle(article);
-    setSelectedArticleId(article.id);
-    setIsArticleDetailsOpen(true);
-  };
+  // Navigation stack state
+  const [navigationStack, setNavigationStack] = useState<NavigationStackItem[]>(
+    []
+  );
 
-  const closeArticleDetails = () => {
+  // Computed values
+  const canGoBack = navigationStack.length > 1;
+
+  // Navigation stack actions
+  const pushItem = useCallback(
+    (item: Omit<NavigationStackItem, "timestamp">) => {
+      const newItem: NavigationStackItem = {
+        ...item,
+        timestamp: Date.now(),
+      };
+
+      setNavigationStack((prev) => {
+        // Avoid duplicate consecutive items
+        const lastItem = prev[prev.length - 1];
+        if (
+          lastItem &&
+          lastItem.type === newItem.type &&
+          lastItem.id === newItem.id
+        ) {
+          return prev;
+        }
+        return [...prev, newItem];
+      });
+    },
+    []
+  );
+
+  const popItem = useCallback((): NavigationStackItem | null => {
+    let poppedItem: NavigationStackItem | null = null;
+
+    setNavigationStack((prev) => {
+      if (prev.length === 0) return prev;
+      poppedItem = prev[prev.length - 1];
+      return prev.slice(0, -1);
+    });
+
+    return poppedItem;
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (navigationStack.length <= 1) return;
+
+    const previousItem = navigationStack[navigationStack.length - 2];
+    popItem();
+
+    // Handle navigation based on the previous item type
+    if (previousItem) {
+      switch (previousItem.type) {
+        case "article":
+          if (
+            previousItem.data &&
+            typeof previousItem.data === "object" &&
+            "id" in previousItem.data
+          ) {
+            // Set article details without pushing to stack (to avoid circular dependency)
+            setSelectedArticle(previousItem.data as THelpArticleDetail);
+            setSelectedArticleId((previousItem.data as THelpArticleDetail).id);
+            setIsArticleDetailsOpen(true);
+          }
+          break;
+        case "collection":
+          // Handle collection navigation if needed
+          break;
+        case "list":
+          closeArticleDetails();
+          break;
+      }
+    }
+  }, [navigationStack, popItem]);
+
+  const clearStack = useCallback(() => {
+    setNavigationStack([]);
+  }, []);
+
+  const getCurrentItem = useCallback((): NavigationStackItem | null => {
+    return navigationStack.length > 0
+      ? navigationStack[navigationStack.length - 1]
+      : null;
+  }, [navigationStack]);
+
+  const getPreviousItem = useCallback((): NavigationStackItem | null => {
+    return navigationStack.length > 1
+      ? navigationStack[navigationStack.length - 2]
+      : null;
+  }, [navigationStack]);
+
+  const openArticleDetails = useCallback(
+    (article: THelpArticleDetail) => {
+      setSelectedArticle(article);
+      setSelectedArticleId(article.id);
+      setIsArticleDetailsOpen(true);
+
+      // Push to navigation stack
+      pushItem({
+        type: "article",
+        id: article.id,
+        title: article.title,
+        data: article,
+      });
+    },
+    [pushItem]
+  );
+
+  const closeArticleDetails = useCallback(() => {
     setSelectedArticle(null);
     setSelectedArticleId(null);
     setIsArticleDetailsOpen(false);
     setArticleDetailsData(undefined);
     setIsLoadingArticle(false);
     setArticleError(null);
-  };
 
-  const resetArticleNavigation = () => {
+    // Pop from navigation stack if current item is an article
+    const currentItem = getCurrentItem();
+    if (currentItem?.type === "article") {
+      popItem();
+    }
+  }, [getCurrentItem, popItem]);
+
+  const resetArticleNavigation = useCallback(() => {
     setSelectedArticle(null);
     setSelectedArticleId(null);
     setIsArticleDetailsOpen(false);
     setArticleDetailsData(undefined);
     setIsLoadingArticle(false);
     setArticleError(null);
-  };
+    clearStack();
+  }, [clearStack]);
 
   return (
     <ArticleNavigationContext.Provider
@@ -82,12 +219,20 @@ export const ArticleNavigationProvider = ({
         articleDetailsData,
         isLoadingArticle,
         articleError,
+        navigationStack,
+        canGoBack,
         openArticleDetails,
         closeArticleDetails,
         resetArticleNavigation,
         setArticleDetailsData,
         setLoadingArticle: setIsLoadingArticle,
         setArticleError,
+        pushItem,
+        popItem,
+        goBack,
+        clearStack,
+        getCurrentItem,
+        getPreviousItem,
       }}
     >
       {children}
@@ -103,4 +248,29 @@ export const useArticleNavigation = () => {
     );
   }
   return context;
+};
+
+// Convenience hook for navigation stack operations
+export const useNavigation = () => {
+  const {
+    pushItem,
+    popItem,
+    goBack,
+    clearStack,
+    getCurrentItem,
+    getPreviousItem,
+    canGoBack,
+    navigationStack,
+  } = useArticleNavigation();
+
+  return {
+    pushItem,
+    popItem,
+    goBack,
+    clearStack,
+    getCurrentItem,
+    getPreviousItem,
+    canGoBack,
+    navigationStack,
+  };
 };

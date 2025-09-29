@@ -1,7 +1,8 @@
-import { UI_MESSAGES } from "@/constants/constants";
+import { cn } from "@/lib/utils";
 
-import { useGetTopArticles } from "../hooks/api/help-service";
-import { useGetPosts } from "../hooks/api/posts-service";
+import { useGetTopArticles } from "@/hooks/api/help-service";
+import { useGetPosts } from "@/hooks/api/posts-service";
+
 import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
 import { ResentMessage } from "./sub-components/home-related/resent-message";
@@ -27,15 +28,15 @@ export const Home = ({
 
   // Fetch posts
   const {
-    data: posts_data,
+    data: postsData,
     isLoading: isLoadingPosts,
     error: postsError,
-  } = useGetPosts({ page: 1, limit: 5 });
+  } = useGetPosts({ limit: 5 });
 
-  const display_articles = topArticlesData?.data?.articles || [];
+  const displayArticles = topArticlesData?.data?.articles || [];
 
-  const display_posts =
-    posts_data?.data?.map((post) => ({
+  const displayPosts =
+    postsData?.data?.map((post) => ({
       ...post,
       id: post._id,
     })) || [];
@@ -44,69 +45,63 @@ export const Home = ({
   const hasError = articlesError || postsError;
 
   return (
-    <div className="dark space-y-4">
-      <div className="text-foreground p-2">
-        <h2 className="text-tertiary text-2xl font-bold">Hello</h2>
-        <h3 className="text-tertiary text-2xl font-bold">
+    <div className={cn("dark space-y-4")}>
+      <div className={cn("text-foreground p-2")}>
+        <h2 className={cn("text-tertiary text-2xl font-bold")}>Hello</h2>
+        <h3 className={cn("text-tertiary text-2xl font-bold")}>
           How can I help you today?
         </h3>
       </div>
-      <div>
-        <AskQuestion onAsk={onAskQuestion} />
-      </div>
-
-      <div>
-        <ResentMessage onOpenChat={onOpenChat} />
-      </div>
+      <AskQuestion onAsk={onAskQuestion} />
+      <ResentMessage onOpenChat={onOpenChat} />
 
       {/* Loading state */}
       {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="text-muted-foreground text-sm">
-            {UI_MESSAGES.LOADING.ARTICLES}
-          </div>
+        <div
+          className={cn(
+            "text-muted-foreground flex items-center justify-center py-8 text-sm"
+          )}
+        >
+          Loading articles...
         </div>
       )}
 
       {/* Error state */}
       {hasError && (
-        <div className="bg-destructive/10 rounded-lg p-4">
-          <p className="text-destructive text-sm">
-            {UI_MESSAGES.ERROR.NEWS_LOAD_FAILED}
+        <div className={cn("bg-destructive/10 rounded-lg p-4")}>
+          <p className={cn("text-destructive text-sm")}>
+            Error loading news...
           </p>
         </div>
       )}
 
       {/* Posts Section */}
-      {!isLoadingPosts && !postsError && display_posts.length > 0 && (
-        <div>
-          <div className="space-y-4">
-            {display_posts.map((post, index) => (
-              <div key={post.id}>
-                <BlogCard
-                  id={post.id}
-                  title={post.title}
-                  description={post.description}
-                  imageurl={post.image_url}
-                  link={post.link_url}
-                />
-              </div>
-            ))}
-          </div>
+      {!isLoadingPosts && !postsError && displayPosts.length > 0 && (
+        <div className={cn("space-y-4")}>
+          {displayPosts.map((post) => (
+            <BlogCard
+              id={post.id}
+              key={post.id}
+              title={post.title}
+              description={post.description}
+              imageurl={post.image_url}
+              link={post.link_url}
+            />
+          ))}
         </div>
       )}
-      <div>
-        <SearchComponent onNavigateToHelp={onNavigateToHelp} />
-      </div>
+      <SearchComponent onNavigateToHelp={onNavigateToHelp} />
       {/* No content state */}
       {!isLoading &&
         !hasError &&
-        display_articles.length === 0 &&
-        display_posts.length === 0 && (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground text-sm">
-              No content available
-            </div>
+        displayArticles.length === 0 &&
+        displayPosts.length === 0 && (
+          <div
+            className={cn(
+              "text-muted-foreground flex items-center justify-center py-8 text-sm"
+            )}
+          >
+            No content available
           </div>
         )}
     </div>

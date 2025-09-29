@@ -4,13 +4,13 @@ import React, { useState } from "react";
 
 import { Bot, ChevronDown } from "lucide-react";
 
-import { Chatbot } from "@/components/chatbot";
+import { Chatbot } from "@/components/chat-bot";
 
 import { useUserId } from "@/hooks/use-user-id";
 
 export default function Home() {
   const [isChatbotopen, setIsChatbotOpen] = useState(false);
-  const { user_id } = useUserId();
+  const { userId } = useUserId();
   return (
     <div className="bg-card min-h-screen">
       <button
@@ -20,9 +20,9 @@ export default function Home() {
         {isChatbotopen ? <ChevronDown /> : <Bot />}
       </button>
 
-      {isChatbotopen && user_id && (
+      {isChatbotopen && userId && (
         <div key="chatbot-container" className="fixed right-6 bottom-20 z-50">
-          <Chatbot user_id={user_id} onClose={() => setIsChatbotOpen(false)} />
+          <Chatbot user_id={userId} onClose={() => setIsChatbotOpen(false)} />
         </div>
       )}
     </div>

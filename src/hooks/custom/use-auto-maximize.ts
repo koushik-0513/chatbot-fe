@@ -1,30 +1,17 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 
-import { TIMING } from "@/constants/constants";
-
-interface UseAutoMaximizeProps {
+type UseAutoMaximizeProps = {
   onMaximizeChange?: (isMaximized: boolean) => void;
   externalIsMaximized?: boolean;
   setInternalIsMaximized?: (isMaximized: boolean) => void;
-}
+};
 
 export const useAutoMaximize = ({
   onMaximizeChange,
   externalIsMaximized,
   setInternalIsMaximized,
 }: UseAutoMaximizeProps) => {
-  const lastMaximizeTime = useRef<number>(0);
-
   const triggerAutoMaximize = useCallback(() => {
-    const now = Date.now();
-
-    // Debounce rapid successive calls
-    if (now - lastMaximizeTime.current < TIMING.MAXIMIZE_DEBOUNCE_MS) {
-      return;
-    }
-
-    lastMaximizeTime.current = now;
-
     const newMaximized = true;
     if (externalIsMaximized !== undefined) {
       onMaximizeChange?.(newMaximized);

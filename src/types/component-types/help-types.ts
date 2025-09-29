@@ -1,60 +1,15 @@
+import { CURRENT_VIEW } from "@/constants/enums";
+import { ARTICLE_REACTIONS } from "@/constants/reaction";
+
 import { TAuthor } from "../types";
 
-export type THelpArticle = {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  readTime?: string;
-  content: string;
-  lastUpdated?: string;
-  tableOfContents?: string[];
-  related_articles?: Array<{
-    id: string;
-    title: string;
-  }>;
-};
-
-export type THelpCollection = {
-  id: string;
-  title: string;
-  description: string;
-  profile_image: string;
-  slug: string;
-  icon: string;
-  article_count: number;
-  articles: THelpArticle[];
-  author: string;
-  authorCount: number;
-};
-
-export enum currentView {
-  LIST = "list",
-  COLLECTION = "collection",
-  ARTICLE = "article",
-}
-
-export type THelpPageState = {
-  currentView: currentView;
-  selectedCollection: THelpCollection | null;
-  selectedArticle: THelpArticle | null;
-};
-
-export type THelp = {
-  id: string;
-  title: string;
-  description: string;
-  articles: THelpArticle[];
-};
-
-export type THelpCollectionsResponse = {
+export type TInfiniteScrollCollectionsResponse = {
   message: string;
-  data: THelpCollection[];
-  pagination: {
-    page: number;
+  data: THelpCollectionDetail[];
+  infinite_scroll: {
+    has_more: boolean;
+    next_cursor: string | null;
     limit: number;
-    total_pages: number;
-    total_collections: number;
   };
 };
 
@@ -67,33 +22,17 @@ export type THelpCollectionDetailResponse = {
       id: string;
       title: string;
     }>;
-    child_collections: THelpCollection[];
+    child_collections: THelpCollectionDetail[];
   };
 };
 
-// Help API types
-export type THelpResponse = {
+export type THelpArticleDetailResponse = {
   message: string;
-  data: THelp[];
-  total: number;
-};
-
-export type THelpDetailResponse = {
-  message: string;
-  data: THelp;
-};
-
-// Alias for backward compatibility
-
-export type THelpCollectionDetail = {
-  id: string;
-  title: string;
-  description: string;
-  slug: string;
-  icon: string;
-  level: number;
-  parent_collection: string | null;
-  total_articles: number;
+  data: {
+    article: THelpArticleDetail;
+    author: TAuthor;
+    co_authors: TAuthor[];
+  };
 };
 
 export type THelpArticleDetail = {
@@ -104,28 +43,35 @@ export type THelpArticleDetail = {
   excerpt: string;
   collection_id: string;
   tags: string[];
-  read_time: number;
-  created_at: string;
   updated_at: string;
   related_articles?: Array<{
     id: string;
     title: string;
   }>;
   reaction: {
-    reaction: string;
+    reaction: TArticleReaction;
     user_id: string;
     _id: string;
   };
 };
 
-// Article Detail API Response - matches the exact structure from the API
-export type THelpArticleDetailResponse = {
-  message: string;
-  data: {
-    article: THelpArticleDetail;
-    author: TAuthor;
-    co_authors: TAuthor[];
-  };
+export type TCurrentView = (typeof CURRENT_VIEW)[number];
+
+export type THelpPageState = {
+  currentView: TCurrentView;
+  selectedCollection: THelpCollectionDetail | null;
+  selectedArticle: THelpArticleDetail | null;
+};
+
+export type THelpCollectionDetail = {
+  id: string;
+  title: string;
+  description: string;
+  slug: string;
+  icon: string;
+  level: number;
+  parent_collection: string | null;
+  articles_count: number;
 };
 
 export type TArticleSearchResult = {
@@ -140,27 +86,18 @@ export type TArticleSearchResult = {
 };
 
 export type TArticleSearchResponse = {
-  success: boolean;
   message: string;
   data: {
     articles: TArticleSearchResult[];
-  };
-  pagination: {
-    page: number;
-    limit: number;
-    total_pages: number;
-    total_articles: number;
+    total_count: number;
+    search_query: string;
   };
 };
 
-export type TGetHelpParams = {
-  page: number;
+// Infinite scroll types for help
+export type TGetInfiniteScrollCollectionsParams = {
   limit: number;
-};
-
-export type TGetCollectionsParams = {
-  page: number;
-  limit: number;
+  cursor?: string | null;
 };
 
 export type TTopArticlesResponse = {
@@ -182,16 +119,15 @@ export type TArticleReactionRequest = {
 };
 
 export type TArticleReactionResponse = {
-  success: boolean;
   message: string;
   data?: {
     reaction: string;
     user_id: string;
-    _id: string;
   };
 };
+
 export type TArticleSearchParams = {
   query: string;
-  page: number;
-  limit: number;
 };
+
+export type TArticleReaction = (typeof ARTICLE_REACTIONS)[number];

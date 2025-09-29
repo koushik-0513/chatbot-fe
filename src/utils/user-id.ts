@@ -1,48 +1,18 @@
-import { USER_CREATED_KEY, USER_ID_KEY } from "@/constants/constants";
+import { USER_ID_KEY } from "@/constants/storage";
 import { ObjectId } from "bson";
-
-export const generateUserId = (): string => {
-  const id = new ObjectId();
-  return id.toHexString();
-};
 
 export const getUserId = (): string => {
   // Check if user ID already exists in localStorage
-  const existing_id = localStorage.getItem(USER_ID_KEY);
+  const existingId = localStorage.getItem(USER_ID_KEY);
 
-  if (existing_id) {
-    return existing_id;
+  if (existingId) {
+    return existingId;
   }
 
   // Generate new user ID if none exists
-  const new_id = generateUserId();
-  localStorage.setItem(USER_ID_KEY, new_id);
+  const id = new ObjectId();
+  const newId = id.toHexString();
+  localStorage.setItem(USER_ID_KEY, newId);
 
-  return new_id;
-};
-
-export const clearUserId = (): void => {
-  localStorage.removeItem(USER_ID_KEY);
-};
-
-export const isValidUserId = (id: string): boolean => {
-  try {
-    // Check if the string is a valid ObjectId format
-    return ObjectId.isValid(id);
-  } catch {
-    return false;
-  }
-};
-
-export const isUserCreatedOnBackend = (): boolean => {
-  const created = localStorage.getItem(USER_CREATED_KEY);
-  return created === "true";
-};
-
-export const setUserCreatedOnBackend = (): void => {
-  localStorage.setItem(USER_CREATED_KEY, "true");
-};
-
-export const clearUserCreatedStatus = (): void => {
-  localStorage.removeItem(USER_CREATED_KEY);
+  return newId;
 };

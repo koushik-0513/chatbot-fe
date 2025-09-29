@@ -1,19 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  ANIMATION_DELAYS,
-  DEFAULT_TITLES,
-  LAYOUT,
-  UI_MESSAGES,
-} from "@/constants/constants";
-import {
-  TChatMessage,
-  TChatMessageSender,
-  TUploadStatus,
-} from "@/types/component-types/chat-types";
+import { LAYOUT } from "@/constants/styles";
+import { DEFAULT_TITLES } from "@/constants/titles";
+import { TChatMessage, TStatus } from "@/types/component-types/chat-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ObjectId } from "bson";
-import { ArrowDown, ArrowLeft, Paperclip, Send, Smile, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, Paperclip, Send, Smile } from "lucide-react";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
@@ -21,31 +13,29 @@ import {
   useGetConversationById,
   useSendMessage,
 } from "@/hooks/api/chat-service";
-import { uploadFile } from "@/hooks/api/file-service";
+import { useUploadFile } from "@/hooks/api/file-service";
+import { useUserId } from "@/hooks/custom/use-user-id";
 
-import { useUserId } from "../../../hooks/use-user-id";
 import { EmojiPicker } from "./emoji-picker";
 
 type TChatContainerProps = {
   chatId: string | null;
   chatTitle: string;
   onBack: () => void;
-  onClose?: () => void;
 };
 
 type UploadItem = {
   id: string;
   name: string;
-  status: TUploadStatus;
+  status: TStatus;
   error?: string;
 };
 export const ChatContainer = ({
   chatId,
   chatTitle,
   onBack,
-  onClose,
 }: TChatContainerProps) => {
-  const { user_id } = useUserId();
+  const { userId, isLoading: isUserIdLoading } = useUserId();
 
   // State - initialize before hooks
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
@@ -57,16 +47,13 @@ export const ChatContainer = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
 
-  const {
-    data: chatHistoryResponse,
-    isLoading,
-    error,
-  } = useGetConversationById(
+  const { data: chatHistoryResponse, isLoading } = useGetConversationById(
     { conversationId: currentChatId || "" },
     { enabled: !!currentChatId }
   );
   const queryClient = useQueryClient();
   const sendMessageMutation = useSendMessage();
+  const uploadFileMutation = useUploadFile();
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,7 +76,7 @@ export const ChatContainer = ({
         const currentMessage = current[index];
         if (
           incomingMessage._id !== currentMessage._id ||
-          incomingMessage.updatedAt !== currentMessage.updatedAt
+          incomingMessage.updated_at !== currentMessage.updated_at
         ) {
           return false;
         }
@@ -191,13 +178,13 @@ export const ChatContainer = ({
 
   // Handle sending message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user_id || isStreaming) return;
+    if (!newMessage.trim() || !userId || isUserIdLoading || isStreaming) return;
 
     const messageText = newMessage.trim();
     const userMessageId = new ObjectId().toHexString();
     const aiMessageId = new ObjectId().toHexString();
 
-    // Generate conversation ID if this is a new chat (no currentChatId)
+    // Generate conversation ID if this is a new chat
     let conversationId = currentChatId;
     if (!conversationId) {
       conversationId = new ObjectId().toHexString();
@@ -208,9 +195,9 @@ export const ChatContainer = ({
     const userMessage: TChatMessage = {
       _id: userMessageId,
       message: messageText,
-      sender: TChatMessageSender.USER,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      sender: "user",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     // Update UI optimistically
@@ -219,85 +206,67 @@ export const ChatContainer = ({
     setIsStreaming(true);
     setStreamingContent("");
 
-    // Scroll to show new user message
+    // Scroll to show user message
     setTimeout(() => scrollToBottom(), 50);
 
-    try {
-      const response = await sendMessageMutation.mutateAsync({
-        conversationId: conversationId,
-        message: messageText,
-        userId: user_id,
-        messageId: userMessageId,
-      });
+    // Send message and handle streaming
+    const response = await sendMessageMutation.mutateAsync({
+      conversationId: conversationId,
+      message: messageText,
+      userId: userId,
+      messageId: userMessageId,
+    });
 
-      if (response.body) {
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        let accumulatedContent = "";
+    if (!response.body) return;
 
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
+    const reader = response.body.getReader();
+    let accumulatedContent = "";
 
-          const chunk = decoder.decode(value, { stream: true });
-          buffer += chunk;
+    // Process streaming response
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+      const chunk = new TextDecoder().decode(value);
+      const lines = chunk.split("\n");
 
-          for (const line of lines) {
-            if (!line.trim() || !line.startsWith("data: ")) continue;
+      for (const line of lines) {
+        if (!line.trim() || !line.startsWith("data: ")) continue;
 
-            try {
-              const jsonPart = line.slice(6);
-              if (jsonPart === "[DONE]") break;
+        const jsonPart = line.slice(6);
+        if (jsonPart === "[DONE]") break;
 
-              const data = JSON.parse(jsonPart);
-              const delta = data.delta || data.content || data.token || "";
+        const data = JSON.parse(jsonPart);
+        const delta = data.delta || data.content || data.token || "";
 
-              if (typeof delta === "string" && delta) {
-                accumulatedContent += delta;
-                setStreamingContent(accumulatedContent);
-              }
-            } catch (e) {
-              console.warn("SSE parse error:", e);
-            }
-          }
+        if (typeof delta === "string" && delta) {
+          accumulatedContent += delta;
+          setStreamingContent(accumulatedContent);
         }
-
-        // Create AI message from streamed content
-        const aiMessage: TChatMessage = {
-          _id: aiMessageId,
-          message: accumulatedContent,
-          sender: TChatMessageSender.ASSISTANT,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-
-        // Add AI message to messages
-        setMessages((prev) => [...prev, aiMessage]);
-
-        // Clean up streaming state
-        setStreamingContent("");
-        setIsStreaming(false);
-
-        // Update sidebar only (not current conversation to avoid re-render)
-        queryClient.invalidateQueries({
-          queryKey: ["useGetChatHistory", { user_id }],
-        });
-
-        // Final scroll to bottom
-        setTimeout(() => scrollToBottom(), 50);
       }
-    } catch (error) {
-      console.error("Send message error:", error);
-      setStreamingContent("");
-      setIsStreaming(false);
-
-      // Optionally show error message
-      // You could add a toast notification here
     }
+
+    // Create AI message from streamed content
+    const aiMessage: TChatMessage = {
+      _id: aiMessageId,
+      message: accumulatedContent,
+      sender: "assistant",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add AI message and clean up
+    setMessages((prev) => [...prev, aiMessage]);
+    setStreamingContent("");
+    setIsStreaming(false);
+
+    // Update sidebar
+    queryClient.invalidateQueries({
+      queryKey: ["useGetChatHistory", { user_id: userId }],
+    });
+
+    // Scroll to show final AI message
+    setTimeout(() => scrollToBottom(), 50);
   };
 
   // Handle Enter key
@@ -319,7 +288,7 @@ export const ChatContainer = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
-    if (!files || !user_id) return;
+    if (!files || !userId || isUserIdLoading) return;
 
     const fileArray = Array.from(files);
 
@@ -328,44 +297,28 @@ export const ChatContainer = ({
       const newItem: UploadItem = {
         id,
         name: file.name,
-        status: TUploadStatus.UPLOADING,
+        status: "processing",
       };
       setUploads((prev) => [...prev, newItem]);
 
-      try {
-        const formData = new FormData();
-        formData.append("file", file, file.name);
+      // Upload file
+      const response = await uploadFileMutation.mutateAsync({
+        file,
+        userId: userId,
+      });
 
-        // use the service file
-        const response = await uploadFile({
-          file,
-          userId: user_id,
-        });
-
-        if (response.success) {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === id ? { ...u, status: TUploadStatus.SUCCESS } : u
-            )
-          );
-        } else {
-          setUploads((prev) =>
-            prev.map((u) =>
-              u.id === id
-                ? { ...u, status: TUploadStatus.ERROR, error: "Upload failed" }
-                : u
-            )
-          );
-        }
-      } catch {
-        setUploads((prev) =>
-          prev.map((u) =>
-            u.id === id
-              ? { ...u, status: TUploadStatus.ERROR, error: "Upload failed" }
-              : u
-          )
-        );
-      }
+      // Update upload status
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === id
+            ? {
+                ...u,
+                status: response ? "processed" : "failed",
+                error: response ? undefined : "Upload failed",
+              }
+            : u
+        )
+      );
 
       // Remove upload item after 2 seconds
       setTimeout(() => {
@@ -376,51 +329,19 @@ export const ChatContainer = ({
     event.currentTarget.value = "";
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-muted-foreground">{UI_MESSAGES.LOADING.CHAT}</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-destructive">
-          {UI_MESSAGES.ERROR.CHAT_LOAD_FAILED}
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex size-full flex-col">
       {/* Header */}
-      <div className="border-border bg-background flex items-center justify-between border-b p-3">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="hover:bg-muted rounded-lg p-1.5 transition-colors"
-            aria-label={UI_MESSAGES.ARIA_LABELS.GO_BACK}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h2 className="font-semibold">
-            {chatTitle ||
-              chatHistoryResponse?.data?.title ||
-              DEFAULT_TITLES.CHAT}
-          </h2>
-        </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="hover:bg-muted rounded-lg p-1.5 transition-colors"
-            aria-label={UI_MESSAGES.ARIA_LABELS.CLOSE_CHAT}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+      <div className="border-border bg-background flex items-center gap-3 border-b p-3">
+        <button
+          onClick={onBack}
+          className="hover:bg-muted rounded-lg p-1.5 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h2 className="font-semibold">
+          {chatTitle || chatHistoryResponse?.data?.title || DEFAULT_TITLES.CHAT}
+        </h2>
       </div>
 
       {/* Messages Container */}
@@ -431,13 +352,11 @@ export const ChatContainer = ({
       >
         {/* Welcome message if no messages */}
         {messages.length === 0 && !isStreaming && (
-          <div className="flex justify-center py-8">
-            <div className="text-center">
-              <p className="mb-2 text-lg font-medium">
-                {UI_MESSAGES.WELCOME.CHAT}
-              </p>
+          <div className="flex justify-center py-8 text-center">
+            <div>
+              <p className="mb-2 text-lg font-medium">Welcome!</p>
               <p className="text-muted-foreground">
-                {UI_MESSAGES.WELCOME.SUBTITLE}
+                Start a new conversation to get help with your questions.
               </p>
             </div>
           </div>
@@ -478,19 +397,18 @@ export const ChatContainer = ({
                       content={streamingContent}
                       className={LAYOUT.PROSE_SIZE}
                     />
-                    <span className="bg-foreground ml-1 inline-block h-4 w-2 animate-pulse" />
+                    <span className="bg-primary ml-1 inline-block h-4 w-0.5 animate-pulse" />
                   </>
                 ) : (
-                  <div className="flex items-center gap-1">
-                    <span
-                      className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_1}]`}
-                    />
-                    <span
-                      className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_2}]`}
-                    />
-                    <span
-                      className={`bg-foreground h-2 w-2 animate-bounce rounded-full [animation-delay:${ANIMATION_DELAYS.DOT_3}]`}
-                    />
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground text-sm">
+                        AI is thinking
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -528,14 +446,12 @@ export const ChatContainer = ({
                     {u.name}
                   </span>
                   <span className="text-muted-foreground">
-                    {u.status === "uploading" &&
-                      UI_MESSAGES.STATUS.UPLOAD_UPLOADING}
-                    {u.status === "success" &&
-                      UI_MESSAGES.STATUS.UPLOAD_SUCCESS}
-                    {u.status === "error" && UI_MESSAGES.STATUS.UPLOAD_ERROR}
+                    {u.status === "processing" && "Uploading..."}
+                    {u.status === "processed" && "Upload successful"}
+                    {u.status === "failed" && "Upload failed"}
                   </span>
                 </div>
-                {u.status === "error" && u.error && (
+                {u.status === "failed" && u.error && (
                   <div className="text-destructive mt-1 text-xs">{u.error}</div>
                 )}
               </div>
@@ -554,13 +470,15 @@ export const ChatContainer = ({
           </button>
 
           {/* File upload button */}
-          <label className="hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+          <label
+            className={`hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors ${!userId || isUserIdLoading || isStreaming ? "cursor-not-allowed opacity-50" : ""}`}
+          >
             <Paperclip className="h-5 w-5" />
             <input
               type="file"
               multiple
               onChange={handleFileSelect}
-              disabled={!user_id || isStreaming}
+              disabled={!userId || isUserIdLoading || isStreaming}
               className="hidden"
             />
           </label>
@@ -571,15 +489,17 @@ export const ChatContainer = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder={UI_MESSAGES.PLACEHOLDERS.MESSAGE_INPUT}
-            disabled={isStreaming}
+            placeholder="Type your message here..."
+            disabled={isUserIdLoading || isStreaming}
             className="border-input bg-background focus:ring-ring flex-1 rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
           />
 
           {/* Send button */}
           <button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || !user_id || isStreaming}
+            disabled={
+              !newMessage.trim() || !userId || isUserIdLoading || isStreaming
+            }
             className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="h-5 w-5" />

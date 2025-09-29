@@ -1,13 +1,11 @@
 import { useState } from "react";
 
-import { UI_MESSAGES } from "@/constants/constants";
-import { motion } from "framer-motion";
 import { ChevronRight, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useGetTopArticles } from "../../../hooks/api/help-service";
+import { useGetTopArticles } from "@/hooks/api/help-service";
 
 type TSearchComponentProps = {
   onNavigateToHelp?: (articleId?: string) => void;
@@ -34,7 +32,7 @@ export const SearchComponent = ({
     }
   };
 
-  const handleArticleClick = (article: { id: string }) => {
+  const handleArticleClick = (article: { id: string; title?: string }) => {
     // Navigate to help page with article ID
     onNavigateToHelp?.(article.id);
   };
@@ -45,17 +43,11 @@ export const SearchComponent = ({
   };
 
   return (
-    <motion.div
-      className="bg-card border-border rounded-lg border p-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-    >
+    <div className="bg-card border-border rounded-lg border p-6">
       {/* Search Input */}
       <div className="relative mb-6">
         <Input
           type="text"
-          placeholder={UI_MESSAGES.PLACEHOLDERS.SEARCH}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyPress}
@@ -71,33 +63,23 @@ export const SearchComponent = ({
         </Button>
       </div>
 
-      {/* Top Articles */}
       <div className="space-y-3">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-4">
-            <motion.div
-              className="text-muted-foreground text-sm"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              {UI_MESSAGES.LOADING.ARTICLES}
-            </motion.div>
-          </div>
-        ) : error ? (
+        {error && (
           <div className="text-destructive py-4 text-center text-sm">
-            {UI_MESSAGES.ERROR.ARTICLES_LOAD_FAILED}
+            {error.message}
+          </div>
+        )}
+        {isLoading ? (
+          <div className="text-destructive py-4 text-center text-sm">
+            Loading articles...
           </div>
         ) : topArticlesData?.data?.articles &&
           topArticlesData.data.articles.length > 0 ? (
-          topArticlesData.data.articles.slice(0, 4).map((article, index) => (
-            <motion.button
+          topArticlesData.data.articles.slice(0, 4).map((article) => (
+            <button
               key={article.id}
               onClick={() => handleArticleClick(article)}
               className="hover:bg-muted/50 flex w-full cursor-pointer items-center justify-between rounded-md p-3 text-left transition-colors"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 + index * 0.1 }}
-              whileHover={{ x: 4 }}
             >
               <div className="flex-1">
                 <h3 className="text-foreground text-sm font-medium">
@@ -105,7 +87,7 @@ export const SearchComponent = ({
                 </h3>
               </div>
               <ChevronRight className="text-muted-foreground h-4 w-4" />
-            </motion.button>
+            </button>
           ))
         ) : (
           <div className="text-muted-foreground py-4 text-center text-sm">
@@ -113,6 +95,6 @@ export const SearchComponent = ({
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };

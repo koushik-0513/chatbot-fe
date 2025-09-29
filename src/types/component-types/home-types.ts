@@ -17,14 +17,15 @@ export type TPost = {
 
 export type TPostsResponse = {
   data: TPost[];
-  total_posts: number;
-  current_page: number;
-  total_pages: number;
-  has_next_page: boolean;
-  has_prev_page: boolean;
+  infinite_scroll: {
+    has_more: boolean;
+    next_cursor: string | null;
+    limit: number;
+  };
+  message: string;
 };
 
-export type TGetPostsParams = {
-  page: number;
+export type TGetInfiniteScrollPostsParams = {
   limit: number;
+  cursor?: string | null;
 };

@@ -6,23 +6,27 @@ import { TArticleSearchResult } from "@/types/component-types/help-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
+import { useSearchArticles } from "@/hooks/api/article-search-service";
+
 type TSearchResultsProps = {
-  searchResults: TArticleSearchResult[];
-  isLoading: boolean;
-  error: Error | null;
   searchQuery: string;
   onArticleClick: (articleId: string) => void;
   onClearSearch: () => void;
 };
 
 export const SearchResults = ({
-  searchResults,
-  isLoading,
-  error,
   searchQuery,
   onArticleClick,
   onClearSearch,
 }: TSearchResultsProps) => {
+  // Search articles
+  const {
+    data: searchResults,
+    isLoading,
+    error,
+  } = useSearchArticles({
+    query: searchQuery,
+  });
   // Handle article click
   const handleArticleClick = useCallback(
     (article: TArticleSearchResult) => {
@@ -77,7 +81,9 @@ export const SearchResults = ({
   }
 
   // Ensure searchResults is an array
-  const safeSearchResults = Array.isArray(searchResults) ? searchResults : [];
+  const safeSearchResults = Array.isArray(searchResults?.data?.articles)
+    ? searchResults.data.articles
+    : [];
 
   if (safeSearchResults.length === 0) {
     return (
