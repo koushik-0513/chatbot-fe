@@ -1,13 +1,12 @@
 import env from "@/config/env";
-import { API_HEADERS } from "@/constants/api";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 
 // Custom Axios instance with common configurations
 const api: AxiosInstance = axios.create({
   baseURL: env.backendUrl,
   headers: {
-    "Content-Type": API_HEADERS.CONTENT_TYPE,
-    [API_HEADERS.NGROK_SKIP_WARNING]: "true",
+    "Content-Type": "application/json",
+    "ngrok-skip-browser-warning": "true",
   },
 });
 

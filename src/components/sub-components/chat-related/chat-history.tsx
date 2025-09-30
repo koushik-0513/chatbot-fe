@@ -22,7 +22,7 @@ export const ChatHistory = ({
 
   return (
     <motion.div
-      className="border-border hover:bg-muted flex cursor-pointer items-center justify-between border-b p-3 transition-colors"
+      className="border-border hover:bg-muted flex w-full cursor-pointer items-center justify-between border-b p-3 transition-colors"
       onClick={handleClick}
       whileHover={{ x: 5, backgroundColor: "rgba(0, 0, 0, 0.05)" }}
       whileTap={{ scale: 0.98 }}

@@ -1,11 +1,9 @@
 import { TApiError } from "@/types/api";
-import { TChatHistoryItem } from "@/types/component-types/chat-types";
-import { motion } from "framer-motion";
+import { TChatHistoryItem } from "@/types/chat-types";
+import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircleQuestionMark } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-
-import { useGetChatHistory } from "@/hooks/api/chat-service";
+import { useGetChatHistory } from "@/hooks/api/chat";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 import { ChatHistory } from "./sub-components/chat-related/chat-history";
@@ -58,14 +56,12 @@ export const Message = ({
   if (isLoading) {
     return (
       <motion.div
-        className={cn("flex h-full flex-col items-center justify-center")}
+        className="flex h-full flex-col items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <div className={cn("text-muted-foreground")}>
-          Loading chat history...
-        </div>
+        <div className="text-muted-foreground">Loading chat history...</div>
       </motion.div>
     );
   }
@@ -74,15 +70,13 @@ export const Message = ({
   if (error && (error as TApiError)?.status_code !== 404) {
     return (
       <motion.div
-        className={cn("flex h-full flex-col items-center justify-center")}
+        className="flex h-full flex-col items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <div className={cn("text-destructive")}>
-          Failed to load chat history
-        </div>
-        <div className={cn("text-muted-foreground mt-2 text-sm")}>
+        <div className="text-destructive">Failed to load chat history</div>
+        <div className="text-muted-foreground mt-2 text-sm">
           {error instanceof Error ? error.message : "An error occurred"}
         </div>
       </motion.div>
@@ -104,76 +98,79 @@ export const Message = ({
 
   return (
     <motion.div
-      className={cn("flex h-full flex-col justify-between space-y-50")}
+      className="flex h-full min-h-0 w-full flex-col space-y-3 p-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <div className={cn("space-y-0")}>
-        {chatHistoryData.length > 0 ? (
-          chatHistoryData.map((chat: TChatHistoryItem, index: number) => {
-            // Handle different possible ID field names
-            const chatId = chat._id;
+      <AnimatePresence mode="wait">
+        <div className="min-h-0 w-full flex-1 space-y-2 overflow-y-auto pr-1">
+          {chatHistoryData.length > 0 ? (
+            chatHistoryData.map((chat: TChatHistoryItem, index: number) => {
+              // Handle different possible ID field names
+              const chatId = chat._id;
 
-            const safeTitle = (chat.title || "Untitled Chat").toString();
-            return (
-              <motion.div
-                key={chatId || index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 + index * 0.1 }}
-              >
-                <ChatHistory
-                  id={chatId || String(index)}
-                  title={safeTitle}
-                  timestamp={""}
-                  day={""}
-                  onClick={(id: string) => handleChatClick(id, safeTitle)}
-                />
-              </motion.div>
-            );
-          })
-        ) : (
-          <motion.div
-            className={cn(
-              "flex h-full flex-col items-center justify-center py-8"
-            )}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <div className={cn("text-muted-foreground")}>
-              No chat history found
-            </div>
-          </motion.div>
-        )}
-      </div>
+              const safeTitle = (chat.title || "Untitled Chat").toString();
+              return (
+                <motion.div
+                  key={chatId || index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2, delay: index * 0.05 }}
+                >
+                  <ChatHistory
+                    id={chatId || String(index)}
+                    title={safeTitle}
+                    timestamp={""}
+                    day={""}
+                    onClick={(id: string) => handleChatClick(id, safeTitle)}
+                  />
+                </motion.div>
+              );
+            })
+          ) : (
+            <motion.div
+              key="no-chats"
+              className="flex h-full flex-col items-center justify-center py-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-muted-foreground">No chat history found</div>
+            </motion.div>
+          )}
+        </div>
+      </AnimatePresence>
 
       {/* New Chat Button - show when there's no history or less than 5 chats */}
-      <div>
-        {chatHistoryData.length < 5 && (
-          <motion.div
-            className={cn("mt-auto flex items-center justify-center p-3")}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <motion.button
-              onClick={handleNewChat}
-              disabled={!userId}
-              className={cn(
-                "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              )}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+      <div className="flex-shrink-0">
+        <AnimatePresence>
+          {chatHistoryData.length < 5 && (
+            <motion.div
+              key="new-chat-button"
+              className="flex items-center justify-center p-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <span className={cn("flex items-center gap-2")}>
-                New Chat
-                <MessageCircleQuestionMark className={cn("h-4 w-4")} />
-              </span>
-            </motion.button>
-          </motion.div>
-        )}
+              <motion.button
+                onClick={handleNewChat}
+                disabled={!userId}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+              >
+                <span className="flex items-center gap-2">
+                  New Chat
+                  <MessageCircleQuestionMark className="h-4 w-4" />
+                </span>
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

@@ -5,10 +5,11 @@ import { useEffect, useState } from "react";
 import {
   COLLAPSED_IFRAME_STYLES,
   DEFAULT_IFRAME_STYLES,
+  INITIAL_FRAME_STYLES,
   MAXIMIZED_IFRAME_STYLES,
-  START_TEST,
 } from "@/constants/styles";
-import { TStarttest } from "@/types/types";
+import { Providers } from "@/providers/providers";
+import { InitialFrameStyles } from "@/types/types";
 import { Bot, X } from "lucide-react";
 
 import { Chatbot } from "@/components/chat-bot";
@@ -17,7 +18,7 @@ import { useUserId } from "@/hooks/custom/use-user-id";
 
 export default function WidgetPage() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
+  const [, setIsMaximized] = useState(false);
   const [isEmbedded, setIsEmbedded] = useState(false);
   const { userId } = useUserId();
   const [, setConfig] = useState({
@@ -48,8 +49,7 @@ export default function WidgetPage() {
 
       // Apply initial positioning and sizing based on config
       const position = newConfig.position;
-      console.log("position", position);
-      let initialStyles: TStarttest = { ...START_TEST };
+      let initialStyles: InitialFrameStyles = { ...INITIAL_FRAME_STYLES };
 
       // Apply position-specific styles
       switch (position) {
@@ -98,7 +98,7 @@ export default function WidgetPage() {
   }, []);
 
   // Resize the iframe from inside
-  const resizeIframe = (styles: TStarttest) => {
+  const resizeIframe = (styles: InitialFrameStyles) => {
     if (isEmbedded) {
       window.parent.postMessage(
         {
@@ -131,7 +131,6 @@ export default function WidgetPage() {
   };
 
   const handleMaximizeChange = (maximized: boolean) => {
-    console.log("handleMaximizeChange", maximized);
     setIsMaximized(maximized);
 
     if (!isEmbedded) {
@@ -153,7 +152,7 @@ export default function WidgetPage() {
     // COLLAPSED STATE - Show floating button
     if (!isOpen) {
       return (
-        <div className="w-100% h-100%">
+        <>
           <button
             onClick={handleOpen}
             className="cursor-pointer p-5"
@@ -161,14 +160,13 @@ export default function WidgetPage() {
           >
             <Bot />
           </button>
-        </div>
+        </>
       );
     }
 
     // EXPANDED STATE - Show full chat interface
     return (
-      // <div className="w-full h-full">
-      <>
+      <div className="h-full w-full">
         <button
           onClick={handleClose}
           className="fixed top-5 right-6 z-100 cursor-pointer rounded-lg text-white transition-all duration-200 hover:scale-105 hover:bg-white/20"
@@ -176,14 +174,10 @@ export default function WidgetPage() {
         >
           <X className="h-4 w-4" />
         </button>
-        <Chatbot
-          user_id={userId ?? ""}
-          onClose={() => handleClose}
-          isMaximized={isMaximized}
-          onMaximizeChange={handleMaximizeChange}
-        />
-      </>
-      // </div>
+        <Providers onMaximizeChange={handleMaximizeChange}>
+          <Chatbot user_id={userId ?? ""} onClose={() => handleClose()} />
+        </Providers>
+      </div>
     );
   }
 }

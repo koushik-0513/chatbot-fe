@@ -29,7 +29,9 @@ const uploadFile = (payload: TUploadFilePayload): TApiPromise => {
 };
 
 // File Hooks
-export const useUploadFile = (options?: TMutationOpts<TUploadFilePayload>) => {
+export const useUploadFile = (
+  options?: TMutationOpts<TUploadFilePayload, unknown>
+) => {
   return useMutation({
     mutationKey: ["useUploadFile"],
     mutationFn: uploadFile,

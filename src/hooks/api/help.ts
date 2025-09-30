@@ -5,7 +5,7 @@ import type {
   THelpCollectionDetailResponse,
   TInfiniteScrollCollectionsResponse,
   TTopArticlesResponse,
-} from "@/types/component-types/help-types";
+} from "@/types/help-types";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -81,10 +81,6 @@ export const useGetCollectionDetails = (
   return useQuery({
     queryKey: ["useGetCollectionDetails", params],
     queryFn: () => getCollectionDetails(params),
-    enabled: !!params.collection_id && !!params.user_id,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
     ...options,
   });
 };
@@ -96,10 +92,6 @@ export const useGetArticleDetails = (
   return useQuery({
     queryKey: ["useGetArticleDetails", params],
     queryFn: () => getArticleDetails(params),
-    enabled: !!params.article_id && !!params.user_id,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
     ...options,
   });
 };
@@ -111,10 +103,6 @@ export const useGetHelp = (
   return useQuery({
     queryKey: ["useGetHelp", params],
     queryFn: () => getHelp(params),
-    enabled: !!params.collection_id,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
     ...options,
   });
 };
@@ -125,9 +113,6 @@ export const useGetTopArticles = (
   return useQuery({
     queryKey: ["useGetTopArticles"],
     queryFn: getTopArticles,
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
     ...options,
   });
 };

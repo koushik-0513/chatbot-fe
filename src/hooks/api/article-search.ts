@@ -2,12 +2,10 @@ import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TArticleSearchParams,
   TArticleSearchResponse,
-} from "@/types/component-types/help-types";
+} from "@/types/help-types";
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
-
-// Base URL: /api/v1/article/...
 
 // Article Search Services
 const searchArticles = (
@@ -27,10 +25,6 @@ export const useSearchArticles = (
   return useQuery({
     queryKey: ["useSearchArticles", params],
     queryFn: () => searchArticles(params),
-    enabled: !!params.query?.trim(),
-    retry: 2,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    refetchOnWindowFocus: false,
     ...options,
   });
 };

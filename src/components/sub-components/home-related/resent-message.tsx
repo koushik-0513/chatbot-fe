@@ -1,12 +1,9 @@
 import { DEFAULT_TITLES } from "@/constants/titles";
-import { TChatMessage } from "@/types/component-types/chat-types";
+import { TChatMessage } from "@/types/chat-types";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import {
-  useGetChatHistory,
-  useGetConversationById,
-} from "@/hooks/api/chat-service";
+import { useGetChatHistory, useGetConversationById } from "@/hooks/api/chat";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 type Props = {

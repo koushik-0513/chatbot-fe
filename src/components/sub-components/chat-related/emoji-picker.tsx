@@ -56,7 +56,7 @@ const EmojiPickerComponent = ({
         picker.removeEventListener("emoji-click", handleEmojiSelect);
       };
     }
-  }, [isLoaded, isClient, onEmojiSelect, onClose]);
+  }, [isLoaded, isClient]);
 
   if (!isClient || !isLoaded) {
     return (

@@ -2,7 +2,7 @@ import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TGetInfiniteScrollPostsParams,
   TPostsResponse,
-} from "@/types/component-types/home-types";
+} from "@/types/home-types";
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -24,9 +24,6 @@ export const useGetPosts = (
   return useQuery({
     queryKey: ["useGetPosts", params.limit],
     queryFn: () => getPosts(params),
-    retry: 2,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false,
     ...options,
   });
 };

@@ -2,11 +2,11 @@
 
 import { useCallback } from "react";
 
-import { TArticleSearchResult } from "@/types/component-types/help-types";
+import { TArticleSearchResult } from "@/types/help-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-import { useSearchArticles } from "@/hooks/api/article-search-service";
+import { useSearchArticles } from "@/hooks/api/article-search";
 
 type TSearchResultsProps = {
   searchQuery: string;
@@ -24,9 +24,10 @@ export const SearchResults = ({
     data: searchResults,
     isLoading,
     error,
-  } = useSearchArticles({
-    query: searchQuery,
-  });
+  } = useSearchArticles(
+    { query: searchQuery },
+    { enabled: !!searchQuery?.trim() }
+  );
   // Handle article click
   const handleArticleClick = useCallback(
     (article: TArticleSearchResult) => {

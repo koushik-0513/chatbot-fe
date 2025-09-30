@@ -1,4 +1,4 @@
-import { THelpCollectionDetail } from "@/types/component-types/help-types";
+import { THelpCollectionDetail } from "@/types/help-types";
 import { ChevronRight } from "lucide-react";
 
 type TArticleCardProps = {

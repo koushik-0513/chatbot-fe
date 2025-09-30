@@ -2,18 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LAYOUT } from "@/constants/styles";
 import { DEFAULT_TITLES } from "@/constants/titles";
-import { TChatMessage, TStatus } from "@/types/component-types/chat-types";
+import { TChatMessage, TStatus } from "@/types/chat-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { ArrowDown, ArrowLeft, Paperclip, Send, Smile } from "lucide-react";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
-import {
-  useGetConversationById,
-  useSendMessage,
-} from "@/hooks/api/chat-service";
-import { useUploadFile } from "@/hooks/api/file-service";
+import { cn } from "@/lib/utils";
+
+import { useGetConversationById, useSendMessage } from "@/hooks/api/chat";
+import { useUploadFile } from "@/hooks/api/file";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 import { EmojiPicker } from "./emoji-picker";
@@ -164,7 +163,7 @@ export const ChatContainer = ({
     if (streamingContent && isNearBottom()) {
       scrollToBottom();
     }
-  }, [streamingContent, isNearBottom, scrollToBottom]);
+  }, [streamingContent]);
 
   // Ensure chat scrolls to bottom when first loaded
   useEffect(() => {
@@ -174,7 +173,7 @@ export const ChatContainer = ({
         scrollToBottom(false);
       }, 100);
     }
-  }, [chatHistoryResponse, isLoading, scrollToBottom]);
+  }, [chatHistoryResponse, isLoading]);
 
   // Handle sending message
   const handleSendMessage = async () => {
@@ -330,9 +329,9 @@ export const ChatContainer = ({
   };
 
   return (
-    <div className="flex size-full flex-col">
+    <div className="flex h-full w-full flex-col">
       {/* Header */}
-      <div className="border-border bg-background flex items-center gap-3 border-b p-3">
+      <div className="border-border bg-background sticky top-0 z-10 flex items-center gap-3 border-b p-3">
         <button
           onClick={onBack}
           className="hover:bg-muted rounded-lg p-1.5 transition-colors"
@@ -350,9 +349,8 @@ export const ChatContainer = ({
         className="flex-1 overflow-y-auto px-4 py-3"
         onScroll={handleScroll}
       >
-        {/* Welcome message if no messages */}
-        {messages.length === 0 && !isStreaming && (
-          <div className="flex justify-center py-8 text-center">
+        {messages.length === 0 && !isStreaming ? (
+          <div className="flex flex-1 items-center justify-center text-center">
             <div>
               <p className="mb-2 text-lg font-medium">Welcome!</p>
               <p className="text-muted-foreground">
@@ -360,64 +358,66 @@ export const ChatContainer = ({
               </p>
             </div>
           </div>
-        )}
-
-        {/* Messages */}
-        <div className="space-y-4">
-          {messages.map((message) => {
-            const isUser = message.sender === "user";
-            return (
-              <div
-                key={message._id}
-                className={`flex ${isUser ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                    isUser ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
-                >
-                  <MarkdownRenderer
-                    content={message.message}
-                    className={LAYOUT.PROSE_SIZE}
-                  />
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Streaming Message */}
-          {isStreaming && (
-            <div className="flex justify-start">
-              <div
-                className={`bg-muted ${LAYOUT.MESSAGE_MAX_WIDTH} rounded-lg px-4 py-2`}
-              >
-                {streamingContent ? (
-                  <>
-                    <MarkdownRenderer
-                      content={streamingContent}
-                      className={LAYOUT.PROSE_SIZE}
-                    />
-                    <span className="bg-primary ml-1 inline-block h-4 w-0.5 animate-pulse" />
-                  </>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground text-sm">
-                        AI is thinking
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+        ) : (
+          <div className="flex min-h-full flex-col justify-end">
+            <div className="space-y-4">
+              {messages.map((message) => {
+                const isUser = message.sender === "user";
+                return (
+                  <div
+                    key={message._id}
+                    className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={cn(
+                        `max-w-[70%] rounded-lg px-4 py-2 ${
+                          isUser
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        }`
+                      )}
+                    >
+                      <MarkdownRenderer
+                        content={message.message}
+                        className={LAYOUT.PROSE_SIZE}
+                      />
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+                );
+              })}
 
+              {/* Streaming Message */}
+              {isStreaming && (
+                <div className="flex justify-start">
+                  <div className={`bg-muted max-w-[70%] rounded-lg px-4 py-2`}>
+                    {streamingContent ? (
+                      <>
+                        <MarkdownRenderer
+                          content={streamingContent}
+                          className={LAYOUT.PROSE_SIZE}
+                        />
+                        <span className="bg-primary ml-1 inline-block h-4 w-0.5 animate-pulse" />
+                      </>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <span className="text-muted-foreground text-sm">
+                            AI is thinking
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         {/* Invisible element to scroll to */}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-0 shrink-0" />
       </div>
 
       {/* Scroll to bottom button */}
@@ -432,7 +432,7 @@ export const ChatContainer = ({
       )}
 
       {/* Input Area */}
-      <div className="border-border bg-background border-t p-4">
+      <div className="border-border bg-background sticky bottom-0 z-10 border-t p-4">
         {/* File uploads display */}
         {uploads.length > 0 && (
           <div className="mb-3 flex flex-col gap-2">
@@ -471,7 +471,9 @@ export const ChatContainer = ({
 
           {/* File upload button */}
           <label
-            className={`hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors ${!userId || isUserIdLoading || isStreaming ? "cursor-not-allowed opacity-50" : ""}`}
+            className={cn(
+              `hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors ${!userId || isUserIdLoading || isStreaming ? "cursor-not-allowed opacity-50" : ""}`
+            )}
           >
             <Paperclip className="h-5 w-5" />
             <input

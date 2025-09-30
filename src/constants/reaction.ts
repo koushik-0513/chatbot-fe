@@ -1,5 +1,5 @@
-import { TArticleReaction } from "@/types/component-types/help-types";
-import { TNewsReaction } from "@/types/component-types/news-types";
+import { TArticleReaction } from "@/types/help-types";
+import { TNewsReaction } from "@/types/news-types";
 
 // Available news reactions
 export const NEWS_REACTIONS = [

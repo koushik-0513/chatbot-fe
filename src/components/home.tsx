@@ -1,7 +1,5 @@
-import { cn } from "@/lib/utils";
-
-import { useGetTopArticles } from "@/hooks/api/help-service";
-import { useGetPosts } from "@/hooks/api/posts-service";
+import { useGetTopArticles } from "@/hooks/api/help";
+import { useGetPosts } from "@/hooks/api/posts";
 
 import { AskQuestion } from "./sub-components/home-related/ask-question";
 import { BlogCard } from "./sub-components/home-related/blog-card";
@@ -24,14 +22,14 @@ export const Home = ({
     data: topArticlesData,
     isLoading: isLoadingArticles,
     error: articlesError,
-  } = useGetTopArticles();
+  } = useGetTopArticles({ enabled: true });
 
   // Fetch posts
   const {
     data: postsData,
     isLoading: isLoadingPosts,
     error: postsError,
-  } = useGetPosts({ limit: 5 });
+  } = useGetPosts({ limit: 5 }, { enabled: true });
 
   const displayArticles = topArticlesData?.data?.articles || [];
 
@@ -45,10 +43,10 @@ export const Home = ({
   const hasError = articlesError || postsError;
 
   return (
-    <div className={cn("dark space-y-4")}>
-      <div className={cn("text-foreground p-2")}>
-        <h2 className={cn("text-tertiary text-2xl font-bold")}>Hello</h2>
-        <h3 className={cn("text-tertiary text-2xl font-bold")}>
+    <div className="dark space-y-4">
+      <div className="text-foreground p-2">
+        <h2 className="text-tertiary text-2xl font-bold">Hello</h2>
+        <h3 className="text-tertiary text-2xl font-bold">
           How can I help you today?
         </h3>
       </div>
@@ -57,27 +55,21 @@ export const Home = ({
 
       {/* Loading state */}
       {isLoading && (
-        <div
-          className={cn(
-            "text-muted-foreground flex items-center justify-center py-8 text-sm"
-          )}
-        >
+        <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
           Loading articles...
         </div>
       )}
 
       {/* Error state */}
       {hasError && (
-        <div className={cn("bg-destructive/10 rounded-lg p-4")}>
-          <p className={cn("text-destructive text-sm")}>
-            Error loading news...
-          </p>
+        <div className="bg-destructive/10 rounded-lg p-4">
+          <p className="text-destructive text-sm">Error loading news...</p>
         </div>
       )}
 
       {/* Posts Section */}
       {!isLoadingPosts && !postsError && displayPosts.length > 0 && (
-        <div className={cn("space-y-4")}>
+        <div className="space-y-4">
           {displayPosts.map((post) => (
             <BlogCard
               id={post.id}
@@ -96,11 +88,7 @@ export const Home = ({
         !hasError &&
         displayArticles.length === 0 &&
         displayPosts.length === 0 && (
-          <div
-            className={cn(
-              "text-muted-foreground flex items-center justify-center py-8 text-sm"
-            )}
-          >
+          <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
             No content available
           </div>
         )}

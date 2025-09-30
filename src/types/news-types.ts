@@ -1,6 +1,6 @@
 import { NEWS_REACTIONS } from "@/constants/reaction";
 
-import { TAuthor } from "../types";
+import { TAuthor } from "./types";
 
 export type TNews = {
   id: string;

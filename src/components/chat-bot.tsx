@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useArticleNavigation } from "@/contexts/article-navigation-context";
-import { useScrollContext } from "@/contexts/scroll-context";
+import { useArticleNavigation } from "@/providers/article-navigation-provider";
+import { useMaximize } from "@/providers/maximize-provider";
+import { useScrollContext } from "@/providers/scroll-provider";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
-
-import { useAutoMaximize } from "@/hooks/custom/use-auto-maximize";
 
 import { Help } from "./help";
 import { Home } from "./home";
@@ -19,16 +18,12 @@ import { Header } from "./sub-components/header";
 import { Navigation } from "./sub-components/navigation-bar";
 
 type TChatbotProps = {
-  user_id: string;
-  isMaximized?: boolean; // controlled
+  user_id: string; // controlled
   onClose?: () => void;
-  onMaximizeChange?: (isMaximized: boolean) => void;
 };
 
-export const Chatbot = ({
-  isMaximized: externalIsMaximized,
-  onMaximizeChange,
-}: TChatbotProps) => {
+export const Chatbot = ({}: TChatbotProps) => {
+  // Use controlled maximize value; default to false if not provided (read-only)
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
@@ -42,26 +37,15 @@ export const Chatbot = ({
   const [navigatedFromHomepage, setNavigatedFromHomepage] = useState(false);
   const [isArticleScrolled, setIsArticleScrolled] = useState(false);
   const { isArticleDetailsOpen } = useArticleNavigation();
+  const { isMaximized, autoMinimize, autoMaximize } = useMaximize();
 
   const [showDetails, setShowDetails] = useState(false);
   const [title, setTitle] = useState<string | null>(null);
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const prevMaximizedRef = useRef<boolean | null>(null);
   const { resetAllScroll } = useScrollContext();
 
-  // Use controlled maximize value; default to false if not provided (read-only)
-  const isMaximized = externalIsMaximized ?? false;
-
-  // Helper to request maximize state changes (controlled)
-  const setMaximized = (maximized: boolean) => {
-    onMaximizeChange?.(maximized);
-  };
-
   // Reset scroll position when active page changes
-  useEffect(() => {
-    resetAllScroll();
-  }, [activePage, resetAllScroll]);
 
   const handlePageChange = (page: string, articleId?: string) => {
     if (activePage === "homepage" && page === "help" && articleId) {
@@ -77,34 +61,37 @@ export const Chatbot = ({
     setSelectedArticleId(articleId || null);
     setDynamicTitle(null);
 
-    // Auto-minimize on page change
-    setMaximized(false);
+    // Only auto-minimize when going back to homepage or list views
+    // Don't auto-minimize when entering details or chat container
+    if (
+      page === "homepage" ||
+      (page === "help" && !articleId) ||
+      page === "news"
+    ) {
+      autoMinimize();
+    }
 
     if (page === "message") setShowChatHistory(true);
 
     resetAllScroll();
   };
 
-  const handleBackToHistory = () => {
+  const onBackToHistory = () => {
     setSelectedChatId(null);
     setShowChatHistory(true);
     setShowActiveChat(false);
     resetAllScroll();
 
-    // Restore previous maximize state if it was changed for active chat
-    if (prevMaximizedRef.current !== null) {
-      setMaximized(prevMaximizedRef.current);
-      prevMaximizedRef.current = null;
-    }
+    // Auto-minimize when going back to chat history
+    autoMinimize();
   };
 
-  const handleChatSelected = (chatId: string | null) => {
+  const onChatSelected = (chatId: string | null) => {
     setSelectedChatId(chatId);
     setShowChatHistory(false);
 
     // Auto-maximize when selecting a chat from history
-    prevMaximizedRef.current = isMaximized;
-    setMaximized(true);
+    autoMaximize();
 
     resetAllScroll();
   };
@@ -115,7 +102,7 @@ export const Chatbot = ({
   };
 
   const handleBackFromDetails = () => {
-    setMaximized(false);
+    autoMinimize();
     setShowDetails(false);
     setShowBackButton(false);
     setNavigatedFromHomepage(false);
@@ -136,14 +123,7 @@ export const Chatbot = ({
     if (!element) return;
     element.addEventListener("scroll", handleContentScroll);
     return () => element.removeEventListener("scroll", handleContentScroll);
-  }, [handleContentScroll]);
-
-  // Centralized auto-maximize hook (pass a no-op for the removed internal setter)
-  const { triggerAutoMaximize } = useAutoMaximize({
-    onMaximizeChange,
-    externalIsMaximized,
-    setInternalIsMaximized: () => {}, // no-op
-  });
+  }, []);
 
   const handleOpenChat = (
     conversationId: string | null,
@@ -156,9 +136,8 @@ export const Chatbot = ({
     setTitle(chatTitle || "Untitled Chat");
     resetAllScroll();
 
-    // Auto-maximize when entering active chat, remember previous state
-    prevMaximizedRef.current = isMaximized;
-    setMaximized(true);
+    // Auto-maximize when entering active chat
+    autoMaximize();
   };
 
   const handleAskQuestion = () => {
@@ -167,8 +146,6 @@ export const Chatbot = ({
     setShowChatHistory(true);
     setShowActiveChat(false);
   };
-
-  const triggerAutoMinimize = () => setMaximized(false);
 
   const handleNavigateToHelp = (articleId?: string) => {
     handlePageChange("help", articleId);
@@ -205,7 +182,7 @@ export const Chatbot = ({
   return (
     <motion.div
       className={cn(
-        "chatbot-container flex flex-col shadow-2xl",
+        "chatbot-container flex h-full min-h-0 w-full flex-1 flex-col shadow-2xl",
         activePage === "homepage" ? "homepage-gradient" : "bg-background"
       )}
       initial={{ opacity: 0, scale: 0.9 }}
@@ -223,121 +200,118 @@ export const Chatbot = ({
           title={getPageTitle(activePage)}
           showBack={showBackButton}
           onBackClick={handleBackClick}
-          isMaximized={isMaximized}
-          onMaximizeChange={setMaximized}
           shouldShowMaximizeButton={shouldShowMaximizeButton}
           showTitleOnScroll={activePage === "help" && showDetails}
           isScrolled={isArticleScrolled}
         />
       )}
 
-      <motion.div
-        ref={contentRef}
-        className="scroll-container flex-1 overflow-y-auto pt-14"
-        style={{ minHeight: 0 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 100 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <AnimatePresence mode="wait">
-          {activePage === "homepage" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="p-4"
-            >
-              <Home
-                onNavigateToHelp={handleNavigateToHelp}
-                onOpenChat={handleOpenChat}
-                onAskQuestion={handleAskQuestion}
-              />
-            </motion.div>
-          )}
+      {/* <div className="flex flex-1 min-h-0 w-full"> */}
+      <AnimatePresence mode="wait">
+        {activePage === "homepage" && (
+          <motion.div
+            key="homepage"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex h-full min-h-0 w-full p-4"
+          >
+            <Home
+              onNavigateToHelp={handleNavigateToHelp}
+              onOpenChat={handleOpenChat}
+              onAskQuestion={handleAskQuestion}
+            />
+          </motion.div>
+        )}
 
-          {activePage === "message" && showActiveChat ? (
-            <motion.div
-              className={cn(
-                "chatbot-container border-border bg-background flex flex-col rounded-lg border shadow-2xl"
-              )}
-              style={{ height: "calc(3rem + 95vh)" }}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                duration: 0.6,
-                type: "spring",
-                stiffness: 200,
-                damping: 25,
-              }}
-            >
-              <ChatContainer
-                chatId={selectedChatId}
-                chatTitle={title ?? ""}
-                onBack={handleBackToHistory}
-              />
-            </motion.div>
-          ) : activePage === "message" ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="p-4"
-            >
-              <Message
-                showChatHistory={showChatHistory}
-                onChatSelected={handleChatSelected}
-                onBackToHistory={handleBackToHistory}
-                setShowActiveChat={setShowActiveChat}
-                title={setTitle}
-              />
-            </motion.div>
-          ) : null}
+        {activePage === "message" && showActiveChat ? (
+          <motion.div
+            key="active-chat"
+            className="flex h-full min-h-0 w-full"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              ...(isMaximized ? { height: "100%", width: "100%" } : {}),
+            }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+            }}
+          >
+            <ChatContainer
+              chatId={selectedChatId}
+              chatTitle={title ?? ""}
+              onBack={onBackToHistory}
+            />
+          </motion.div>
+        ) : activePage === "message" ? (
+          <motion.div
+            key="message-history"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex h-full min-h-0 w-full"
+          >
+            <Message
+              showChatHistory={showChatHistory}
+              onChatSelected={onChatSelected}
+              onBackToHistory={onBackToHistory}
+              setShowActiveChat={setShowActiveChat}
+              title={setTitle}
+            />
+          </motion.div>
+        ) : null}
 
-          {activePage === "help" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Help
-                onShowBackButton={setShowBackButton}
-                backButtonTrigger={backButtonTrigger}
-                activePage={activePage}
-                onShowDetails={setShowDetails}
-                onBackFromDetails={handleBackFromDetails}
-                selectedArticleId={selectedArticleId}
-                onTitleChange={setDynamicTitle}
-                navigatedFromHomepage={navigatedFromHomepage}
-              />
-            </motion.div>
-          )}
+        {activePage === "help" && (
+          <motion.div
+            key="help"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex h-full min-h-0 w-full overflow-y-auto"
+          >
+            <Help
+              onShowBackButton={setShowBackButton}
+              backButtonTrigger={backButtonTrigger}
+              activePage={activePage}
+              onShowDetails={setShowDetails}
+              onBackFromDetails={handleBackFromDetails}
+              selectedArticleId={selectedArticleId}
+              onTitleChange={setDynamicTitle}
+              navigatedFromHomepage={navigatedFromHomepage}
+            />
+          </motion.div>
+        )}
 
-          {activePage === "news" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
-              className="p-4"
-            >
-              <News
-                onShowBackButton={setShowBackButton}
-                backButtonTrigger={backButtonTrigger}
-                activePage={activePage}
-                onShowDetails={setShowDetails}
-                onAutoMaximize={triggerAutoMaximize}
-                onAutoMinimize={triggerAutoMinimize}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+        {activePage === "news" && (
+          <motion.div
+            key="news"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="flex h-full min-h-0 w-full flex-col overflow-y-auto p-4"
+          >
+            <News
+              onShowBackButton={setShowBackButton}
+              backButtonTrigger={backButtonTrigger}
+              activePage={activePage}
+              onShowDetails={setShowDetails}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* </div> */}
 
       {!showDetails && showActiveChat !== true && (
-        <Navigation activePage={activePage} onPageChange={handlePageChange} />
+        <div className="sticky bottom-0 z-30 w-full">
+          <Navigation activePage={activePage} onPageChange={handlePageChange} />
+        </div>
       )}
     </motion.div>
   );

@@ -5,7 +5,7 @@ import { ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useGetTopArticles } from "@/hooks/api/help-service";
+import { useGetTopArticles } from "@/hooks/api/help";
 
 type TSearchComponentProps = {
   onNavigateToHelp?: (articleId?: string) => void;
@@ -17,7 +17,13 @@ export const SearchComponent = ({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch top articles from API
-  const { data: topArticlesData, isLoading, error } = useGetTopArticles();
+  const {
+    data: topArticlesData,
+    isLoading,
+    error,
+  } = useGetTopArticles({
+    enabled: true,
+  });
 
   const handleSearch = () => {
     if (searchQuery.trim()) {

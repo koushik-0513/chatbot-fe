@@ -11,7 +11,7 @@ import {
 import {
   THelpArticleDetail,
   THelpArticleDetailResponse,
-} from "@/types/component-types/help-types";
+} from "@/types/help-types";
 
 // Navigation stack item types
 export type NavigationItemType = "article" | "collection" | "list";

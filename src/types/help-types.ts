@@ -1,7 +1,7 @@
 import { CURRENT_VIEW } from "@/constants/enums";
 import { ARTICLE_REACTIONS } from "@/constants/reaction";
 
-import { TAuthor } from "../types";
+import { TAuthor } from "./types";
 
 export type TInfiniteScrollCollectionsResponse = {
   message: string;

@@ -1,9 +1,5 @@
-import {
-  ARTICLE_REACTIONS,
-  ARTICLE_REACTION_EMOJI_MAP,
-} from "@/constants/reaction";
 import type { TApiPromise, TMutationOpts } from "@/types/api";
-import { TArticleReaction } from "@/types/component-types/help-types";
+import { TArticleReaction } from "@/types/help-types";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -31,18 +27,14 @@ const submitArticleReaction = (
 
 // Article Reaction Hooks
 export const useSubmitArticleReaction = (
-  options?: TMutationOpts<TSubmitArticleReactionPayload>
+  options?: TMutationOpts<TSubmitArticleReactionPayload, TArticleReaction>
 ) => {
   return useMutation({
     mutationKey: ["useSubmitArticleReaction"],
     mutationFn: submitArticleReaction,
-    onError: (error) => {
-      console.error("Error submitting article reaction:", error);
-    },
     ...options,
   });
 };
 
 // Re-export utils for convenience
-export { ARTICLE_REACTIONS, ARTICLE_REACTION_EMOJI_MAP };
 export type { TArticleReaction };

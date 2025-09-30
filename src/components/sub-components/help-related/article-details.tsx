@@ -13,15 +13,15 @@ import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
 } from "@/constants/reaction";
-import { useScrollContext } from "@/contexts/scroll-context";
-import { TArticleReaction } from "@/types/component-types/help-types";
+import { useScrollContext } from "@/providers/scroll-provider";
+import { TArticleReaction } from "@/types/help-types";
 import { getRelativeTime } from "@/utils/date-time";
 import { motion } from "framer-motion";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
-import { useSubmitArticleReaction } from "@/hooks/api/article-reaction-service";
-import { useGetArticleDetails } from "@/hooks/api/help-service";
+import { useSubmitArticleReaction } from "@/hooks/api/article-reaction";
+import { useGetArticleDetails } from "@/hooks/api/help";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 type TArticleDetailsProps = {
@@ -93,14 +93,14 @@ export const ArticleDetails = ({
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [resetAllScroll]);
+  }, []);
 
   // Notify parent of article title when data is loaded
   useEffect(() => {
     if (article?.title) {
       onTitleChange?.(article.title);
     }
-  }, [articleDetailsData, onTitleChange]);
+  }, [articleDetailsData]);
 
   // Function to calculate relative time
 

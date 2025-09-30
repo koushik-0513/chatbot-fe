@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { useScrollContext } from "@/contexts/scroll-context";
-import { TNews } from "@/types/component-types/news-types";
+import { useMaximize } from "@/providers/maximize-provider";
+import { useScrollContext } from "@/providers/scroll-provider";
+import { TNews } from "@/types/news-types";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { cn } from "@/lib/utils";
-
-import { useGetInfiniteScrollNews } from "@/hooks/api/news-service";
+import { useGetInfiniteScrollNews } from "@/hooks/api/news";
 import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
 
 import { NewsCard } from "./sub-components/news-related/news-cards";
@@ -17,8 +16,6 @@ type TNewsProps = {
   backButtonTrigger: number;
   activePage: string;
   onShowDetails?: (show: boolean) => void;
-  onAutoMaximize?: () => void;
-  onAutoMinimize?: () => void;
 };
 
 export const News = ({
@@ -26,9 +23,8 @@ export const News = ({
   backButtonTrigger,
   activePage,
   onShowDetails,
-  onAutoMaximize,
-  onAutoMinimize,
 }: TNewsProps) => {
+  const { autoMaximize, autoMinimize } = useMaximize();
   const [selectedNewsId, setSelectedNewsId] = useState<string | null>(null);
   const { resetAllScroll } = useScrollContext();
   const {
@@ -38,7 +34,7 @@ export const News = ({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useGetInfiniteScrollNews({ limit: 5 });
+  } = useGetInfiniteScrollNews({ limit: 5 }, { enabled: true });
 
   // Flatten all pages of news data
   const allNews = infiniteNewsData?.pages.flatMap((page) => page.data) || [];
@@ -56,15 +52,12 @@ export const News = ({
     if (activePage === "news") {
       setSelectedNewsId(null);
       onShowBackButton(false);
-
-      // Force scroll reset for this component
-      resetAllScroll();
     } else {
       // Reset state when switching away from news
       setSelectedNewsId(null);
       onShowBackButton(false);
     }
-  }, [activePage, resetAllScroll]); // Remove navigationStack from dependencies
+  }, [activePage]); // Remove navigationStack from dependencies
 
   // Handle back button trigger from navbar
   useEffect(() => {
@@ -78,7 +71,7 @@ export const News = ({
     onShowBackButton(true);
     onShowDetails?.(true);
     // Ensure the widget is maximized when opening a news item
-    onAutoMaximize?.();
+    autoMaximize();
     // Reset scroll when navigating to news details
     resetAllScroll();
   };
@@ -88,7 +81,7 @@ export const News = ({
     setSelectedNewsId(null);
     onShowBackButton(false);
     onShowDetails?.(false);
-    onAutoMinimize?.();
+    autoMinimize();
     // Reset scroll when going back to news list
     resetAllScroll();
   };
@@ -103,13 +96,9 @@ export const News = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className={cn("h-full w-full")}
+            className="h-full w-full"
           >
-            <NewsDetails
-              newsId={selectedNewsId}
-              onBack={handleBackClick}
-              onAutoMaximize={onAutoMaximize}
-            />
+            <NewsDetails newsId={selectedNewsId} onBack={handleBackClick} />
           </motion.div>
         )}
 
@@ -120,9 +109,7 @@ export const News = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className={cn(
-              "text-muted-foreground flex w-full items-center justify-center py-8 text-sm"
-            )}
+            className="text-muted-foreground flex w-full items-center justify-center py-8 text-sm"
           >
             Loading news...
           </motion.div>
@@ -135,9 +122,9 @@ export const News = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className={cn("bg-destructive/10 w-full rounded-lg p-4")}
+            className="bg-destructive/10 w-full rounded-lg p-4"
           >
-            <p className={cn("text-destructive text-sm")}>
+            <p className="text-destructive text-sm">
               Failed to load news. Please try again later.
             </p>
           </motion.div>
@@ -154,31 +141,27 @@ export const News = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className={cn("w-full")}
+              className="w-full"
             >
-              <div className={cn("mb-4 px-1")}>
-                <h1 className={cn("text-card-foreground text-xl font-bold")}>
+              <div className="mb-4 px-1">
+                <h1 className="text-card-foreground text-xl font-bold">
                   Latest
                 </h1>
-                <p className={cn("text-muted-foreground text-sm")}>
+                <p className="text-muted-foreground text-sm">
                   From Team Prodgain
                 </p>
               </div>
-              <div className={cn("space-y-4")}>
+              <div className="space-y-4">
                 {allNews.map((news, index) => (
                   <div
                     key={news.id}
                     ref={index === allNews.length - 1 ? lastElementRef : null}
                   >
-                    <NewsCard news={news as TNews} onClick={handleNewsClick} />
+                    <NewsCard news={news} onClick={handleNewsClick} />
                   </div>
                 ))}
                 {isFetchingNextPage && (
-                  <div
-                    className={cn(
-                      "text-muted-foreground flex w-full items-center justify-center py-4 text-sm"
-                    )}
-                  >
+                  <div className="text-muted-foreground flex w-full items-center justify-center py-4 text-sm">
                     Loading more news...
                   </div>
                 )}

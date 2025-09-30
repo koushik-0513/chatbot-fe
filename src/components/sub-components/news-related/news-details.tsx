@@ -8,21 +8,22 @@ import {
   SCALE_VARIANTS,
 } from "@/constants/animations";
 import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
-import { useScrollContext } from "@/contexts/scroll-context";
-import { TNewsReaction } from "@/types/component-types/news-types";
+import { useScrollContext } from "@/providers/scroll-provider";
+import { TNewsReaction } from "@/types/news-types";
 import { getRelativeTime } from "@/utils/date-time";
 import { motion } from "framer-motion";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
-import { useSubmitNewsReaction } from "@/hooks/api/news-reaction-service";
-import { useGetNewsById } from "@/hooks/api/news-service";
+import { cn } from "@/lib/utils";
+
+import { useGetNewsById } from "@/hooks/api/news";
+import { useSubmitNewsReaction } from "@/hooks/api/news-reaction";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 type TNewsDetailsProps = {
   newsId: string;
   onBack: () => void;
-  onAutoMaximize?: () => void;
 };
 
 export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
@@ -35,7 +36,10 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
     data: newsData,
     isLoading,
     error,
-  } = useGetNewsById({ news_id: newsId, user_id: userId || "" });
+  } = useGetNewsById(
+    { news_id: newsId, user_id: userId || "" },
+    { enabled: !!newsId && !!userId }
+  );
 
   const news = newsData?.data;
 
@@ -80,7 +84,7 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [resetAllScroll]);
+  }, []);
 
   // Loading state
   if (isLoading) {
@@ -237,11 +241,13 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
                   key={reaction}
                   onClick={() => handleReactionSubmit(reaction)}
                   disabled={isSubmitting}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                    isSelected
-                      ? "border-primary bg-primary/10 scale-110"
-                      : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
-                  } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
+                  className={cn(
+                    `flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                      isSelected
+                        ? "border-primary bg-primary/10 scale-110"
+                        : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                    } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `
+                  )}
                   variants={SCALE_VARIANTS}
                   whileHover={!isSubmitting ? { scale: 1.1 } : {}}
                   whileTap={!isSubmitting ? { scale: 0.95 } : {}}

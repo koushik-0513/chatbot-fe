@@ -16,7 +16,7 @@ export type TAuthor = {
   };
 };
 
-export type TStarttest = {
+export type InitialFrameStyles = {
   width: string;
   height: string;
   zIndex?: number;

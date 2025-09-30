@@ -1,7 +1,6 @@
 import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
 import type { TApiPromise, TMutationOpts } from "@/types/api";
-import type { TNewsReactionResponse } from "@/types/component-types/news-types";
-import { TNewsReaction } from "@/types/component-types/news-types";
+import type { TNewsReaction, TNewsReactionResponse } from "@/types/news-types";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -29,14 +28,11 @@ const submitNewsReaction = (
 
 // News Reaction Hooks
 export const useSubmitNewsReaction = (
-  options?: TMutationOpts<TSubmitNewsReactionPayload>
+  options?: TMutationOpts<TSubmitNewsReactionPayload, TNewsReactionResponse>
 ) => {
   return useMutation({
     mutationKey: ["useSubmitNewsReaction"],
     mutationFn: submitNewsReaction,
-    onError: (error) => {
-      console.error("Error submitting news reaction:", error);
-    },
     ...options,
   });
 };

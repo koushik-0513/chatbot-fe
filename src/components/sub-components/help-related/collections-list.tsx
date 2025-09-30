@@ -1,7 +1,7 @@
-import { THelpCollectionDetail } from "@/types/component-types/help-types";
+import { THelpCollectionDetail } from "@/types/help-types";
 import { motion } from "framer-motion";
 
-import { useGetInfiniteScrollCollections } from "@/hooks/api/help-service";
+import { useGetInfiniteScrollCollections } from "@/hooks/api/help";
 import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
 
 import { ArticleCard } from "./article-cards";
@@ -21,7 +21,15 @@ export const CollectionsList = ({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useGetInfiniteScrollCollections({ limit: 5 });
+  } = useGetInfiniteScrollCollections(
+    { limit: 5 },
+    {
+      enabled: true,
+      retry: 2,
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    }
+  );
 
   // Flatten all pages of collections data
   const allCollections =

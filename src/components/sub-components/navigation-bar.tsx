@@ -15,9 +15,7 @@ type NavigationProps = {
 };
 
 export const Navigation = ({ activePage, onPageChange }: NavigationProps) => (
-  <motion.div
-    className={cn("border-border bg-card flex gap-1 rounded-b-lg border-t p-3")}
-  >
+  <motion.div className="border-border bg-card flex gap-1 rounded-b-lg border-t p-3">
     {NAVIGATION_ITEMS.map((item) => {
       const Icon = item.icon;
       const isActive = activePage === item.id;

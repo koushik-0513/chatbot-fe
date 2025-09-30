@@ -3,17 +3,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useArticleNavigation,
   useNavigation,
-} from "@/contexts/article-navigation-context";
-import { useScrollContext } from "@/contexts/scroll-context";
+} from "@/providers/article-navigation-provider";
+import { useMaximize } from "@/providers/maximize-provider";
+import { useScrollContext } from "@/providers/scroll-provider";
 import {
   TArticleReaction,
   THelpArticleDetail,
   THelpCollectionDetail,
   THelpPageState,
-} from "@/types/component-types/help-types";
+} from "@/types/help-types";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { useAutoMaximize } from "@/hooks/custom/use-auto-maximize";
 import { useDebounce } from "@/hooks/custom/use-debounce";
 
 import { ArticleDetails } from "./sub-components/help-related/article-details";
@@ -28,7 +28,6 @@ type THelppageProps = {
   activePage: string;
   onShowDetails?: (show: boolean) => void;
   onBackFromDetails?: () => void;
-  onMinimizeOnly?: () => void;
   selectedArticleId?: string | null;
   onTitleChange?: (title: string) => void;
   navigatedFromHomepage?: boolean;
@@ -40,12 +39,11 @@ export const Help = ({
   activePage,
   onShowDetails,
   onBackFromDetails,
-  onMinimizeOnly,
   selectedArticleId: propSelectedArticleId,
   onTitleChange,
   navigatedFromHomepage = false,
 }: THelppageProps) => {
-  const { shouldAutoMaximize } = useAutoMaximize({});
+  const { autoMaximize, autoMinimize } = useMaximize();
   const [pageState, setPageState] = useState<THelpPageState>({
     currentView: "list",
     selectedCollection: null,
@@ -110,12 +108,7 @@ export const Help = ({
 
     resetArticleNavigation();
     openArticleDetails(article as THelpArticleDetail);
-  }, [
-    propSelectedArticleId,
-    selectedArticleId,
-    openArticleDetails,
-    resetArticleNavigation,
-  ]);
+  }, [propSelectedArticleId, selectedArticleId]);
 
   // State for selected collection ID
   const [selectedCollectionId, setSelectedCollectionId] = useState<
@@ -164,33 +157,9 @@ export const Help = ({
         selectedArticle: loadingArticle,
       });
       onShowDetails?.(true);
-
-      // Use centralized auto-maximize logic
-      if (
-        shouldAutoMaximize({
-          navigatedFromHomepage,
-          cameFromSearch,
-          isDetailsView: true,
-        })
-      ) {
-      }
+      autoMaximize();
     }
-  }, [
-    selectedArticleId,
-    onShowDetails,
-    navigatedFromHomepage,
-    cameFromSearch,
-    shouldAutoMaximize,
-    createLoadingArticle,
-  ]);
-
-  // Get the current title based on the view
-  const getCurrentTitle = () => {
-    if (pageState.currentView === "article" && selectedArticleId) {
-      return "Article"; // Will be updated by the ArticleDetails component
-    }
-    return "Help";
-  };
+  }, [selectedArticleId]);
 
   // Handle scroll-based title visibility
   useEffect(() => {
@@ -247,13 +216,7 @@ export const Help = ({
       resetArticleNavigation();
       onShowBackButton(false);
     }
-  }, [
-    activePage,
-    resetAllScroll,
-    propSelectedArticleId,
-    navigatedFromHomepage,
-    resetArticleNavigation,
-  ]);
+  }, [activePage, navigatedFromHomepage]);
   // Handle back button trigger from navbar
   useEffect(() => {
     if (backButtonTrigger > 0) {
@@ -263,7 +226,7 @@ export const Help = ({
         handle_back_to_list();
       }
     }
-  }, [backButtonTrigger, navigatedFromHomepage]);
+  }, [backButtonTrigger]);
 
   const handle_collection_click = useCallback(
     (collection: THelpCollectionDetail) => {
@@ -308,10 +271,11 @@ export const Help = ({
       }
 
       onShowDetails?.(true);
+      autoMaximize();
       // Reset scroll when navigating to article
       resetAllScroll();
     },
-    [onShowDetails, resetAllScroll, openArticleDetails, onShowBackButton]
+    [onShowDetails, autoMaximize, openArticleDetails, onShowBackButton]
   );
 
   // Handle related article navigation
@@ -329,12 +293,7 @@ export const Help = ({
       // Reset scroll position for new article
       resetAllScroll();
     },
-    [
-      pageState.selectedCollection,
-      resetAllScroll,
-      openArticleDetails,
-      createLoadingArticle,
-    ]
+    [pageState.selectedCollection]
   );
 
   // Search handlers
@@ -414,8 +373,8 @@ export const Help = ({
       resetArticleNavigation();
       // Don't hide navbar for search view
       onShowDetails?.(false);
-      // Call onMinimizeOnly to trigger minimize without affecting back button state
-      onMinimizeOnly?.();
+      // Auto-minimize when going back to search
+      autoMinimize();
       // Keep search query active
       setIsSearching(true);
 
@@ -459,8 +418,8 @@ export const Help = ({
     resetArticleNavigation();
     // Don't hide navbar for collection view
     onShowDetails?.(false);
-    // Call onMinimizeOnly to trigger minimize without affecting back button state
-    onMinimizeOnly?.();
+    // Auto-minimize when going back to collection
+    autoMinimize();
     // Reset title to "Help"
     onTitleChange?.("Help");
 
@@ -474,10 +433,8 @@ export const Help = ({
     pageState.selectedCollection,
     navigatedFromHomepage,
     onShowDetails,
-    onMinimizeOnly,
     onBackFromDetails,
     onTitleChange,
-    resetAllScroll,
     resetArticleNavigation,
   ]);
 
@@ -500,81 +457,79 @@ export const Help = ({
   };
 
   return (
-    <div className="w-full">
-      <AnimatePresence mode="wait">
-        {pageState.currentView === "article" && pageState.selectedArticle && (
-          <motion.div
-            key="article"
-            className="w-full"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ArticleDetails
-              articleId={selectedArticleId}
-              onRelatedArticleClick={handle_related_article_click}
-              onTitleChange={onTitleChange}
-            />
-          </motion.div>
-        )}
+    <AnimatePresence mode="wait">
+      {pageState.currentView === "article" && pageState.selectedArticle && (
+        <motion.div
+          key="article"
+          className="flex h-full min-h-0 w-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ArticleDetails
+            articleId={selectedArticleId}
+            onRelatedArticleClick={handle_related_article_click}
+            onTitleChange={onTitleChange}
+          />
+        </motion.div>
+      )}
 
-        {pageState.currentView === "collection" && (
-          <motion.div
-            key="collection"
-            className="w-full"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CollectionDetails
-              collectionId={selectedCollectionId}
-              onArticleClick={handle_article_click}
-              onChildCollectionClick={handle_child_collection_click}
-            />
-          </motion.div>
-        )}
+      {pageState.currentView === "collection" && (
+        <motion.div
+          key="collection"
+          className="flex h-full min-h-0 w-full"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <CollectionDetails
+            collectionId={selectedCollectionId}
+            onArticleClick={handle_article_click}
+            onChildCollectionClick={handle_child_collection_click}
+          />
+        </motion.div>
+      )}
 
-        {pageState.currentView === "list" && (
+      {pageState.currentView === "list" && (
+        <motion.div
+          key="list"
+          className="flex h-full min-h-0 w-full flex-col space-y-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+        >
           <motion.div
-            key="list"
-            className="flex w-full flex-col space-y-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="mt-4 w-full px-5"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="mt-4 w-full px-5"
-            >
-              <SearchBar
-                searchQuery={searchQuery}
-                onSearchChange={handleSearchChange}
-                onClearSearch={handleClearSearch}
-                isSearching={isSearching}
-              />
-            </motion.div>
-
-            {/* Show search results when searching, otherwise show collections */}
-            {isSearching ? (
-              <SearchResults
-                searchQuery={debouncedSearchQuery}
-                onArticleClick={(articleId: string) => {
-                  const loadingArticle = createLoadingArticle(articleId);
-                  handle_article_click(loadingArticle, true);
-                }}
-                onClearSearch={handleClearSearch}
-              />
-            ) : (
-              <CollectionsList onCollectionClick={handle_collection_click} />
-            )}
+            <SearchBar
+              searchQuery={searchQuery}
+              onSearchChange={handleSearchChange}
+              onClearSearch={handleClearSearch}
+              isSearching={isSearching}
+            />
           </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+
+          {/* Show search results when searching, otherwise show collections */}
+          {isSearching ? (
+            <SearchResults
+              searchQuery={debouncedSearchQuery}
+              onArticleClick={(articleId: string) => {
+                const loadingArticle = createLoadingArticle(articleId);
+                handle_article_click(loadingArticle, true);
+              }}
+              onClearSearch={handleClearSearch}
+            />
+          ) : (
+            <CollectionsList onCollectionClick={handle_collection_click} />
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

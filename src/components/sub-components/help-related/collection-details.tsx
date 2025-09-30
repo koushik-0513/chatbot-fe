@@ -5,14 +5,11 @@ import {
   ITEM_VARIANTS,
   SCALE_VARIANTS,
 } from "@/constants/animations";
-import {
-  THelpArticleDetail,
-  THelpCollectionDetail,
-} from "@/types/component-types/help-types";
+import { THelpArticleDetail, THelpCollectionDetail } from "@/types/help-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-import { useGetCollectionDetails } from "@/hooks/api/help-service";
+import { useGetCollectionDetails } from "@/hooks/api/help";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 type TCollectionDetailsProps = {
@@ -73,13 +70,13 @@ export const CollectionDetails = ({
 
   return (
     <motion.div
-      className="w-full"
+      className="flex h-full min-h-0 w-full flex-col"
       variants={CONTAINER_VARIANTS}
       initial="hidden"
       animate="visible"
     >
       {/* Header section with padding */}
-      <div className="space-y-4 px-3">
+      <div className="w-full space-y-4 px-3">
         {/* Header */}
         <motion.div
           variants={ITEM_VARIANTS}
@@ -91,7 +88,7 @@ export const CollectionDetails = ({
         </motion.div>
 
         {/* Collection description */}
-        <motion.div className="space-y-3" variants={ITEM_VARIANTS}>
+        <motion.div className="w-full space-y-3" variants={ITEM_VARIANTS}>
           <p className="text-muted-foreground px-2 text-sm leading-relaxed">
             {collection.description}
           </p>
@@ -138,77 +135,78 @@ export const CollectionDetails = ({
         </motion.div>
       </div>
 
-      {/* Articles list - full width */}
-      {articles.length > 0 && (
-        <motion.div className="mt-4 w-full" variants={ITEM_VARIANTS}>
-          <div className="space-y-0">
-            {articles.map((article, index) => (
-              <motion.div
-                key={article.id}
-                className="border-border hover:bg-muted flex w-full cursor-pointer items-center justify-between border-b px-3 py-4 transition-colors"
-                onClick={() => onArticleClick(article as THelpArticleDetail)}
-                variants={ITEM_VARIANTS}
-                transition={{ delay: index * 0.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex-1 px-2">
-                  <h3 className="text-card-foreground mb-1 text-sm font-medium">
-                    {article.title}
-                  </h3>
-                </div>
+      <div className="w-full flex-1 overflow-y-auto px-3 pb-4">
+        {/* Articles list - full width */}
+        {articles.length > 0 && (
+          <motion.div className="mt-4 w-full" variants={ITEM_VARIANTS}>
+            <div className="w-full space-y-0">
+              {articles.map((article, index) => (
                 <motion.div
-                  whileHover={{ x: 2 }}
-                  transition={{ duration: 0.2 }}
-                  className="px-2"
+                  key={article.id}
+                  className="border-border hover:bg-muted flex w-full cursor-pointer items-center justify-between border-b px-3 py-4 transition-colors"
+                  onClick={() => onArticleClick(article as THelpArticleDetail)}
+                  variants={ITEM_VARIANTS}
+                  transition={{ delay: index * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <ChevronRight className="text-muted-foreground h-4 w-4" />
-                </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Child Collections - full width */}
-
-      {child_collections.length > 0 && (
-        <motion.div className="mt-4 w-full" variants={ITEM_VARIANTS}>
-          <div className="space-y-0">
-            {child_collections.map((childCollection, index) => (
-              <motion.div
-                key={childCollection.id}
-                className="border-border hover:bg-muted flex w-full cursor-pointer items-center justify-between border-b px-3 py-4 transition-colors"
-                onClick={() => handleChildCollectionClick(childCollection)}
-                variants={ITEM_VARIANTS}
-                transition={{ delay: index * 0.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className="flex flex-1 items-center gap-3">
-                  <div></div>
-                  <div className="flex-1">
+                  <div className="flex-1 px-2">
                     <h3 className="text-card-foreground mb-1 text-sm font-medium">
-                      {childCollection.title}
+                      {article.title}
                     </h3>
-                    <p className="text-muted-foreground text-xs leading-relaxed">
-                      {childCollection.description}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {childCollection.articles_count} articles
-                    </p>
                   </div>
-                </div>
-                <motion.div
-                  whileHover={{ x: 2 }}
-                  transition={{ duration: 0.2 }}
-                  className="px-2"
-                >
-                  <ChevronRight className="text-muted-foreground h-4 w-4" />
+                  <motion.div
+                    whileHover={{ x: 2 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-2"
+                  >
+                    <ChevronRight className="text-muted-foreground h-4 w-4" />
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      )}
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Child Collections - full width */}
+        {child_collections.length > 0 && (
+          <motion.div className="mt-4 w-full" variants={ITEM_VARIANTS}>
+            <div className="w-full space-y-0">
+              {child_collections.map((childCollection, index) => (
+                <motion.div
+                  key={childCollection.id}
+                  className="border-border hover:bg-muted flex w-full cursor-pointer items-center justify-between border-b px-3 py-4 transition-colors"
+                  onClick={() => handleChildCollectionClick(childCollection)}
+                  variants={ITEM_VARIANTS}
+                  transition={{ delay: index * 0.05 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex flex-1 items-center gap-3">
+                    <div></div>
+                    <div className="flex-1">
+                      <h3 className="text-card-foreground mb-1 text-sm font-medium">
+                        {childCollection.title}
+                      </h3>
+                      <p className="text-muted-foreground text-xs leading-relaxed">
+                        {childCollection.description}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {childCollection.articles_count} articles
+                      </p>
+                    </div>
+                  </div>
+                  <motion.div
+                    whileHover={{ x: 2 }}
+                    transition={{ duration: 0.2 }}
+                    className="px-2"
+                  >
+                    <ChevronRight className="text-muted-foreground h-4 w-4" />
+                  </motion.div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 };

@@ -24,7 +24,7 @@ export const DEFAULT_IFRAME_STYLES = {
   maxHeight: "90vh",
 } as const;
 
-export const START_TEST = {
+export const INITIAL_FRAME_STYLES = {
   width: "60px",
   height: "60px",
   zIndex: 9999,
@@ -33,7 +33,7 @@ export const START_TEST = {
 } as const;
 
 export const MAXIMIZED_IFRAME_STYLES = {
-  width: "600px",
+  width: "500px",
   height: "900px",
   borderRadius: "12px",
   maxWidth: "100%",

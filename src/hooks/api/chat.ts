@@ -2,12 +2,10 @@ import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
 import type {
   TChatHistoryAPIResponse,
   TConversationAPIResponse,
-} from "@/types/component-types/chat-types";
+} from "@/types/chat-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
-
-// Base URL: /api/v1/conversation/...
 
 // Chat Types
 type TGetChatHistoryQParams = {
@@ -44,18 +42,18 @@ const getChatHistory = (
 const getConversationById = ({
   conversationId,
   ...params
-}: TGetConversationByIdQParams): TApiPromise<TConversationAPIResponse> => {
+}: TGetConversationByIdQParams) => {
   return api.get(`/conversation/${conversationId}`, { params });
 };
 
 const deleteConversation = ({
   conversationId,
   ...payload
-}: TDeleteConversationPayload): TApiPromise => {
+}: TDeleteConversationPayload): TApiPromise<void> => {
   return api.delete(`/conversation/${conversationId}`, payload);
 };
 
-const sendMessage = (payload: TSendMessagePayload): Promise<Response> => {
+const sendMessage = (payload: TSendMessagePayload): TApiPromise<Response> => {
   const { conversationId, message, userId, messageId } = payload;
   const url = `/chat/stream/${conversationId}?user_id=${userId}`;
 
@@ -83,9 +81,6 @@ export const useGetChatHistory = (
   return useQuery({
     queryKey: ["useGetChatHistory", params],
     queryFn: () => getChatHistory(params),
-    enabled: !!params.user_id,
-    retry: 2,
-    staleTime: 60_000,
     ...options,
   });
 };
@@ -97,13 +92,12 @@ export const useGetConversationById = (
   return useQuery({
     queryKey: ["useGetConversationById", params],
     queryFn: () => getConversationById(params),
-    enabled: !!params.conversationId,
     ...options,
   });
 };
 
 export const useDeleteConversation = (
-  options?: TMutationOpts<TDeleteConversationPayload>
+  options?: TMutationOpts<TDeleteConversationPayload, void>
 ) => {
   return useMutation({
     mutationKey: ["useDeleteConversation"],
@@ -113,7 +107,7 @@ export const useDeleteConversation = (
 };
 
 export const useSendMessage = (
-  options?: TMutationOpts<TSendMessagePayload>
+  options?: TMutationOpts<TSendMessagePayload, Response>
 ) => {
   return useMutation({
     mutationKey: ["useSendMessage"],

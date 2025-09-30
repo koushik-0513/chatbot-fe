@@ -2,11 +2,17 @@
 
 import { useState } from "react";
 
-import { ArticleNavigationProvider } from "@/contexts/article-navigation-context";
-import { ScrollProvider } from "@/contexts/scroll-context";
+import { ArticleNavigationProvider } from "@/providers/article-navigation-provider";
+import { MaximizeProvider } from "@/providers/maximize-provider";
+import { ScrollProvider } from "@/providers/scroll-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-export const Providers = ({ children }: { children: React.ReactNode }) => {
+type ProvidersProps = {
+  children: React.ReactNode;
+  onMaximizeChange?: (isMaximized: boolean) => void;
+};
+
+export const Providers = ({ children, onMaximizeChange }: ProvidersProps) => {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -25,9 +31,11 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ScrollProvider>
-        <ArticleNavigationProvider>{children}</ArticleNavigationProvider>
-      </ScrollProvider>
+      <MaximizeProvider onMaximizeChange={onMaximizeChange}>
+        <ScrollProvider>
+          <ArticleNavigationProvider>{children}</ArticleNavigationProvider>
+        </ScrollProvider>
+      </MaximizeProvider>
     </QueryClientProvider>
   );
 };

@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { TNews } from "@/types/component-types/news-types";
+import { TNews } from "@/types/news-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
