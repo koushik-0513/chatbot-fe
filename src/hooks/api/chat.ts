@@ -1,14 +1,15 @@
-import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
-import type {
-  TChatHistoryAPIResponse,
-  TConversationAPIResponse,
-} from "@/types/chat-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
+import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
+import type {
+  TConversationAPIResponse,
+  TConversationListAPIResponse,
+} from "@/types/chat-types";
+
 // Chat Types
-type TGetChatHistoryQParams = {
+type TGetConversationListQParams = {
   user_id: string;
   page?: number;
   limit?: number;
@@ -30,9 +31,9 @@ type TSendMessagePayload = {
 };
 
 // Chat Services
-const getChatHistory = (
-  params: TGetChatHistoryQParams
-): TApiPromise<TChatHistoryAPIResponse> => {
+const getConversationList = (
+  params: TGetConversationListQParams
+): TApiPromise<TConversationListAPIResponse> => {
   const { user_id, page = 1, limit = 5 } = params;
   return api.get("/conversation", {
     params: { user_id, page, limit },
@@ -42,7 +43,7 @@ const getChatHistory = (
 const getConversationById = ({
   conversationId,
   ...params
-}: TGetConversationByIdQParams) => {
+}: TGetConversationByIdQParams): TApiPromise<TConversationAPIResponse> => {
   return api.get(`/conversation/${conversationId}`, { params });
 };
 
@@ -74,13 +75,13 @@ const sendMessage = (payload: TSendMessagePayload): TApiPromise<Response> => {
 };
 
 // Chat Hooks
-export const useGetChatHistory = (
-  params: TGetChatHistoryQParams,
-  options?: TQueryOpts<TChatHistoryAPIResponse>
+export const useGetConversationList = (
+  params: TGetConversationListQParams,
+  options?: TQueryOpts<TConversationListAPIResponse>
 ) => {
   return useQuery({
-    queryKey: ["useGetChatHistory", params],
-    queryFn: () => getChatHistory(params),
+    queryKey: ["useGetConversationList", params],
+    queryFn: () => getConversationList(params),
     ...options,
   });
 };

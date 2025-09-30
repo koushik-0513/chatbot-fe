@@ -1,8 +1,9 @@
-import type { TApiPromise, TMutationOpts } from "@/types/api";
-import { TArticleReaction } from "@/types/help-types";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
+
+import type { TApiPromise, TMutationOpts } from "@/types/api";
+import { TArticleReaction } from "@/types/help-types";
 
 // Base URL: /api/v1/article/...
 

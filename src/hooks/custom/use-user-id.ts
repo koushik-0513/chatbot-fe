@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
+import { ObjectId } from "bson";
+
 import { USER_ID_KEY } from "@/constants/storage";
-import { getUserId } from "@/utils/user-id";
 
 export const useUserId = () => {
   const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isNewUser, setIsNewUser] = useState(false);
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -15,25 +14,17 @@ export const useUserId = () => {
     initialized.current = true;
 
     const initializeUser = () => {
-      try {
-        // Check if user ID already exists before calling getUserId
-        const existingId = localStorage.getItem(USER_ID_KEY);
-        const wasUserCreated = existingId !== null;
+      const existingId = localStorage.getItem(USER_ID_KEY);
 
-        // Get or generate user ID
-        const id = getUserId();
-
-        setUserId(id);
-        setIsNewUser(!wasUserCreated);
-      } catch (error) {
-        console.error("Error initializing user:", error);
-        // Fallback: generate a new ID
-        const fallbackId = getUserId();
-        setUserId(fallbackId);
-        setIsNewUser(true);
-      } finally {
-        setIsLoading(false);
+      if (existingId) {
+        setUserId(existingId);
+        return;
       }
+      // Generate new user ID if none exists
+      const id = new ObjectId();
+      const newId = id.toHexString();
+      localStorage.setItem(USER_ID_KEY, newId);
+      setUserId(newId);
     };
 
     initializeUser();
@@ -41,7 +32,5 @@ export const useUserId = () => {
 
   return {
     userId,
-    isLoading,
-    isNewUser,
   };
 };

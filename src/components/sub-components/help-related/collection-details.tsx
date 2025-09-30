@@ -1,20 +1,22 @@
 import Image from "next/image";
 
+import { motion } from "framer-motion";
+import { ChevronRight } from "lucide-react";
+
 import {
   CONTAINER_VARIANTS,
   ITEM_VARIANTS,
   SCALE_VARIANTS,
 } from "@/constants/animations";
-import { THelpArticleDetail, THelpCollectionDetail } from "@/types/help-types";
-import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 
 import { useGetCollectionDetails } from "@/hooks/api/help";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
+import { THelpCollectionDetail } from "@/types/help-types";
+
 type TCollectionDetailsProps = {
   collectionId: string | null;
-  onArticleClick: (article: THelpArticleDetail) => void;
+  onArticleClick: (articleId: string) => void;
   onChildCollectionClick: (
     collection: THelpCollectionDetail,
     parentId: string
@@ -144,7 +146,7 @@ export const CollectionDetails = ({
                 <motion.div
                   key={article.id}
                   className="border-border hover:bg-muted flex w-full cursor-pointer items-center justify-between border-b px-3 py-4 transition-colors"
-                  onClick={() => onArticleClick(article as THelpArticleDetail)}
+                  onClick={() => onArticleClick(article.id)}
                   variants={ITEM_VARIANTS}
                   transition={{ delay: index * 0.05 }}
                   whileTap={{ scale: 0.98 }}

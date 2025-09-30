@@ -1,12 +1,4 @@
-import { SENDER, STATUS } from "@/constants/constants";
-
-// File service types
-export type TUploadOptions = {
-  file: File;
-  user_id: string;
-  onProgress?: (percent: number) => void;
-  signal?: AbortSignal;
-};
+import { SENDER, STATUS } from "@/constants/enums";
 
 export type TStatus = (typeof STATUS)[number];
 export type TSender = (typeof SENDER)[number];
@@ -20,11 +12,8 @@ export type TChatMessage = {
   updated_at: string;
 };
 
-// Display message type for UI components
-export type TDisplayMessage = TChatMessage & { isNew: boolean };
-
-// Chat history item - matches actual API response
-export type TChatHistoryItem = {
+// Conversation item - matches actual API response
+export type TConversationItem = {
   _id: string;
   title: string;
   user_id: string;
@@ -32,10 +21,10 @@ export type TChatHistoryItem = {
   updated_at: string;
 };
 
-// Chat history API response - matches actual API response
-export type TChatHistoryAPIResponse = {
+// Conversation list API response - matches actual API response
+export type TConversationListAPIResponse = {
   message: string;
-  data: TChatHistoryItem[];
+  data: TConversationItem[];
   pagination: {
     page: number;
     limit: number;
@@ -45,7 +34,7 @@ export type TChatHistoryAPIResponse = {
 };
 
 // Conversation type (matches the exact API response structure)
-export type TConversation = {
+type TConversation = {
   _id: string;
   title: string;
   user_id: string;

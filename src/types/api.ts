@@ -23,7 +23,7 @@ export type TQueryOpts<TData = unknown> = Omit<
 >;
 
 // Mutation options type
-export type TMutationOpts<TVariables = unknown> = Omit<
-  UseMutationOptions<unknown, Error, TVariables, unknown>,
+export type TMutationOpts<TVariables = unknown, TData = unknown> = Omit<
+  UseMutationOptions<TData, Error, TVariables, unknown>,
   "mutationKey" | "mutationFn"
 >;

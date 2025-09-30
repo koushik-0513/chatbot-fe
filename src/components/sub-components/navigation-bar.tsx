@@ -1,5 +1,6 @@
-import { NAVIGATION_ITEMS } from "@/constants/navigation";
 import { motion } from "framer-motion";
+
+import { NAVIGATION_ITEMS } from "@/constants/navigation";
 
 import { cn } from "@/lib/utils";
 

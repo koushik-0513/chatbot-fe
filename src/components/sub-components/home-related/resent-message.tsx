@@ -1,10 +1,14 @@
 import { DEFAULT_TITLES } from "@/constants/titles";
-import { TChatMessage } from "@/types/chat-types";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { useGetChatHistory, useGetConversationById } from "@/hooks/api/chat";
+import {
+  useGetConversationById,
+  useGetConversationList,
+} from "@/hooks/api/chat";
 import { useUserId } from "@/hooks/custom/use-user-id";
+
+import { TChatMessage } from "@/types/chat-types";
 
 type Props = {
   onOpenChat?: (conversationId: string | null, title?: string) => void;
@@ -13,7 +17,7 @@ type Props = {
 export const ResentMessage = ({ onOpenChat }: Props) => {
   const { userId, isNewUser } = useUserId();
 
-  const { data: history, isLoading: isHistoryLoading } = useGetChatHistory(
+  const { data: history, isLoading: isHistoryLoading } = useGetConversationList(
     { user_id: userId || "" },
     { enabled: !!userId }
   );

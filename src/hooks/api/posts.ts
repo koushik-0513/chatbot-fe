@@ -1,11 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
+
+import { api } from "@/lib/api";
+
 import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TGetInfiniteScrollPostsParams,
   TPostsResponse,
 } from "@/types/home-types";
-import { useQuery } from "@tanstack/react-query";
-
-import { api } from "@/lib/api";
 
 // Base URL: /api/v1/post/...
 

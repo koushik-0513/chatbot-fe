@@ -52,12 +52,6 @@ export type TGetInfiniteScrollNewsParams = {
   cursor?: string | null;
 };
 
-// News reaction types
-export type TNewsReactionRequest = {
-  reaction: string;
-  user_id: string;
-};
-
 export type TNewsReactionResponse = {
   message: string;
 };

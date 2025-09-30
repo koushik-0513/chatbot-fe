@@ -1,6 +1,7 @@
-import { useMaximize } from "@/providers/maximize-provider";
 import { motion } from "framer-motion";
 import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
+
+import { useMaximize } from "@/providers/maximize-provider";
 
 import { cn } from "@/lib/utils";
 

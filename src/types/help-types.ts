@@ -55,7 +55,7 @@ export type THelpArticleDetail = {
   };
 };
 
-export type TCurrentView = (typeof CURRENT_VIEW)[number];
+type TCurrentView = (typeof CURRENT_VIEW)[number];
 
 export type THelpPageState = {
   currentView: TCurrentView;
@@ -109,20 +109,6 @@ export type TTopArticlesResponse = {
       read_time: number;
       created_at: string;
     }>;
-  };
-};
-
-// Article reaction types
-export type TArticleReactionRequest = {
-  reaction: string;
-  user_id: string;
-};
-
-export type TArticleReactionResponse = {
-  message: string;
-  data?: {
-    reaction: string;
-    user_id: string;
   };
 };
 

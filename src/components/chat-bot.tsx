@@ -5,15 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useArticleNavigation } from "@/providers/article-navigation-provider";
 import { useMaximize } from "@/providers/maximize-provider";
 import { useScrollContext } from "@/providers/scroll-provider";
-import { AnimatePresence, motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 
+import { Chat } from "./chat";
 import { Help } from "./help";
 import { Home } from "./home";
-import { Message } from "./message";
 import { News } from "./news";
-import { ChatContainer } from "./sub-components/chat-related/chat-container";
+import { Messages } from "./sub-components/chat-related/messages";
 import { Header } from "./sub-components/header";
 import { Navigation } from "./sub-components/navigation-bar";
 
@@ -23,7 +22,6 @@ type TChatbotProps = {
 };
 
 export const Chatbot = ({}: TChatbotProps) => {
-  // Use controlled maximize value; default to false if not provided (read-only)
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
@@ -45,8 +43,6 @@ export const Chatbot = ({}: TChatbotProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const { resetAllScroll } = useScrollContext();
 
-  // Reset scroll position when active page changes
-
   const handlePageChange = (page: string, articleId?: string) => {
     if (activePage === "homepage" && page === "help" && articleId) {
       setShowBackButton(true);
@@ -61,8 +57,6 @@ export const Chatbot = ({}: TChatbotProps) => {
     setSelectedArticleId(articleId || null);
     setDynamicTitle(null);
 
-    // Only auto-minimize when going back to homepage or list views
-    // Don't auto-minimize when entering details or chat container
     if (
       page === "homepage" ||
       (page === "help" && !articleId) ||
@@ -81,18 +75,13 @@ export const Chatbot = ({}: TChatbotProps) => {
     setShowChatHistory(true);
     setShowActiveChat(false);
     resetAllScroll();
-
-    // Auto-minimize when going back to chat history
     autoMinimize();
   };
 
   const onChatSelected = (chatId: string | null) => {
     setSelectedChatId(chatId);
     setShowChatHistory(false);
-
-    // Auto-maximize when selecting a chat from history
     autoMaximize();
-
     resetAllScroll();
   };
 
@@ -106,7 +95,6 @@ export const Chatbot = ({}: TChatbotProps) => {
     setShowDetails(false);
     setShowBackButton(false);
     setNavigatedFromHomepage(false);
-
     handlePageChange("homepage");
     resetAllScroll();
     setIsArticleScrolled(false);
@@ -123,7 +111,7 @@ export const Chatbot = ({}: TChatbotProps) => {
     if (!element) return;
     element.addEventListener("scroll", handleContentScroll);
     return () => element.removeEventListener("scroll", handleContentScroll);
-  }, []);
+  }, [handleContentScroll]);
 
   const handleOpenChat = (
     conversationId: string | null,
@@ -135,8 +123,6 @@ export const Chatbot = ({}: TChatbotProps) => {
     setShowActiveChat(true);
     setTitle(chatTitle || "Untitled Chat");
     resetAllScroll();
-
-    // Auto-maximize when entering active chat
     autoMaximize();
   };
 
@@ -179,21 +165,18 @@ export const Chatbot = ({}: TChatbotProps) => {
     }
   };
 
+  const containerStyle: React.CSSProperties = {
+    height: isMaximized ? "100%" : "700px",
+    width: isMaximized ? "100%" : "400px",
+  };
+
   return (
-    <motion.div
+    <div
       className={cn(
         "chatbot-container flex h-full min-h-0 w-full flex-1 flex-col shadow-2xl",
         activePage === "homepage" ? "homepage-gradient" : "bg-background"
       )}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{
-        opacity: 1,
-        scale: 1,
-        height: isMaximized ? "100%" : "700px",
-        width: isMaximized ? "100%" : "400px",
-      }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      layout="size"
+      style={containerStyle}
     >
       {activePage !== "homepage" && !showActiveChat && (
         <Header
@@ -206,113 +189,70 @@ export const Chatbot = ({}: TChatbotProps) => {
         />
       )}
 
-      {/* <div className="flex flex-1 min-h-0 w-full"> */}
-      <AnimatePresence mode="wait">
-        {activePage === "homepage" && (
-          <motion.div
-            key="homepage"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex h-full min-h-0 w-full p-4"
-          >
-            <Home
-              onNavigateToHelp={handleNavigateToHelp}
-              onOpenChat={handleOpenChat}
-              onAskQuestion={handleAskQuestion}
-            />
-          </motion.div>
-        )}
+      {activePage === "homepage" && (
+        <div className="flex h-full min-h-0 w-full">
+          <Home
+            onNavigateToHelp={handleNavigateToHelp}
+            onOpenChat={handleOpenChat}
+            onAskQuestion={handleAskQuestion}
+          />
+        </div>
+      )}
 
-        {activePage === "message" && showActiveChat ? (
-          <motion.div
-            key="active-chat"
-            className="flex h-full min-h-0 w-full"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              ...(isMaximized ? { height: "100%", width: "100%" } : {}),
-            }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{
-              duration: 0.3,
-              ease: "easeOut",
-            }}
-          >
-            <ChatContainer
-              chatId={selectedChatId}
-              chatTitle={title ?? ""}
-              onBack={onBackToHistory}
-            />
-          </motion.div>
-        ) : activePage === "message" ? (
-          <motion.div
-            key="message-history"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex h-full min-h-0 w-full"
-          >
-            <Message
-              showChatHistory={showChatHistory}
-              onChatSelected={onChatSelected}
-              onBackToHistory={onBackToHistory}
-              setShowActiveChat={setShowActiveChat}
-              title={setTitle}
-            />
-          </motion.div>
-        ) : null}
+      {activePage === "message" && showActiveChat ? (
+        <div className="flex h-full min-h-0 w-full">
+          <Messages
+            chatId={selectedChatId}
+            chatTitle={title ?? ""}
+            onBack={onBackToHistory}
+          />
+        </div>
+      ) : activePage === "message" ? (
+        <div className="flex h-full min-h-0 w-full">
+          <Chat
+            showChatHistory={showChatHistory}
+            onChatSelected={onChatSelected}
+            onBackToHistory={onBackToHistory}
+            setShowActiveChat={setShowActiveChat}
+            title={setTitle}
+          />
+        </div>
+      ) : null}
 
-        {activePage === "help" && (
-          <motion.div
-            key="help"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex h-full min-h-0 w-full overflow-y-auto"
-          >
-            <Help
-              onShowBackButton={setShowBackButton}
-              backButtonTrigger={backButtonTrigger}
-              activePage={activePage}
-              onShowDetails={setShowDetails}
-              onBackFromDetails={handleBackFromDetails}
-              selectedArticleId={selectedArticleId}
-              onTitleChange={setDynamicTitle}
-              navigatedFromHomepage={navigatedFromHomepage}
-            />
-          </motion.div>
-        )}
+      {activePage === "help" && (
+        <div
+          className="flex h-full min-h-0 w-full overflow-y-auto"
+          ref={contentRef}
+        >
+          <Help
+            onShowBackButton={setShowBackButton}
+            backButtonTrigger={backButtonTrigger}
+            activePage={activePage}
+            onShowDetails={setShowDetails}
+            onBackFromDetails={handleBackFromDetails}
+            selectedArticleId={selectedArticleId}
+            onTitleChange={setDynamicTitle}
+            navigatedFromHomepage={navigatedFromHomepage}
+          />
+        </div>
+      )}
 
-        {activePage === "news" && (
-          <motion.div
-            key="news"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex h-full min-h-0 w-full flex-col overflow-y-auto p-4"
-          >
-            <News
-              onShowBackButton={setShowBackButton}
-              backButtonTrigger={backButtonTrigger}
-              activePage={activePage}
-              onShowDetails={setShowDetails}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {/* </div> */}
+      {activePage === "news" && (
+        <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto p-4">
+          <News
+            onShowBackButton={setShowBackButton}
+            backButtonTrigger={backButtonTrigger}
+            activePage={activePage}
+            onShowDetails={setShowDetails}
+          />
+        </div>
+      )}
 
       {!showDetails && showActiveChat !== true && (
         <div className="sticky bottom-0 z-30 w-full">
           <Navigation activePage={activePage} onPageChange={handlePageChange} />
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };

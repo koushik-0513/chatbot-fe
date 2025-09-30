@@ -1,7 +1,8 @@
-import type { TApiPromise, TMutationOpts } from "@/types/api";
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
+
+import type { TApiPromise, TMutationOpts } from "@/types/api";
 
 // Base URL: /api/v1/file/...
 

@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
 
+import { getRelativeTime } from "@/utils/date-time";
+import { motion } from "framer-motion";
+
 import {
   CONTAINER_VARIANTS,
   ITEM_VARIANTS,
@@ -13,16 +16,18 @@ import {
   ARTICLE_REACTIONS,
   ARTICLE_REACTION_EMOJI_MAP,
 } from "@/constants/reaction";
+
 import { useScrollContext } from "@/providers/scroll-provider";
-import { TArticleReaction } from "@/types/help-types";
-import { getRelativeTime } from "@/utils/date-time";
-import { motion } from "framer-motion";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+import { cn } from "@/lib/utils";
 
 import { useSubmitArticleReaction } from "@/hooks/api/article-reaction";
 import { useGetArticleDetails } from "@/hooks/api/help";
 import { useUserId } from "@/hooks/custom/use-user-id";
+
+import { TArticleReaction } from "@/types/help-types";
 
 type TArticleDetailsProps = {
   articleId: string | null;
@@ -298,11 +303,17 @@ export const ArticleDetails = ({
                   key={reaction}
                   onClick={() => handleReactionSubmit(reaction)}
                   disabled={isSubmitting}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                    isSelected
-                      ? "border-primary bg-primary/10 scale-110"
-                      : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
-                  } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `}
+                  className={cn(
+                    `flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                      isSelected
+                        ? "border-primary bg-primary/10 scale-110"
+                        : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                    }, ${
+                      isSubmitting
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer hover:scale-105"
+                    }, ${selectedReaction && !isSelected ? "opacity-10" : ""} `
+                  )}
                   variants={SCALE_VARIANTS}
                   initial="hidden"
                   animate="visible"

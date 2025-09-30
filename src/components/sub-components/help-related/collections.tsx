@@ -1,10 +1,11 @@
-import { THelpCollectionDetail } from "@/types/help-types";
 import { motion } from "framer-motion";
 
 import { useGetInfiniteScrollCollections } from "@/hooks/api/help";
 import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
 
-import { ArticleCard } from "./article-cards";
+import { THelpCollectionDetail } from "@/types/help-types";
+
+import { ArticleCard } from "./collection-cards";
 
 type TCollectionsListProps = {
   onCollectionClick: (collection: THelpCollectionDetail) => void;

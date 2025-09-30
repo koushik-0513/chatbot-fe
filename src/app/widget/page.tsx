@@ -2,19 +2,27 @@
 
 import { useEffect, useState } from "react";
 
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Bot, X } from "lucide-react";
+
 import {
   COLLAPSED_IFRAME_STYLES,
   DEFAULT_IFRAME_STYLES,
   INITIAL_FRAME_STYLES,
   MAXIMIZED_IFRAME_STYLES,
 } from "@/constants/styles";
-import { Providers } from "@/providers/providers";
-import { InitialFrameStyles } from "@/types/types";
-import { Bot, X } from "lucide-react";
+
+import { ArticleNavigationProvider } from "@/providers/article-navigation-provider";
+import { MaximizeProvider } from "@/providers/maximize-provider";
+import { ScrollProvider } from "@/providers/scroll-provider";
 
 import { Chatbot } from "@/components/chat-bot";
 
+import { queryClient } from "@/lib/query-client";
+
 import { useUserId } from "@/hooks/custom/use-user-id";
+
+import { InitialFrameStyles } from "@/types/types";
 
 export default function WidgetPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -174,9 +182,15 @@ export default function WidgetPage() {
         >
           <X className="h-4 w-4" />
         </button>
-        <Providers onMaximizeChange={handleMaximizeChange}>
-          <Chatbot user_id={userId ?? ""} onClose={() => handleClose()} />
-        </Providers>
+        <QueryClientProvider client={queryClient}>
+          <MaximizeProvider onMaximizeChange={handleMaximizeChange}>
+            <ScrollProvider>
+              <ArticleNavigationProvider>
+                <Chatbot user_id={userId ?? ""} onClose={() => handleClose()} />
+              </ArticleNavigationProvider>
+            </ScrollProvider>
+          </MaximizeProvider>
+        </QueryClientProvider>
       </div>
     );
   }

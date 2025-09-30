@@ -1,12 +1,13 @@
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+
+import { api } from "@/lib/api";
+
 import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TGetInfiniteScrollNewsParams,
   TInfiniteScrollNewsResponse,
   TNewsDetailResponse,
 } from "@/types/news-types";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-
-import { api } from "@/lib/api";
 
 // News Types
 type TGetNewsByIdQParams = {
@@ -57,7 +58,7 @@ export const useGetInfiniteScrollNews = (
     queryKey: ["useGetInfiniteScrollNews", params.limit],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       getInfiniteScrollNews({ ...params, cursor: pageParam }),
-    initialPageParam: null as string | null,
+    initialPageParam: null,
     getNextPageParam: (lastPage) =>
       lastPage.infinite_scroll.has_more
         ? lastPage.infinite_scroll.next_cursor

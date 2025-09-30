@@ -1,3 +1,7 @@
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+
+import { api } from "@/lib/api";
+
 import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TGetInfiniteScrollCollectionsParams,
@@ -6,9 +10,6 @@ import type {
   TInfiniteScrollCollectionsResponse,
   TTopArticlesResponse,
 } from "@/types/help-types";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-
-import { api } from "@/lib/api";
 
 // Help Types
 
@@ -126,7 +127,7 @@ export const useGetInfiniteScrollCollections = (
     queryKey: ["useGetInfiniteScrollCollections", params.limit],
     queryFn: ({ pageParam }: { pageParam: string | null }) =>
       getInfiniteScrollCollections({ ...params, cursor: pageParam }),
-    initialPageParam: null as string | null,
+    initialPageParam: null,
     getNextPageParam: (lastPage) =>
       lastPage.infinite_scroll.has_more
         ? lastPage.infinite_scroll.next_cursor

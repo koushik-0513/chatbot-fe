@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 
+import { AnimatePresence, motion } from "framer-motion";
+
 import { useMaximize } from "@/providers/maximize-provider";
 import { useScrollContext } from "@/providers/scroll-provider";
-import { TNews } from "@/types/news-types";
-import { AnimatePresence, motion } from "framer-motion";
 
 import { useGetInfiniteScrollNews } from "@/hooks/api/news";
 import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
+
+import { TNews } from "@/types/news-types";
 
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";

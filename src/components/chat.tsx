@@ -1,12 +1,13 @@
-import { TApiError } from "@/types/api";
-import { TChatHistoryItem } from "@/types/chat-types";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircleQuestionMark } from "lucide-react";
 
-import { useGetChatHistory } from "@/hooks/api/chat";
+import { useGetConversationList } from "@/hooks/api/chat";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
-import { ChatHistory } from "./sub-components/chat-related/chat-history";
+import { TApiError } from "@/types/api";
+import { TConversationItem } from "@/types/chat-types";
+
+import { Conversation } from "./sub-components/chat-related/conversations";
 
 type TMessageProps = {
   showChatHistory: boolean;
@@ -17,7 +18,7 @@ type TMessageProps = {
   title: (title: string) => void;
 };
 
-export const Message = ({
+export const Chat = ({
   onChatSelected,
   setShowActiveChat,
   title,
@@ -29,7 +30,7 @@ export const Message = ({
     data: chatHistoryResponse,
     isLoading,
     error,
-  } = useGetChatHistory(
+  } = useGetConversationList(
     { user_id: userId || "", page: 1, limit: 5 },
     { enabled: !!userId }
   );
@@ -85,13 +86,13 @@ export const Message = ({
 
   // Extract the data array from the response
   // If there's a 404 error, treat it as empty data
-  const chatHistoryDataRaw: TChatHistoryItem[] =
+  const chatHistoryDataRaw: TConversationItem[] =
     (error as TApiError)?.status_code === 404
       ? []
       : chatHistoryResponse?.data || [];
   const chatHistoryData = [...chatHistoryDataRaw].sort(
-    (a: TChatHistoryItem, b: TChatHistoryItem) => {
-      const getTs = (x: TChatHistoryItem) => new Date(x.updated_at).getTime();
+    (a: TConversationItem, b: TConversationItem) => {
+      const getTs = (x: TConversationItem) => new Date(x.updated_at).getTime();
       return getTs(b) - getTs(a);
     }
   );
@@ -106,7 +107,7 @@ export const Message = ({
       <AnimatePresence mode="wait">
         <div className="min-h-0 w-full flex-1 space-y-2 overflow-y-auto pr-1">
           {chatHistoryData.length > 0 ? (
-            chatHistoryData.map((chat: TChatHistoryItem, index: number) => {
+            chatHistoryData.map((chat: TConversationItem, index: number) => {
               // Handle different possible ID field names
               const chatId = chat._id;
 
@@ -119,7 +120,7 @@ export const Message = ({
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.2, delay: index * 0.05 }}
                 >
-                  <ChatHistory
+                  <Conversation
                     id={chatId || String(index)}
                     title={safeTitle}
                     timestamp={""}

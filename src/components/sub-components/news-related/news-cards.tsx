@@ -1,11 +1,12 @@
 import Image from "next/image";
 
-import { TNews } from "@/types/news-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
+
+import { TNews } from "@/types/news-types";
 
 type TNewsCardProps = {
   news: TNews;

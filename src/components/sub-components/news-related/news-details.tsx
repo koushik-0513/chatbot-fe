@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Image from "next/image";
+
+import { getRelativeTime } from "@/utils/date-time";
+import { motion } from "framer-motion";
 
 import {
   CONTAINER_VARIANTS,
@@ -8,10 +11,8 @@ import {
   SCALE_VARIANTS,
 } from "@/constants/animations";
 import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
+
 import { useScrollContext } from "@/providers/scroll-provider";
-import { TNewsReaction } from "@/types/news-types";
-import { getRelativeTime } from "@/utils/date-time";
-import { motion } from "framer-motion";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
@@ -21,6 +22,8 @@ import { useGetNewsById } from "@/hooks/api/news";
 import { useSubmitNewsReaction } from "@/hooks/api/news-reaction";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
+import { TNewsReaction } from "@/types/news-types";
+
 type TNewsDetailsProps = {
   newsId: string;
   onBack: () => void;
@@ -28,7 +31,6 @@ type TNewsDetailsProps = {
 
 export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
   const { resetAllScroll } = useScrollContext();
-  const contentRef = useRef<HTMLDivElement>(null);
   const { userId } = useUserId();
 
   // Fetch news details
@@ -81,9 +83,6 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
   // Reset scroll when component mounts
   useEffect(() => {
     resetAllScroll();
-    if (contentRef.current) {
-      contentRef.current.scrollTop = 0;
-    }
   }, []);
 
   // Loading state

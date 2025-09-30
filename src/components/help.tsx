@@ -1,24 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  useArticleNavigation,
-  useNavigation,
-} from "@/providers/article-navigation-provider";
+import { AnimatePresence, motion } from "framer-motion";
+
+import { useArticleNavigation } from "@/providers/article-navigation-provider";
 import { useMaximize } from "@/providers/maximize-provider";
 import { useScrollContext } from "@/providers/scroll-provider";
+
+import { useDebounce } from "@/hooks/custom/use-debounce";
+
 import {
   TArticleReaction,
   THelpArticleDetail,
   THelpCollectionDetail,
   THelpPageState,
 } from "@/types/help-types";
-import { AnimatePresence, motion } from "framer-motion";
-
-import { useDebounce } from "@/hooks/custom/use-debounce";
 
 import { ArticleDetails } from "./sub-components/help-related/article-details";
 import { CollectionDetails } from "./sub-components/help-related/collection-details";
-import { CollectionsList } from "./sub-components/help-related/collections-list";
+import { CollectionsList } from "./sub-components/help-related/collections";
 import { SearchBar } from "./sub-components/help-related/search-bar";
 import { SearchResults } from "./sub-components/help-related/search-results";
 
@@ -60,8 +59,12 @@ export const Help = ({
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Use article navigation context
-  const { selectedArticleId, openArticleDetails, resetArticleNavigation } =
-    useArticleNavigation();
+  const {
+    selectedArticleId,
+    openArticleDetails,
+    openArticleDetailsById,
+    resetArticleNavigation,
+  } = useArticleNavigation();
 
   const lastPropArticleIdRef = useRef<string | null>(null);
 
@@ -70,7 +73,7 @@ export const Help = ({
     goBack: goBackInNavigation,
     getPreviousItem,
     navigationStack,
-  } = useNavigation();
+  } = useArticleNavigation();
 
   // Set selectedArticleId when propSelectedArticleId changes (from home page navigation)
   useEffect(() => {
@@ -89,26 +92,14 @@ export const Help = ({
       return;
     }
 
-    const article = {
-      id: propSelectedArticleId,
-      title: "Loading...",
-      slug: "",
-      excerpt: "",
-      collection_id: "",
-      tags: [],
-      updated_at: "",
-      content: "",
-      reaction: {
-        reaction: "",
-        user_id: "",
-        _id: "",
-      },
-      related_articles: [],
-    };
-
     resetArticleNavigation();
-    openArticleDetails(article as THelpArticleDetail);
-  }, [propSelectedArticleId, selectedArticleId]);
+    openArticleDetailsById(propSelectedArticleId);
+  }, [
+    propSelectedArticleId,
+    selectedArticleId,
+    openArticleDetailsById,
+    resetArticleNavigation,
+  ]);
 
   // State for selected collection ID
   const [selectedCollectionId, setSelectedCollectionId] = useState<
@@ -126,40 +117,18 @@ export const Help = ({
     setIsSearching(debouncedSearchQuery.length > 0);
   }, [debouncedSearchQuery]);
 
-  // Helper function to create a minimal article object for loading state
-  const createLoadingArticle = useCallback(
-    (id: string): THelpArticleDetail => ({
-      id,
-      title: "Loading...",
-      slug: "",
-      excerpt: "",
-      collection_id: "",
-      tags: [],
-      updated_at: "",
-      content: "",
-      reaction: {
-        reaction: "" as TArticleReaction,
-        user_id: "",
-        _id: "",
-      },
-      related_articles: [],
-    }),
-    []
-  );
-
   // Auto-show article when selectedArticleId is provided
   useEffect(() => {
     if (selectedArticleId) {
-      const loadingArticle = createLoadingArticle(selectedArticleId);
       setPageState({
         currentView: "article",
         selectedCollection: null,
-        selectedArticle: loadingArticle,
+        selectedArticle: null, // Will be populated when data is fetched
       });
       onShowDetails?.(true);
       autoMaximize();
     }
-  }, [selectedArticleId]);
+  }, [selectedArticleId, onShowDetails, autoMaximize]);
 
   // Handle scroll-based title visibility
   useEffect(() => {
@@ -247,9 +216,9 @@ export const Help = ({
   );
 
   const handle_article_click = useCallback(
-    (article: THelpArticleDetail, fromSearch: boolean = false) => {
-      // Use context to open article details
-      openArticleDetails(article);
+    (articleId: string, fromSearch: boolean = false) => {
+      // Use context to open article details by ID
+      openArticleDetailsById(articleId);
 
       if (fromSearch) {
         setCameFromSearch(true); // Mark that we came from search
@@ -257,7 +226,7 @@ export const Help = ({
           ...prev,
           currentView: "article",
           selectedCollection: null,
-          selectedArticle: article,
+          selectedArticle: null, // Will be populated when data is fetched
         }));
         // Show back button when navigating from search
         onShowBackButton(true);
@@ -266,7 +235,7 @@ export const Help = ({
           ...prev,
           currentView: "article",
           selectedCollection: prev.selectedCollection,
-          selectedArticle: article,
+          selectedArticle: null, // Will be populated when data is fetched
         }));
       }
 
@@ -275,25 +244,29 @@ export const Help = ({
       // Reset scroll when navigating to article
       resetAllScroll();
     },
-    [onShowDetails, autoMaximize, openArticleDetails, onShowBackButton]
+    [
+      onShowDetails,
+      autoMaximize,
+      openArticleDetailsById,
+      onShowBackButton,
+      resetAllScroll,
+    ]
   );
 
   // Handle related article navigation
   const handle_related_article_click = useCallback(
     (articleId: string) => {
-      // Create a minimal article object for loading state
-      const loadingArticle = createLoadingArticle(articleId);
-      openArticleDetails(loadingArticle);
+      openArticleDetailsById(articleId);
       setPageState({
         currentView: "article",
         selectedCollection: pageState.selectedCollection,
-        selectedArticle: null, // Will be populated by the useEffect when article loads
+        selectedArticle: null, // Will be populated when data is fetched
       });
 
       // Reset scroll position for new article
       resetAllScroll();
     },
-    [pageState.selectedCollection]
+    [pageState.selectedCollection, openArticleDetailsById, resetAllScroll]
   );
 
   // Search handlers
@@ -458,7 +431,7 @@ export const Help = ({
 
   return (
     <AnimatePresence mode="wait">
-      {pageState.currentView === "article" && pageState.selectedArticle && (
+      {pageState.currentView === "article" && selectedArticleId && (
         <motion.div
           key="article"
           className="flex h-full min-h-0 w-full"
@@ -520,8 +493,7 @@ export const Help = ({
             <SearchResults
               searchQuery={debouncedSearchQuery}
               onArticleClick={(articleId: string) => {
-                const loadingArticle = createLoadingArticle(articleId);
-                handle_article_click(loadingArticle, true);
+                handle_article_click(articleId, true);
               }}
               onClearSearch={handleClearSearch}
             />

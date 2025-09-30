@@ -34,7 +34,7 @@ export const MarkdownRenderer = ({
               className={cn(
                 isSmallText
                   ? "text-card-foreground mb-1 text-xs font-normal"
-                  : "text-card-foreground mb-4 text-2xl font-bold"
+                  : "text-card-foreground mb-4 text-xl font-bold"
               )}
             >
               {children}

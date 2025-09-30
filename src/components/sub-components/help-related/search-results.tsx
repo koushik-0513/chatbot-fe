@@ -2,11 +2,12 @@
 
 import { useCallback } from "react";
 
-import { TArticleSearchResult } from "@/types/help-types";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
 import { useSearchArticles } from "@/hooks/api/article-search";
+
+import { TArticleSearchResult } from "@/types/help-types";
 
 type TSearchResultsProps = {
   searchQuery: string;

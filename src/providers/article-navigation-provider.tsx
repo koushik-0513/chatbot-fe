@@ -25,7 +25,7 @@ export type NavigationStackItem = {
 };
 
 type ArticleNavigationContextType = {
-  // State for article details navigation from home page
+  // State for article details navigation
   selectedArticleId: string | null;
   selectedArticle: THelpArticleDetail | null;
   isArticleDetailsOpen: boolean;
@@ -39,6 +39,7 @@ type ArticleNavigationContextType = {
 
   // Actions
   openArticleDetails: (article: THelpArticleDetail) => void;
+  openArticleDetailsById: (articleId: string) => void;
   closeArticleDetails: () => void;
   resetArticleNavigation: () => void;
   setArticleDetailsData: (data: THelpArticleDetailResponse | undefined) => void;
@@ -46,11 +47,7 @@ type ArticleNavigationContextType = {
   setArticleError: (error: Error | null) => void;
 
   // Navigation stack actions
-  pushItem: (item: Omit<NavigationStackItem, "timestamp">) => void;
-  popItem: () => NavigationStackItem | null;
   goBack: () => void;
-  clearStack: () => void;
-  getCurrentItem: () => NavigationStackItem | null;
   getPreviousItem: () => NavigationStackItem | null;
 };
 
@@ -185,6 +182,25 @@ export const ArticleNavigationProvider = ({
     [pushItem]
   );
 
+  const openArticleDetailsById = useCallback(
+    (articleId: string) => {
+      setSelectedArticle(null); // Clear the article data initially
+      setSelectedArticleId(articleId);
+      setIsArticleDetailsOpen(true);
+      setIsLoadingArticle(true);
+      setArticleError(null);
+
+      // Push to navigation stack with minimal data
+      pushItem({
+        type: "article",
+        id: articleId,
+        title: "Loading...",
+        data: null,
+      });
+    },
+    [pushItem]
+  );
+
   const closeArticleDetails = useCallback(() => {
     setSelectedArticle(null);
     setSelectedArticleId(null);
@@ -222,16 +238,13 @@ export const ArticleNavigationProvider = ({
         navigationStack,
         canGoBack,
         openArticleDetails,
+        openArticleDetailsById,
         closeArticleDetails,
         resetArticleNavigation,
         setArticleDetailsData,
         setLoadingArticle: setIsLoadingArticle,
         setArticleError,
-        pushItem,
-        popItem,
         goBack,
-        clearStack,
-        getCurrentItem,
         getPreviousItem,
       }}
     >
@@ -248,29 +261,4 @@ export const useArticleNavigation = () => {
     );
   }
   return context;
-};
-
-// Convenience hook for navigation stack operations
-export const useNavigation = () => {
-  const {
-    pushItem,
-    popItem,
-    goBack,
-    clearStack,
-    getCurrentItem,
-    getPreviousItem,
-    canGoBack,
-    navigationStack,
-  } = useArticleNavigation();
-
-  return {
-    pushItem,
-    popItem,
-    goBack,
-    clearStack,
-    getCurrentItem,
-    getPreviousItem,
-    canGoBack,
-    navigationStack,
-  };
 };

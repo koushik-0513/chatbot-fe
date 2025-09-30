@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { LAYOUT } from "@/constants/styles";
-import { DEFAULT_TITLES } from "@/constants/titles";
-import { TChatMessage, TStatus } from "@/types/chat-types";
 import { useQueryClient } from "@tanstack/react-query";
 import { ObjectId } from "bson";
 import { ArrowDown, ArrowLeft, Paperclip, Send, Smile } from "lucide-react";
+
+import { LAYOUT } from "@/constants/styles";
+import { DEFAULT_TITLES } from "@/constants/titles";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { useGetConversationById, useSendMessage } from "@/hooks/api/chat";
 import { useUploadFile } from "@/hooks/api/file";
 import { useUserId } from "@/hooks/custom/use-user-id";
+
+import { TChatMessage, TStatus } from "@/types/chat-types";
 
 import { EmojiPicker } from "./emoji-picker";
 
@@ -29,12 +31,12 @@ type UploadItem = {
   status: TStatus;
   error?: string;
 };
-export const ChatContainer = ({
+export const Messages = ({
   chatId,
   chatTitle,
   onBack,
 }: TChatContainerProps) => {
-  const { userId, isLoading: isUserIdLoading } = useUserId();
+  const { userId } = useUserId();
 
   // State - initialize before hooks
   const [currentChatId, setCurrentChatId] = useState<string | null>(chatId);
@@ -177,7 +179,7 @@ export const ChatContainer = ({
 
   // Handle sending message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !userId || isUserIdLoading || isStreaming) return;
+    if (!newMessage.trim() || !userId || isStreaming) return;
 
     const messageText = newMessage.trim();
     const userMessageId = new ObjectId().toHexString();
@@ -261,7 +263,7 @@ export const ChatContainer = ({
 
     // Update sidebar
     queryClient.invalidateQueries({
-      queryKey: ["useGetChatHistory", { user_id: userId }],
+      queryKey: ["useGetConversationList", { user_id: userId }],
     });
 
     // Scroll to show final AI message
@@ -287,7 +289,7 @@ export const ChatContainer = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
-    if (!files || !userId || isUserIdLoading) return;
+    if (!files || !userId) return;
 
     const fileArray = Array.from(files);
 
@@ -366,7 +368,9 @@ export const ChatContainer = ({
                 return (
                   <div
                     key={message._id}
-                    className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                    className={cn(
+                      `flex ${isUser ? "justify-end" : "justify-start"}`
+                    )}
                   >
                     <div
                       className={cn(
@@ -472,7 +476,7 @@ export const ChatContainer = ({
           {/* File upload button */}
           <label
             className={cn(
-              `hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors ${!userId || isUserIdLoading || isStreaming ? "cursor-not-allowed opacity-50" : ""}`
+              `hover:bg-muted cursor-pointer rounded-lg p-2 transition-colors ${!userId || isStreaming ? "cursor-not-allowed opacity-50" : ""}`
             )}
           >
             <Paperclip className="h-5 w-5" />
@@ -480,7 +484,7 @@ export const ChatContainer = ({
               type="file"
               multiple
               onChange={handleFileSelect}
-              disabled={!userId || isUserIdLoading || isStreaming}
+              disabled={!userId || isStreaming}
               className="hidden"
             />
           </label>
@@ -492,16 +496,14 @@ export const ChatContainer = ({
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Type your message here..."
-            disabled={isUserIdLoading || isStreaming}
+            disabled={isStreaming}
             className="border-input bg-background focus:ring-ring flex-1 rounded-lg border px-4 py-2 text-sm focus:ring-2 focus:outline-none disabled:opacity-50"
           />
 
           {/* Send button */}
           <button
             onClick={handleSendMessage}
-            disabled={
-              !newMessage.trim() || !userId || isUserIdLoading || isStreaming
-            }
+            disabled={!newMessage.trim() || !userId || isStreaming}
             className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-4 py-2 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="h-5 w-5" />

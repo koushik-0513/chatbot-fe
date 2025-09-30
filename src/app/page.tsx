@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 
-import { Providers } from "@/providers/providers";
 import { Bot, ChevronDown } from "lucide-react";
 
 import { Chatbot } from "@/components/chat-bot";
@@ -23,9 +22,7 @@ export default function Home() {
 
       {isChatbotopen && userId && (
         <div key="chatbot-container" className="fixed right-6 bottom-20 z-50">
-          <Providers>
-            <Chatbot user_id={userId} onClose={() => setIsChatbotOpen(false)} />
-          </Providers>
+          <Chatbot user_id={userId} onClose={() => setIsChatbotOpen(false)} />
         </div>
       )}
     </div>

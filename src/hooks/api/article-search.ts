@@ -1,11 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
+
+import { api } from "@/lib/api";
+
 import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TArticleSearchParams,
   TArticleSearchResponse,
 } from "@/types/help-types";
-import { useQuery } from "@tanstack/react-query";
-
-import { api } from "@/lib/api";
 
 // Article Search Services
 const searchArticles = (
