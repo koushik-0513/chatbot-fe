@@ -125,7 +125,11 @@ export const ArticleDetails = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
       >
-        <div className="text-muted-foreground">Loading article...</div>
+        <motion.div
+          className="border-primary/60 h-10 w-10 rounded-full border-4 border-b-transparent"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+        />
       </motion.div>
     );
   }
@@ -154,16 +158,6 @@ export const ArticleDetails = ({
     >
       {/* Content Container */}
       <div className="space-y-6">
-        {/* Article Title */}
-        <motion.h1
-          className="text-card-foreground text-xl leading-tight font-bold"
-          variants={ITEM_VARIANTS}
-          initial="hidden"
-          animate="visible"
-        >
-          {article?.title}
-        </motion.h1>
-
         {/* Author and Metadata */}
         <motion.div
           className="flex items-center justify-between"
@@ -179,12 +173,12 @@ export const ArticleDetails = ({
               height={40}
               className="h-10 w-10 rounded-full object-cover"
             />
-            <motion.div className="flex flex-row items-center gap-2">
+            <motion.div className="flex flex-col items-start">
               <p className="text-card-foreground text-sm font-medium">
-                {getAuthorName()}
+                Written by {getAuthorName()}
               </p>
               <p className="text-muted-foreground text-xs">
-                {getRelativeTime(article?.updated_at)}
+                Updated over {getRelativeTime(article?.updated_at)}
               </p>
             </motion.div>
           </div>

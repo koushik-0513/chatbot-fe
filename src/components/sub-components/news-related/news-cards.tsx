@@ -61,7 +61,7 @@ export const NewsCard = ({
           </div>
 
           <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
+            <div className="flex flex-row">
               <CardTitle className="text-card-foreground text-md mb-2 line-clamp-2 font-bold">
                 {news.title}
               </CardTitle>

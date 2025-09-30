@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircleQuestionMark } from "lucide-react";
+import { MessageCircleQuestion } from "lucide-react"; // ✅ correct icon
 
 import { useGetConversationList } from "@/hooks/api/chat";
 import { useUserId } from "@/hooks/custom/use-user-id";
@@ -25,10 +25,10 @@ export const Chat = ({
 }: TMessageProps) => {
   const { userId } = useUserId();
 
-  // Use React Query to fetch chat history
   const {
     data: chatHistoryResponse,
     isLoading,
+    isError,            // ✅ destructure this
     error,
   } = useGetConversationList(
     { user_id: userId || "", page: 1, limit: 5 },
@@ -46,55 +46,19 @@ export const Chat = ({
       console.error(error);
       return;
     }
-    // Don't generate conversation ID yet - show initial message first
     onChatSelected(null);
     setShowActiveChat(true);
-    // Set title for new chat
     title("New Chat");
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <motion.div
-        className="flex h-full flex-col items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="text-muted-foreground">Loading chat history...</div>
-      </motion.div>
-    );
-  }
+  // Treat 404 as empty state
+  const isNotFound = (error as TApiError)?.status_code === 404;
 
-  // Error state - but treat 404 as empty state
-  if (error && (error as TApiError)?.status_code !== 404) {
-    return (
-      <motion.div
-        className="flex h-full flex-col items-center justify-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="text-destructive">Failed to load chat history</div>
-        <div className="text-muted-foreground mt-2 text-sm">
-          {error instanceof Error ? error.message : "An error occurred"}
-        </div>
-      </motion.div>
-    );
-  }
-
-  // Extract the data array from the response
-  // If there's a 404 error, treat it as empty data
+  // Data (404 => empty)
   const chatHistoryDataRaw: TConversationItem[] =
-    (error as TApiError)?.status_code === 404
-      ? []
-      : chatHistoryResponse?.data || [];
+    isNotFound ? [] : chatHistoryResponse?.data || [];
   const chatHistoryData = [...chatHistoryDataRaw].sort(
-    (a: TConversationItem, b: TConversationItem) => {
-      const getTs = (x: TConversationItem) => new Date(x.updated_at).getTime();
-      return getTs(b) - getTs(a);
-    }
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   );
 
   return (
@@ -106,11 +70,46 @@ export const Chat = ({
     >
       <AnimatePresence mode="wait">
         <div className="min-h-0 w-full flex-1 space-y-2 overflow-y-auto pr-1">
-          {chatHistoryData.length > 0 ? (
-            chatHistoryData.map((chat: TConversationItem, index: number) => {
-              // Handle different possible ID field names
+          {isLoading ? (
+            // ✅ loading
+            <motion.div
+              key="loading"
+              className="flex h-full flex-col items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-muted-foreground">Loading chat history...</div>
+            </motion.div>
+          ) : isError && !isNotFound ? (
+            // ✅ defensive: should be caught above, but safe to keep
+            <motion.div
+              key="error"
+              className="flex h-full flex-col items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-muted-foreground">Error loading chat history...</div>
+            </motion.div>
+          ) : chatHistoryData.length === 0 ? (
+            // ✅ empty
+            <motion.div
+              key="no-chats"
+              className="flex h-full flex-col items-center justify-center py-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="text-muted-foreground">No chat history found</div>
+            </motion.div>
+          ) : (
+            // ✅ list
+            chatHistoryData.map((chat, index) => {
               const chatId = chat._id;
-
               const safeTitle = (chat.title || "Untitled Chat").toString();
               return (
                 <motion.div
@@ -130,22 +129,11 @@ export const Chat = ({
                 </motion.div>
               );
             })
-          ) : (
-            <motion.div
-              key="no-chats"
-              className="flex h-full flex-col items-center justify-center py-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="text-muted-foreground">No chat history found</div>
-            </motion.div>
           )}
         </div>
       </AnimatePresence>
 
-      {/* New Chat Button - show when there's no history or less than 5 chats */}
+      {/* New Chat Button */}
       <div className="flex-shrink-0">
         <AnimatePresence>
           {chatHistoryData.length < 5 && (
@@ -166,7 +154,7 @@ export const Chat = ({
               >
                 <span className="flex items-center gap-2">
                   New Chat
-                  <MessageCircleQuestionMark className="h-4 w-4" />
+                  <MessageCircleQuestion className="h-4 w-4" />
                 </span>
               </motion.button>
             </motion.div>

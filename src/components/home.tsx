@@ -43,7 +43,7 @@ export const Home = ({
   const hasError = articlesError || postsError;
 
   return (
-    <div className="dark space-y-4 overflow-y-auto p-4">
+    <div className="dark flex h-full flex-col space-y-4 overflow-y-auto p-4">
       <div className="text-foreground p-2">
         <h2 className="text-tertiary text-2xl font-bold">Hello</h2>
         <h3 className="text-tertiary text-2xl font-bold">

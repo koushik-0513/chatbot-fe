@@ -200,7 +200,7 @@ export const Chatbot = ({}: TChatbotProps) => {
       )}
 
       {activePage === "message" && showActiveChat ? (
-        <div className="flex h-full min-h-0 w-full">
+        <div className="flex h-full min-h-0 w-full flex-1">
           <Messages
             chatId={selectedChatId}
             chatTitle={title ?? ""}
@@ -208,7 +208,7 @@ export const Chatbot = ({}: TChatbotProps) => {
           />
         </div>
       ) : activePage === "message" ? (
-        <div className="flex h-full min-h-0 w-full">
+        <div className="flex h-full min-h-0 w-full flex-1">
           <Chat
             showChatHistory={showChatHistory}
             onChatSelected={onChatSelected}

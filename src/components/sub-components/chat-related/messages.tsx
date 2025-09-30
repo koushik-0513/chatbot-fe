@@ -331,7 +331,7 @@ export const Messages = ({
   };
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-[900px] min-h-0 w-full flex-1 flex-col">
       {/* Header */}
       <div className="border-border bg-background sticky top-0 z-10 flex items-center gap-3 border-b p-3">
         <button
@@ -348,11 +348,11 @@ export const Messages = ({
       {/* Messages Container */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-3"
+        className="flex-1 min-h-0 overflow-y-auto px-4 py-3"
         onScroll={handleScroll}
       >
         {messages.length === 0 && !isStreaming ? (
-          <div className="flex flex-1 items-center justify-center text-center">
+          <div className="flex items-center justify-center text-center">
             <div>
               <p className="mb-2 text-lg font-medium">Welcome!</p>
               <p className="text-muted-foreground">
