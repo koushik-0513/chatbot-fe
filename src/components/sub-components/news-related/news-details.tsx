@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import { getRelativeTime } from "@/utils/date-time";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   CONTAINER_VARIANTS,
@@ -30,6 +31,7 @@ type TNewsDetailsProps = {
 export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
   const { resetAllScroll } = useScrollContext();
   const { userId } = useUserId();
+  const queryClient = useQueryClient();
 
   // Fetch news details
   const {
@@ -52,10 +54,8 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
 
   // Initialize reaction state when news data is loaded
   useEffect(() => {
-    if (news?.reaction?.reaction) {
-      setSelectedReaction(news.reaction.reaction);
-    }
-  }, [news]);
+    setSelectedReaction(news?.reaction?.reaction ?? null);
+  }, [news?.reaction?.reaction]);
 
   // Handle reaction submission
   const handleReactionSubmit = async (reaction: TNewsReaction) => {
@@ -73,6 +73,7 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
         userId: userId,
       });
       setSelectedReaction(reaction);
+      await queryClient.invalidateQueries({ queryKey: ["useGetNewsById"] });
     } catch (error) {
       console.error(error);
     }
@@ -81,7 +82,7 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
   // Reset scroll when component mounts
   useEffect(() => {
     resetAllScroll();
-  }, []);
+  }, [resetAllScroll]);
 
   // Loading state
   if (isLoading) {

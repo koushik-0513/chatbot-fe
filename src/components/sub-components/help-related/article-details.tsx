@@ -6,6 +6,7 @@ import Image from "next/image";
 
 import { getRelativeTime } from "@/utils/date-time";
 import { motion } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   CONTAINER_VARIANTS,
@@ -48,6 +49,7 @@ export const ArticleDetails = ({
   const { resetAllScroll } = useScrollContext();
   const contentRef = useRef<HTMLDivElement>(null);
   const { userId: user_id } = useUserId();
+  const queryClient = useQueryClient();
 
   // Fetch article details when an article is selected
   const { data: articleDetailsData, isLoading: isFetchingArticle } =
@@ -66,6 +68,10 @@ export const ArticleDetails = ({
     return isValidArticleReaction(article?.reaction?.reaction);
   });
 
+  useEffect(() => {
+    setSelectedReaction(isValidArticleReaction(article?.reaction?.reaction));
+  }, [article?.reaction?.reaction]);
+
   // Article reaction mutation
   const submitReactionMutation = useSubmitArticleReaction();
 
@@ -78,12 +84,17 @@ export const ArticleDetails = ({
       return;
     }
 
-    await submitReactionMutation.mutateAsync({
-      articleId: article?.id || "",
-      reaction: reaction,
-      userId: user_id,
-    });
-    setSelectedReaction(reaction);
+    try {
+      await submitReactionMutation.mutateAsync({
+        articleId: article?.id || "",
+        reaction: reaction,
+        userId: user_id,
+      });
+      setSelectedReaction(reaction);
+      await queryClient.invalidateQueries({ queryKey: ["useGetArticleDetails"] });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   // Handle related article click
@@ -97,14 +108,14 @@ export const ArticleDetails = ({
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, []);
+  }, [resetAllScroll]);
 
   // Notify parent of article title when data is loaded
   useEffect(() => {
     if (article?.title) {
       onTitleChange?.(article.title);
     }
-  }, [articleDetailsData]);
+  }, [article?.title, onTitleChange]);
 
   // Function to calculate relative time
 
@@ -125,7 +136,7 @@ export const ArticleDetails = ({
         transition={{ duration: 0.4 }}
       >
         <motion.div
-          className="border-primary/60 h-10 w-10 rounded-full border-4 border-b-transparent"
+          className="border-primary/60 rounded-full border-4 border-b-transparent"
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
         />
