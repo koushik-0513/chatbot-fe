@@ -86,7 +86,7 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-[calc(100vh-90px)] items-center justify-center">
         <div className="text-center">
           <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2"></div>
           <p className="text-muted-foreground">Loading news details...</p>

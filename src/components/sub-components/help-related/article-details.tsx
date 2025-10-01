@@ -119,7 +119,7 @@ export const ArticleDetails = ({
   if (isFetchingArticle) {
     return (
       <motion.div
-        className="flex h-full flex-col items-center justify-center"
+        className="flex h-[calc(100vh-80px)] flex-col items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}

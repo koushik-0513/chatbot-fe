@@ -55,7 +55,7 @@ export const Home = ({
 
       {/* Loading state */}
       {isLoading && (
-        <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
+        <div className="flex h-full w-[400px] items-center justify-center text-muted-foreground py-8 text-sm">
           Loading articles...
         </div>
       )}
