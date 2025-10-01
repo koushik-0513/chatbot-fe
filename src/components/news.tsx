@@ -89,7 +89,7 @@ export const News = ({
   };
 
   return (
-    <div className={"h-full w-full"}>
+    <div className="h-full w-full">
       <AnimatePresence mode="wait">
         {selectedNewsId && (
           <motion.div
@@ -98,7 +98,7 @@ export const News = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
-            className="h-full w-full"
+            className="w-full"
           >
             <NewsDetails newsId={selectedNewsId} onBack={handleBackClick} />
           </motion.div>

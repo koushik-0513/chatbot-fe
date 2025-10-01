@@ -434,7 +434,7 @@ export const Help = ({
       {pageState.currentView === "article" && selectedArticleId && (
         <motion.div
           key="article"
-          className="flex h-full min-h-0 w-full"
+          className="flex min-h-0 w-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -451,7 +451,7 @@ export const Help = ({
       {pageState.currentView === "collection" && (
         <motion.div
           key="collection"
-          className="flex h-full min-h-0 w-full"
+          className="flex min-h-0 w-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -468,7 +468,7 @@ export const Help = ({
       {pageState.currentView === "list" && (
         <motion.div
           key="list"
-          className="flex h-full min-h-0 w-full flex-col space-y-4"
+          className="flex min-h-0 w-full flex-col space-y-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}

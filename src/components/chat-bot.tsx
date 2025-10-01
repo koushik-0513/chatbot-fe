@@ -166,8 +166,8 @@ export const Chatbot = ({}: TChatbotProps) => {
   };
 
   const containerStyle: React.CSSProperties = {
-    height: isMaximized ? "100%" : "700px",
-    width: isMaximized ? "100%" : "400px",
+    height: isMaximized ? "1000px" : "700px",
+    width: isMaximized ? "calc(100vw)" : "400px",
   };
 
   return (
@@ -190,25 +190,20 @@ export const Chatbot = ({}: TChatbotProps) => {
       )}
 
       {activePage === "homepage" && (
-        <div className="flex h-full min-h-0 w-full">
           <Home
             onNavigateToHelp={handleNavigateToHelp}
             onOpenChat={handleOpenChat}
             onAskQuestion={handleAskQuestion}
           />
-        </div>
       )}
 
       {activePage === "message" && showActiveChat ? (
-        <div className="flex h-full min-h-0 w-full flex-1">
           <Messages
             chatId={selectedChatId}
             chatTitle={title ?? ""}
             onBack={onBackToHistory}
           />
-        </div>
       ) : activePage === "message" ? (
-        <div className="flex h-full min-h-0 w-full flex-1">
           <Chat
             showChatHistory={showChatHistory}
             onChatSelected={onChatSelected}
@@ -216,12 +211,11 @@ export const Chatbot = ({}: TChatbotProps) => {
             setShowActiveChat={setShowActiveChat}
             title={setTitle}
           />
-        </div>
       ) : null}
 
       {activePage === "help" && (
         <div
-          className="flex h-full min-h-0 w-full overflow-y-auto"
+          className="flex h-full min-h-0 w-full flex-1 overflow-y-auto"
           ref={contentRef}
         >
           <Help
@@ -238,20 +232,16 @@ export const Chatbot = ({}: TChatbotProps) => {
       )}
 
       {activePage === "news" && (
-        <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto p-4">
           <News
             onShowBackButton={setShowBackButton}
             backButtonTrigger={backButtonTrigger}
             activePage={activePage}
             onShowDetails={setShowDetails}
           />
-        </div>
       )}
 
       {!showDetails && showActiveChat !== true && (
-        <div className="sticky bottom-0 z-30 w-full">
           <Navigation activePage={activePage} onPageChange={handlePageChange} />
-        </div>
       )}
     </div>
   );

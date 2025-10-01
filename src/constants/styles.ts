@@ -33,9 +33,7 @@ export const INITIAL_FRAME_STYLES = {
 } as const;
 
 export const MAXIMIZED_IFRAME_STYLES = {
-  width: "500px",
-  height: "95vh",
+  width: "calc(30vw - 80px)",
+  height: "calc(100vh - 80px)",
   borderRadius: "12px",
-  maxWidth: "100%",
-  maxHeight: "95vh",
 } as const;

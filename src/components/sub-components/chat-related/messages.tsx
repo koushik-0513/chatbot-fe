@@ -331,7 +331,7 @@ export const Messages = ({
   };
 
   return (
-    <div className="flex h-[900px] min-h-0 w-full flex-1 flex-col">
+    <div className="flex h-[calc(100vh)] w-full flex-1 flex-col">
       {/* Header */}
       <div className="border-border bg-background sticky top-0 z-10 flex items-center gap-3 border-b p-3">
         <button
