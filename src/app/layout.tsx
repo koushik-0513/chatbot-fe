@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="flex items-center justify-center">
+      <body className="flex items-center justify-center bg-transparent">
         <QueryClientProvider client={queryClient}>
           <MaximizeProvider>
             <ScrollProvider>

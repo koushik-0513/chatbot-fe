@@ -8,7 +8,7 @@ export const COLLAPSED_IFRAME_STYLES = {
   width: "60px",
   height: "60px",
   zIndex: 9999,
-  borderRadius: "12px",
+  borderRadius: "50%",
   position: "fixed",
   bottom: "20px",
   right: "20px",
@@ -28,7 +28,7 @@ export const INITIAL_FRAME_STYLES = {
   width: "60px",
   height: "60px",
   zIndex: 9999,
-  borderRadius: "12px",
+  borderRadius: "50%",
   position: "fixed",
 } as const;
 

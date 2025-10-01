@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Bot, X } from "lucide-react";
+import { BotMessageSquare, X } from "lucide-react";
 
 import {
   COLLAPSED_IFRAME_STYLES,
@@ -163,10 +163,10 @@ export default function WidgetPage() {
         <>
           <button
             onClick={handleOpen}
-            className="cursor-pointer p-5"
+            className="cursor-pointer bg-[#5d3ac8] rounded-full pt-[17px] pb-5 pl-5 pr-5"
             title="Open Chat"
           >
-            <Bot />
+          <BotMessageSquare />
           </button>
         </>
       );
