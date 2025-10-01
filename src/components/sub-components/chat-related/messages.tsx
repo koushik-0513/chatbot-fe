@@ -138,7 +138,10 @@ export const Messages = ({
       // For new chats use an instant jump to avoid visible flicker
       // For existing chats with new messages, scroll smoothly if user was near bottom
       const shouldScrollSmoothly = !isNewChat && isNearBottom();
-      scrollToBottom(!shouldScrollSmoothly);
+      // Add a small delay to ensure DOM is updated
+      setTimeout(() => {
+        scrollToBottom(!shouldScrollSmoothly);
+      }, 50);
     }
 
     lastSyncedMessageIdRef.current = latestFetchedMessageId;
@@ -175,7 +178,7 @@ export const Messages = ({
         scrollToBottom(false);
       }, 100);
     }
-  }, [chatHistoryResponse, isLoading]);
+  }, [chatHistoryResponse, isLoading, scrollToBottom]);
 
   // Handle sending message
   const handleSendMessage = async () => {
@@ -331,7 +334,7 @@ export const Messages = ({
   };
 
   return (
-    <div className="flex h-[calc(100vh)] w-full flex-1 flex-col">
+    <div className="flex h-full w-full flex-1 flex-col">
       {/* Header */}
       <div className="border-border bg-background sticky top-0 z-10 flex items-center gap-3 border-b p-3">
         <button
@@ -352,7 +355,7 @@ export const Messages = ({
         onScroll={handleScroll}
       >
         {messages.length === 0 && !isStreaming ? (
-          <div className="flex items-center justify-center text-center">
+          <div className="flex h-full items-center justify-center text-center">
             <div>
               <p className="mb-2 text-lg font-medium">Welcome!</p>
               <p className="text-muted-foreground">
@@ -361,63 +364,61 @@ export const Messages = ({
             </div>
           </div>
         ) : (
-          <div className="flex min-h-full flex-col justify-end pb-3">
-            <div className="space-y-4">
-              {messages.map((message) => {
-                const isUser = message.sender === "user";
-                return (
+          <div className="space-y-4 pb-3">
+            {messages.map((message) => {
+              const isUser = message.sender === "user";
+              return (
+                <div
+                  key={message._id}
+                  className={cn(
+                    `flex ${isUser ? "justify-end" : "justify-start"}`
+                  )}
+                >
                   <div
-                    key={message._id}
                     className={cn(
-                      `flex ${isUser ? "justify-end" : "justify-start"}`
+                      `max-w-[70%] rounded-lg px-4 py-2 ${
+                        isUser
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`
                     )}
                   >
-                    <div
-                      className={cn(
-                        `max-w-[70%] rounded-lg px-4 py-2 ${
-                          isUser
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`
-                      )}
-                    >
-                      <MarkdownRenderer
-                        content={message.message}
-                        className={LAYOUT.PROSE_SIZE}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Streaming Message */}
-              {isStreaming && (
-                <div className="flex justify-start">
-                  <div className={`bg-muted max-w-[70%] rounded-lg px-4 py-2`}>
-                    {streamingContent ? (
-                      <>
-                        <MarkdownRenderer
-                          content={streamingContent}
-                          className={LAYOUT.PROSE_SIZE}
-                        />
-                        <span className="bg-primary ml-1 inline-block h-4 w-0.5 animate-pulse" />
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <span className="text-muted-foreground text-sm">
-                            AI is thinking
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
-                        </div>
-                      </div>
-                    )}
+                    <MarkdownRenderer
+                      content={message.message}
+                      className={LAYOUT.PROSE_SIZE}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
+
+            {/* Streaming Message */}
+            {isStreaming && (
+              <div className="flex justify-start">
+                <div className={`bg-muted max-w-[70%] rounded-lg px-4 py-2`}>
+                  {streamingContent ? (
+                    <>
+                      <MarkdownRenderer
+                        content={streamingContent}
+                        className={LAYOUT.PROSE_SIZE}
+                      />
+                      <span className="bg-primary ml-1 inline-block h-4 w-0.5 animate-pulse" />
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground text-sm">
+                          AI is thinking
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <div className="border-muted-foreground h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
         {/* Invisible element to scroll to */}

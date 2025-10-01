@@ -166,7 +166,7 @@ export const Chatbot = ({}: TChatbotProps) => {
   };
 
   const containerStyle: React.CSSProperties = {
-    height: isMaximized ? "1000px" : "700px",
+    height: isMaximized ? "calc(100vh)" : "700px",
     width: isMaximized ? "calc(100vw)" : "400px",
   };
 
