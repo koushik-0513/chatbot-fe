@@ -54,6 +54,7 @@ export const SearchComponent = ({
       <div className="relative mb-6">
         <Input
           type="text"
+          placeholder="Search for articles..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyPress}

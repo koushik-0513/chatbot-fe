@@ -1,9 +1,12 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
-import type { TApiPromise, TQueryOpts } from "@/types/api";
+import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
 import type {
+  TArticleReaction,
+  TArticleSearchParams,
+  TArticleSearchResponse,
   TGetInfiniteScrollCollectionsParams,
   THelpArticleDetailResponse,
   THelpCollectionDetailResponse,
@@ -32,6 +35,13 @@ type TInfiniteScrollCollectionsOptions = {
   staleTime: number;
   refetchOnWindowFocus: boolean;
   enabled: boolean;
+};
+
+// Article Reaction Types
+type TSubmitArticleReactionPayload = {
+  articleId: string;
+  reaction: string;
+  userId: string;
 };
 
 const getCollectionDetails = ({
@@ -73,6 +83,28 @@ const getInfiniteScrollCollections = (
     queryParams.cursor = cursor;
   }
   return api.get("/collection", { params: queryParams });
+};
+
+// Article Reaction Services
+const submitArticleReaction = (
+  payload: TSubmitArticleReactionPayload
+): TApiPromise<TArticleReaction> => {
+  const { articleId, reaction, userId } = payload;
+  return api.post(
+    `/article/${articleId}/reaction`,
+    { reaction },
+    { params: { user_id: userId } }
+  );
+};
+
+// Article Search Services
+const searchArticles = (
+  params: TArticleSearchParams
+): TApiPromise<TArticleSearchResponse> => {
+  const { query } = params;
+  return api.get("/article", {
+    params: { search: query },
+  });
 };
 
 export const useGetCollectionDetails = (
@@ -138,3 +170,29 @@ export const useGetInfiniteScrollCollections = (
     enabled: options?.enabled,
   });
 };
+
+// Article Reaction Hooks
+export const useSubmitArticleReaction = (
+  options?: TMutationOpts<TSubmitArticleReactionPayload, TArticleReaction>
+) => {
+  return useMutation({
+    mutationKey: ["useSubmitArticleReaction"],
+    mutationFn: submitArticleReaction,
+    ...options,
+  });
+};
+
+// Article Search Hooks
+export const useSearchArticles = (
+  params: TArticleSearchParams,
+  options?: TQueryOpts<TArticleSearchResponse>
+) => {
+  return useQuery({
+    queryKey: ["useSearchArticles", params],
+    queryFn: () => searchArticles(params),
+    ...options,
+  });
+};
+
+// Re-export utils for convenience
+export type { TArticleReaction };

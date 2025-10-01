@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-import { useSearchArticles } from "@/hooks/api/article-search";
+import { useSearchArticles } from "@/hooks/api/help";
 
 import { TArticleSearchResult } from "@/types/help-types";
 

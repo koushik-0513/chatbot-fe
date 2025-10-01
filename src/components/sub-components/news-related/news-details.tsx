@@ -10,16 +10,14 @@ import {
   ITEM_VARIANTS,
   SCALE_VARIANTS,
 } from "@/constants/animations";
-import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
-
 import { useScrollContext } from "@/providers/scroll-provider";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 import { cn } from "@/lib/utils";
 
-import { useGetNewsById } from "@/hooks/api/news";
-import { useSubmitNewsReaction } from "@/hooks/api/news-reaction";
+import { useGetNewsById, useSubmitNewsReaction } from "@/hooks/api/news";
+import { NEWS_REACTIONS, NEWS_REACTION_EMOJI_MAP } from "@/constants/reaction";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 import { TNewsReaction } from "@/types/news-types";
@@ -241,10 +239,9 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
                   onClick={() => handleReactionSubmit(reaction)}
                   disabled={isSubmitting}
                   className={cn(
-                    `flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
-                      isSelected
-                        ? "border-primary bg-primary/10 scale-110"
-                        : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                    `flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${isSelected
+                      ? "border-primary bg-primary/10 scale-110"
+                      : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
                     } ${isSubmitting ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:scale-105"} ${selectedReaction && !isSelected ? "opacity-10" : ""} `
                   )}
                   variants={SCALE_VARIANTS}

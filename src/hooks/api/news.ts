@@ -1,12 +1,14 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
-import type { TApiPromise, TQueryOpts } from "@/types/api";
+import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
 import type {
   TGetInfiniteScrollNewsParams,
   TInfiniteScrollNewsResponse,
   TNewsDetailResponse,
+  TNewsReaction,
+  TNewsReactionResponse,
 } from "@/types/news-types";
 
 // News Types
@@ -20,6 +22,13 @@ type TInfiniteScrollNewsOptions = {
   staleTime?: number;
   refetchOnWindowFocus?: boolean;
   enabled?: boolean;
+};
+
+// News Reaction Types
+type TSubmitNewsReactionPayload = {
+  newsId: string;
+  reaction: string;
+  userId: string;
 };
 
 // write it like get news by id
@@ -36,6 +45,18 @@ const getNewsById = ({
   return api.get(`/news/${news_id}`, {
     params: { ...params },
   });
+};
+
+// News Reaction Services
+const submitNewsReaction = (
+  payload: TSubmitNewsReactionPayload
+): TApiPromise<TNewsReactionResponse> => {
+  const { newsId, reaction, userId } = payload;
+  return api.post(
+    `/news/${newsId}/reaction`,
+    { reaction },
+    { params: { user_id: userId } }
+  );
 };
 
 export const useGetNewsById = (
@@ -66,3 +87,16 @@ export const useGetInfiniteScrollNews = (
     enabled: options?.enabled,
   });
 };
+
+// News Reaction Hooks
+export const useSubmitNewsReaction = (
+  options?: TMutationOpts<TSubmitNewsReactionPayload, TNewsReactionResponse>
+) => {
+  return useMutation({
+    mutationKey: ["useSubmitNewsReaction"],
+    mutationFn: submitNewsReaction,
+    ...options,
+  });
+};
+
+export type { TNewsReaction };

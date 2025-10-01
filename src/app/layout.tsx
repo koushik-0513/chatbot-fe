@@ -1,7 +1,5 @@
 "use client";
 
-import type { Metadata } from "next";
-
 import "@/styles/global.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 
