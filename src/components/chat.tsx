@@ -122,8 +122,6 @@ export const Chat = ({
                   <Conversation
                     id={chatId || String(index)}
                     title={safeTitle}
-                    timestamp={""}
-                    day={""}
                     onClick={(id: string) => handleChatClick(id, safeTitle)}
                   />
                 </motion.div>

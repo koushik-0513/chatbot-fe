@@ -4,16 +4,12 @@ import { ChevronRight } from "lucide-react";
 type TChatHistoryProps = {
   id: string;
   title: string;
-  timestamp: string;
-  day: string;
   onClick: (id: string) => void;
 };
 
 export const Conversation = ({
   id,
   title,
-  timestamp,
-  day,
   onClick,
 }: TChatHistoryProps) => {
   const handleClick = () => {
@@ -32,9 +28,6 @@ export const Conversation = ({
         <h4 className="text-card-foreground mb-1 text-sm font-medium">
           {title}
         </h4>
-        <p className="text-muted-foreground text-xs">
-          {day} • {timestamp}
-        </p>
       </div>
       <motion.div whileHover={{ x: 2 }} transition={{ duration: 0.2 }}>
         <ChevronRight className="text-muted-foreground h-4 w-4" />
