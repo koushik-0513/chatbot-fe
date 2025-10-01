@@ -361,7 +361,7 @@ export const Messages = ({
             </div>
           </div>
         ) : (
-          <div className="flex min-h-full flex-col justify-end">
+          <div className="flex min-h-full flex-col justify-end pb-3">
             <div className="space-y-4">
               {messages.map((message) => {
                 const isUser = message.sender === "user";
