@@ -2,26 +2,26 @@
 
 import { ReactNode, createContext, useContext, useState } from "react";
 
-interface MaximizeContextType {
+type TMaximizeContextType = {
   isMaximized: boolean;
   setMaximized: (maximized: boolean) => void;
   autoMinimize: () => void;
   autoMaximize: () => void;
-}
+};
 
-const MaximizeContext = createContext<MaximizeContextType | undefined>(
+const MaximizeContext = createContext<TMaximizeContextType | undefined>(
   undefined
 );
 
-interface MaximizeProviderProps {
+type TMaximizeProviderProps = {
   children: ReactNode;
   onMaximizeChange?: (isMaximized: boolean) => void;
-}
+};
 
 export const MaximizeProvider = ({
   children,
   onMaximizeChange,
-}: MaximizeProviderProps) => {
+}: TMaximizeProviderProps): React.JSX.Element => {
   const [isMaximized, setIsMaximized] = useState(false);
 
   const setMaximized = (maximized: boolean) => {
@@ -51,7 +51,7 @@ export const MaximizeProvider = ({
   );
 };
 
-export const useMaximize = () => {
+export const useMaximize = (): TMaximizeContextType => {
   const context = useContext(MaximizeContext);
   if (context === undefined) {
     throw new Error("useMaximize must be used within a MaximizeProvider");

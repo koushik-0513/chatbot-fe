@@ -8,7 +8,7 @@ import { Chatbot } from "@/components/chat-bot";
 
 import { useUserId } from "@/hooks/custom/use-user-id";
 
-export default function Home() {
+const HomePage = (): React.JSX.Element => {
   const [isChatbotopen, setIsChatbotOpen] = useState(false);
   const { userId } = useUserId();
   return (
@@ -27,4 +27,6 @@ export default function Home() {
       )}
     </div>
   );
-}
+};
+
+export { HomePage };

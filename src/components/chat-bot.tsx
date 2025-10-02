@@ -21,7 +21,7 @@ type TChatbotProps = {
   onClose?: () => void;
 };
 
-export const Chatbot = ({}: TChatbotProps) => {
+export const Chatbot = ({}: TChatbotProps): React.JSX.Element => {
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);

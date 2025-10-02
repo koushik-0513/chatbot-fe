@@ -21,7 +21,7 @@ export const Header = ({
   shouldShowMaximizeButton = () => false,
   showTitleOnScroll = false,
   isScrolled = false,
-}: HeaderProps) => {
+}: HeaderProps): React.JSX.Element => {
   const { isMaximized, setMaximized } = useMaximize();
 
   return (

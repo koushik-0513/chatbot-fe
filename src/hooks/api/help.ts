@@ -86,10 +86,11 @@ const getInfiniteScrollCollections = (
 };
 
 // Article Reaction Services
-const submitArticleReaction = (
-  payload: TSubmitArticleReactionPayload
-): TApiPromise<TArticleReaction> => {
-  const { articleId, reaction, userId } = payload;
+const submitArticleReaction = ({
+  articleId,
+  reaction,
+  userId,
+}: TSubmitArticleReactionPayload): TApiPromise<TArticleReaction> => {
   return api.post(
     `/article/${articleId}/reaction`,
     { reaction },

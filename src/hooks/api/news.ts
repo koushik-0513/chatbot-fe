@@ -48,10 +48,11 @@ const getNewsById = ({
 };
 
 // News Reaction Services
-const submitNewsReaction = (
-  payload: TSubmitNewsReactionPayload
-): TApiPromise<TNewsReactionResponse> => {
-  const { newsId, reaction, userId } = payload;
+const submitNewsReaction = ({
+  newsId,
+  reaction,
+  userId,
+}: TSubmitNewsReactionPayload): TApiPromise<TNewsReactionResponse> => {
   return api.post(
     `/news/${newsId}/reaction`,
     { reaction },

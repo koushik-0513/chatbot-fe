@@ -24,7 +24,7 @@ import { useUserId } from "@/hooks/custom/use-user-id";
 
 import { InitialFrameStyles } from "@/types/types";
 
-export default function WidgetPage() {
+const WidgetPage = (): React.JSX.Element => {
   const [isOpen, setIsOpen] = useState(false);
   const [, setIsMaximized] = useState(false);
   const [isEmbedded, setIsEmbedded] = useState(false);
@@ -106,7 +106,7 @@ export default function WidgetPage() {
   }, []);
 
   // Resize the iframe from inside
-  const resizeIframe = (styles: InitialFrameStyles) => {
+  const resizeIframe = ({ styles }: { styles: InitialFrameStyles }): void => {
     if (isEmbedded) {
       window.parent.postMessage(
         {
@@ -119,26 +119,26 @@ export default function WidgetPage() {
   };
 
   // Handle opening the chat
-  const handleOpen = () => {
+  const handleOpen = (): void => {
     setIsOpen(true);
     setIsMaximized(false);
 
     if (isEmbedded) {
-      resizeIframe(DEFAULT_IFRAME_STYLES);
+      resizeIframe({ styles: DEFAULT_IFRAME_STYLES });
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (): void => {
     setIsOpen(false);
     setIsMaximized(false);
 
     if (isEmbedded) {
       // Resize back to floating button
-      resizeIframe(COLLAPSED_IFRAME_STYLES);
+      resizeIframe({ styles: COLLAPSED_IFRAME_STYLES });
     }
   };
 
-  const handleMaximizeChange = (maximized: boolean) => {
+  const handleMaximizeChange = (maximized: boolean): void => {
     setIsMaximized(maximized);
 
     if (!isEmbedded) {
@@ -149,9 +149,9 @@ export default function WidgetPage() {
       if (!isOpen) {
         setIsOpen(true);
       }
-      resizeIframe(MAXIMIZED_IFRAME_STYLES);
+      resizeIframe({ styles: MAXIMIZED_IFRAME_STYLES });
     } else {
-      resizeIframe(DEFAULT_IFRAME_STYLES);
+      resizeIframe({ styles: DEFAULT_IFRAME_STYLES });
     }
   };
 
@@ -194,4 +194,9 @@ export default function WidgetPage() {
       </div>
     );
   }
-}
+
+  // Non-embedded mode - return placeholder
+  return <div>Widget not available in non-embedded mode</div>;
+};
+
+export { WidgetPage };

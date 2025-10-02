@@ -16,7 +16,7 @@ export const Home = ({
   onNavigateToHelp,
   onOpenChat,
   onAskQuestion,
-}: THomepageProps) => {
+}: THomepageProps): React.JSX.Element => {
   // Fetch top articles
   const {
     data: topArticlesData,

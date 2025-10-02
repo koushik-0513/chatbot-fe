@@ -54,8 +54,7 @@ const deleteConversation = ({
   return api.delete(`/conversation/${conversationId}`, payload);
 };
 
-const sendMessage = (payload: TSendMessagePayload): TApiPromise<Response> => {
-  const { conversationId, message, userId, messageId } = payload;
+const sendMessage = ({ conversationId, message, userId, messageId }: TSendMessagePayload): TApiPromise<Response> => {
   const url = `/chat/stream/${conversationId}?user_id=${userId}`;
 
   return fetch(`${api.defaults.baseURL}${url}`, {

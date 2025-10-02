@@ -4,7 +4,7 @@ import { ObjectId } from "bson";
 
 import { USER_ID_KEY } from "@/constants/storage";
 
-export const useUserId = () => {
+export const useUserId = (): { userId: string | null } => {
   const [userId, setUserId] = useState<string | null>(null);
   const initialized = useRef(false);
 
