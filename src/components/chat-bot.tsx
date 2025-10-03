@@ -18,9 +18,10 @@ import { Navigation } from "./sub-components/navigation-bar";
 
 type TChatbotProps = {
   user_id: string; // controlled
+  onClose: () => void;
 };
 
-export const Chatbot = ({ user_id }: TChatbotProps): React.JSX.Element => {
+export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);

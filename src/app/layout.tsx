@@ -9,11 +9,11 @@ import { ScrollProvider } from "@/providers/scroll-provider";
 
 import { queryClient } from "@/lib/query-client";
 
-const RootLayout = ({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>): React.JSX.Element => {
+}>) {
   return (
     <html lang="en">
       <body className="flex items-center overflow-hidden justify-center bg-transparent">
@@ -27,6 +27,4 @@ const RootLayout = ({
       </body>
     </html>
   );
-};
-
-export { RootLayout };
+}

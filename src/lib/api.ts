@@ -1,4 +1,4 @@
-import env from "@/config/env";
+import { env } from "@/config/env";
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 
 // Custom Axios instance with common configurations

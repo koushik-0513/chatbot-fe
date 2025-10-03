@@ -24,7 +24,7 @@ import { useUserId } from "@/hooks/custom/use-user-id";
 
 import { InitialFrameStyles } from "@/types/types";
 
-const WidgetPage = (): React.JSX.Element => {
+export default function WidgetPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [, setIsMaximized] = useState(false);
   const [isEmbedded, setIsEmbedded] = useState(false);
@@ -106,7 +106,7 @@ const WidgetPage = (): React.JSX.Element => {
   }, []);
 
   // Resize the iframe from inside
-  const resizeIframe = ({ styles }: { styles: InitialFrameStyles }): void => {
+  const resizeIframe = (styles: InitialFrameStyles) => {
     if (isEmbedded) {
       window.parent.postMessage(
         {
@@ -119,26 +119,26 @@ const WidgetPage = (): React.JSX.Element => {
   };
 
   // Handle opening the chat
-  const handleOpen = (): void => {
+  const handleOpen = () => {
     setIsOpen(true);
     setIsMaximized(false);
 
     if (isEmbedded) {
-      resizeIframe({ styles: DEFAULT_IFRAME_STYLES });
+      resizeIframe(DEFAULT_IFRAME_STYLES);
     }
   };
 
-  const handleClose = (): void => {
+  const handleClose = () => {
     setIsOpen(false);
     setIsMaximized(false);
 
     if (isEmbedded) {
       // Resize back to floating button
-      resizeIframe({ styles: COLLAPSED_IFRAME_STYLES });
+      resizeIframe(COLLAPSED_IFRAME_STYLES);
     }
   };
 
-  const handleMaximizeChange = (maximized: boolean): void => {
+  const handleMaximizeChange = (maximized: boolean) => {
     setIsMaximized(maximized);
 
     if (!isEmbedded) {
@@ -149,9 +149,9 @@ const WidgetPage = (): React.JSX.Element => {
       if (!isOpen) {
         setIsOpen(true);
       }
-      resizeIframe({ styles: MAXIMIZED_IFRAME_STYLES });
+      resizeIframe(MAXIMIZED_IFRAME_STYLES);
     } else {
-      resizeIframe({ styles: DEFAULT_IFRAME_STYLES });
+      resizeIframe(DEFAULT_IFRAME_STYLES);
     }
   };
 
@@ -194,9 +194,4 @@ const WidgetPage = (): React.JSX.Element => {
       </div>
     );
   }
-
-  // Non-embedded mode - return placeholder
-  return <div>Widget not available in non-embedded mode</div>;
-};
-
-export { WidgetPage };
+}
