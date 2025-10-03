@@ -26,9 +26,6 @@ type TGetArticleDetailsQParams = {
   user_id: string;
 };
 
-type TGetHelpQParams = {
-  collection_id: string;
-};
 
 type TInfiniteScrollCollectionsOptions = {
   retry: number;
@@ -64,11 +61,6 @@ const getArticleDetails = ({
   });
 };
 
-const getHelp = ({
-  collection_id,
-}: TGetHelpQParams): TApiPromise<THelpCollectionDetailResponse> => {
-  return api.get(`/collection/${collection_id}`, {});
-};
 
 const getTopArticles = (): TApiPromise<TTopArticlesResponse> => {
   return api.get("/article/top");
@@ -130,16 +122,6 @@ export const useGetArticleDetails = (
   });
 };
 
-export const useGetHelp = (
-  params: TGetHelpQParams,
-  options?: TQueryOpts<THelpCollectionDetailResponse>
-) => {
-  return useQuery({
-    queryKey: ["useGetHelp", params],
-    queryFn: () => getHelp(params),
-    ...options,
-  });
-};
 
 export const useGetTopArticles = (
   options?: TQueryOpts<TTopArticlesResponse>

@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
-import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
+import type { TApiPromise, TQueryOpts } from "@/types/api";
 import type {
   TConversationAPIResponse,
   TConversationListAPIResponse,
@@ -19,9 +19,6 @@ type TGetConversationByIdQParams = {
   conversationId: string;
 };
 
-type TDeleteConversationPayload = {
-  conversationId: string;
-};
 
 type TSendMessagePayload = {
   conversationId: string | null;
@@ -47,12 +44,6 @@ const getConversationById = ({
   return api.get(`/conversation/${conversationId}`, { params });
 };
 
-const deleteConversation = ({
-  conversationId,
-  ...payload
-}: TDeleteConversationPayload): TApiPromise<void> => {
-  return api.delete(`/conversation/${conversationId}`, payload);
-};
 
 const sendMessage = ({ conversationId, message, userId, messageId }: TSendMessagePayload): TApiPromise<Response> => {
   const url = `/chat/stream/${conversationId}?user_id=${userId}`;
@@ -96,15 +87,6 @@ export const useGetConversationById = (
   });
 };
 
-export const useDeleteConversation = (
-  options?: TMutationOpts<TDeleteConversationPayload, void>
-) => {
-  return useMutation({
-    mutationKey: ["useDeleteConversation"],
-    mutationFn: deleteConversation,
-    ...options,
-  });
-};
 
 export const useSendMessage = (
   options?: TMutationOpts<TSendMessagePayload, Response>
