@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 import { getRelativeTime } from "@/utils/date-time";
-import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
+import { motion } from "framer-motion";
 
 import {
   CONTAINER_VARIANTS,
@@ -24,7 +24,10 @@ import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
 import { cn } from "@/lib/utils";
 
-import { useGetArticleDetails, useSubmitArticleReaction } from "@/hooks/api/help";
+import {
+  useGetArticleDetails,
+  useSubmitArticleReaction,
+} from "@/hooks/api/help";
 import { useUserId } from "@/hooks/custom/use-user-id";
 
 import { TArticleReaction } from "@/types/help-types";
@@ -91,7 +94,9 @@ export const ArticleDetails = ({
         userId: user_id,
       });
       setSelectedReaction(reaction);
-      await queryClient.invalidateQueries({ queryKey: ["useGetArticleDetails"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["useGetArticleDetails"],
+      });
     } catch (error) {
       console.error(error);
     }
@@ -108,7 +113,7 @@ export const ArticleDetails = ({
     if (contentRef.current) {
       contentRef.current.scrollTop = 0;
     }
-  }, [resetAllScroll]);
+  }, []);
 
   // Notify parent of article title when data is loaded
   useEffect(() => {
@@ -308,12 +313,14 @@ export const ArticleDetails = ({
                   onClick={() => handleReactionSubmit(reaction)}
                   disabled={isSubmitting}
                   className={cn(
-                    `flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${isSelected
-                      ? "border-primary bg-primary/10 scale-110"
-                      : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
-                    }, ${isSubmitting
-                      ? "cursor-not-allowed opacity-50"
-                      : "cursor-pointer hover:scale-105"
+                    `flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                      isSelected
+                        ? "border-primary bg-primary/10 scale-110"
+                        : "border-muted bg-muted/50 hover:border-primary/50 hover:bg-primary/5"
+                    }, ${
+                      isSubmitting
+                        ? "cursor-not-allowed opacity-50"
+                        : "cursor-pointer hover:scale-105"
                     }, ${selectedReaction && !isSelected ? "opacity-10" : ""} `
                   )}
                   variants={SCALE_VARIANTS}

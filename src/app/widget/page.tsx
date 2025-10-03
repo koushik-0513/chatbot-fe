@@ -163,10 +163,10 @@ export default function WidgetPage() {
         <>
           <button
             onClick={handleOpen}
-            className="cursor-pointer bg-[#5d3ac8] rounded-full pt-[17px] pb-5 pl-5 pr-5"
+            className="cursor-pointer rounded-full bg-[#5d3ac8] pt-[17px] pr-5 pb-5 pl-5"
             title="Open Chat"
           >
-          <BotMessageSquare />
+            <BotMessageSquare />
           </button>
         </>
       );

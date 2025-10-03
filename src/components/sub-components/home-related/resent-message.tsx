@@ -18,7 +18,11 @@ type Props = {
 export const ResentMessage = ({ onOpenChat }: Props) => {
   const { userId } = useUserId();
 
-  const { data: history, isLoading: isHistoryLoading, error: historyError } = useGetConversationList(
+  const {
+    data: history,
+    isLoading: isHistoryLoading,
+    error: historyError,
+  } = useGetConversationList(
     { user_id: userId || "" },
     {
       enabled: !!userId,
@@ -58,7 +62,8 @@ export const ResentMessage = ({ onOpenChat }: Props) => {
     return null;
   }
 
-  const is404Error = historyError && (historyError as TApiError)?.status_code === 404;
+  const is404Error =
+    historyError && (historyError as TApiError)?.status_code === 404;
   const hasRecentMessages = !is404Error && historyData.length > 0;
 
   if (!hasRecentMessages) {

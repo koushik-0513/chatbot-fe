@@ -190,27 +190,27 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
       )}
 
       {activePage === "homepage" && (
-          <Home
-            onNavigateToHelp={handleNavigateToHelp}
-            onOpenChat={handleOpenChat}
-            onAskQuestion={handleAskQuestion}
-          />
+        <Home
+          onNavigateToHelp={handleNavigateToHelp}
+          onOpenChat={handleOpenChat}
+          onAskQuestion={handleAskQuestion}
+        />
       )}
 
       {activePage === "message" && showActiveChat ? (
-          <Messages
-            chatId={selectedChatId}
-            chatTitle={title ?? ""}
-            onBack={onBackToHistory}
-          />
+        <Messages
+          chatId={selectedChatId}
+          chatTitle={title ?? ""}
+          onBack={onBackToHistory}
+        />
       ) : activePage === "message" ? (
-          <Chat
-            showChatHistory={showChatHistory}
-            onChatSelected={onChatSelected}
-            onBackToHistory={onBackToHistory}
-            setShowActiveChat={setShowActiveChat}
-            title={setTitle}
-          />
+        <Chat
+          showChatHistory={showChatHistory}
+          onChatSelected={onChatSelected}
+          onBackToHistory={onBackToHistory}
+          setShowActiveChat={setShowActiveChat}
+          title={setTitle}
+        />
       ) : null}
 
       {activePage === "help" && (
@@ -232,16 +232,16 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
       )}
 
       {activePage === "news" && (
-          <News
-            onShowBackButton={setShowBackButton}
-            backButtonTrigger={backButtonTrigger}
-            activePage={activePage}
-            onShowDetails={setShowDetails}
-          />
+        <News
+          onShowBackButton={setShowBackButton}
+          backButtonTrigger={backButtonTrigger}
+          activePage={activePage}
+          onShowDetails={setShowDetails}
+        />
       )}
 
       {!showDetails && showActiveChat !== true && (
-          <Navigation activePage={activePage} onPageChange={handlePageChange} />
+        <Navigation activePage={activePage} onPageChange={handlePageChange} />
       )}
     </div>
   );

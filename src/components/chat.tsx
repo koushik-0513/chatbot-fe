@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircleQuestion } from "lucide-react"; // ✅ correct icon
+import { MessageCircleQuestion } from "lucide-react";
+
+// ✅ correct icon
 
 import { useGetConversationList } from "@/hooks/api/chat";
 import { useUserId } from "@/hooks/custom/use-user-id";
@@ -28,7 +30,7 @@ export const Chat = ({
   const {
     data: chatHistoryResponse,
     isLoading,
-    isError,            // ✅ destructure this
+    isError, // ✅ destructure this
     error,
   } = useGetConversationList(
     { user_id: userId || "", page: 1, limit: 5 },
@@ -55,10 +57,12 @@ export const Chat = ({
   const isNotFound = (error as TApiError)?.status_code === 404;
 
   // Data (404 => empty)
-  const chatHistoryDataRaw: TConversationItem[] =
-    isNotFound ? [] : chatHistoryResponse?.data || [];
+  const chatHistoryDataRaw: TConversationItem[] = isNotFound
+    ? []
+    : chatHistoryResponse?.data || [];
   const chatHistoryData = [...chatHistoryDataRaw].sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    (a, b) =>
+      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
   );
 
   return (
@@ -80,7 +84,9 @@ export const Chat = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="text-muted-foreground">Loading chat history...</div>
+              <div className="text-muted-foreground">
+                Loading chat history...
+              </div>
             </motion.div>
           ) : isError && !isNotFound ? (
             // ✅ defensive: should be caught above, but safe to keep
@@ -92,7 +98,9 @@ export const Chat = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="text-muted-foreground">Error loading chat history...</div>
+              <div className="text-muted-foreground">
+                Error loading chat history...
+              </div>
             </motion.div>
           ) : chatHistoryData.length === 0 ? (
             // ✅ empty

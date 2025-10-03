@@ -14,19 +14,16 @@ type TUploadFilePayload = {
 
 // File Services
 const uploadFile = (payload: TUploadFilePayload): TApiPromise => {
-  const { file, userId: user_id } = payload;
+  const { file, userId } = payload;
   const formData = new FormData();
   formData.append("file", file);
 
-  return api.post(
-    `/file/upload?user_id=${encodeURIComponent(user_id)}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  return api.post("/file/upload", formData, {
+    params: { user_id: userId },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 // File Hooks

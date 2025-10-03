@@ -213,7 +213,7 @@ export const Messages = ({
     // Scroll to show user message
     setTimeout(() => scrollToBottom(), 50);
 
-    // Send message and handle streaming
+    // Send message and handle streaming (SSE format from backend)
     const response = await sendMessageMutation.mutateAsync({
       conversationId: conversationId,
       message: messageText,
@@ -221,33 +221,63 @@ export const Messages = ({
       messageId: userMessageId,
     });
 
-    if (!response.body) return;
+    if (!response.body) {
+      // Fallback: mark streaming as done without content
+      setIsStreaming(false);
+      return;
+    }
 
     const reader = response.body.getReader();
+    const decoder = new TextDecoder();
     let accumulatedContent = "";
 
-    // Process streaming response
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-      const chunk = new TextDecoder().decode(value);
-      const lines = chunk.split("\n");
+        const chunkText = decoder.decode(value, { stream: true });
+        if (chunkText) {
+          // Parse SSE format
+          const lines = chunkText.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6); // Remove 'data: ' prefix
 
-      for (const line of lines) {
-        if (!line.trim() || !line.startsWith("data: ")) continue;
+              // Skip [DONE] and empty lines
+              if (data === "[DONE]" || data.trim() === "") continue;
 
-        const jsonPart = line.slice(6);
-        if (jsonPart === "[DONE]") break;
+              try {
+                const parsed = JSON.parse(data);
 
-        const data = JSON.parse(jsonPart);
-        const delta = data.delta || data.content || data.token || "";
-
-        if (typeof delta === "string" && delta) {
-          accumulatedContent += delta;
-          setStreamingContent(accumulatedContent);
+                // Handle different event types
+                if (parsed.type === "text-delta" && parsed.delta) {
+                  accumulatedContent += parsed.delta;
+                  setStreamingContent(accumulatedContent);
+                } else if (parsed.type === "text-start") {
+                  // Reset content when starting new text
+                  accumulatedContent = "";
+                  setStreamingContent("");
+                } else if (
+                  parsed.type === "text-end" ||
+                  parsed.type === "finish"
+                ) {
+                  // Streaming is complete
+                  break;
+                }
+              } catch (e) {
+                // If JSON parsing fails, treat as plain text (fallback)
+                if (data.trim()) {
+                  accumulatedContent += data;
+                  setStreamingContent(accumulatedContent);
+                }
+              }
+            }
+          }
         }
       }
+    } finally {
+      reader.releaseLock?.();
     }
 
     // Create AI message from streamed content
@@ -351,7 +381,7 @@ export const Messages = ({
       {/* Messages Container */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 min-h-0 overflow-y-auto px-4 py-3"
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
         onScroll={handleScroll}
       >
         {messages.length === 0 && !isStreaming ? (
@@ -513,7 +543,7 @@ export const Messages = ({
 
         {/* Emoji picker */}
         {showEmojiPicker && (
-          <div className="absolute bottom-20 left-4 z-50">
+          <div className="absolute -bottom-1 -left-1 z-50">
             <EmojiPicker
               onEmojiSelect={handleEmojiSelect}
               onClose={() => setShowEmojiPicker(false)}

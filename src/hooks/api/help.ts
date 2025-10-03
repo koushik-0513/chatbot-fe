@@ -26,7 +26,6 @@ type TGetArticleDetailsQParams = {
   user_id: string;
 };
 
-
 type TInfiniteScrollCollectionsOptions = {
   retry: number;
   staleTime: number;
@@ -60,7 +59,6 @@ const getArticleDetails = ({
     params: { user_id, ...params },
   });
 };
-
 
 const getTopArticles = (): TApiPromise<TTopArticlesResponse> => {
   return api.get("/article/top");
@@ -122,7 +120,6 @@ export const useGetArticleDetails = (
   });
 };
 
-
 export const useGetTopArticles = (
   options?: TQueryOpts<TTopArticlesResponse>
 ) => {
@@ -147,10 +144,7 @@ export const useGetInfiniteScrollCollections = (
       lastPage.infinite_scroll.has_more
         ? lastPage.infinite_scroll.next_cursor
         : undefined,
-    retry: options?.retry ?? 2,
-    staleTime: options?.staleTime ?? 5 * 60 * 1000,
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    enabled: options?.enabled,
+    ...options,
   });
 };
 

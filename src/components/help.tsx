@@ -59,12 +59,8 @@ export const Help = ({
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   // Use article navigation context
-  const {
-    selectedArticleId,
-    openArticleDetails,
-    openArticleDetailsById,
-    resetArticleNavigation,
-  } = useArticleNavigation();
+  const { selectedArticleId, openArticleDetailsById, resetArticleNavigation } =
+    useArticleNavigation();
 
   const lastPropArticleIdRef = useRef<string | null>(null);
 
@@ -94,12 +90,7 @@ export const Help = ({
 
     resetArticleNavigation();
     openArticleDetailsById(propSelectedArticleId);
-  }, [
-    propSelectedArticleId,
-    selectedArticleId,
-    openArticleDetailsById,
-    resetArticleNavigation,
-  ]);
+  }, [propSelectedArticleId, selectedArticleId, openArticleDetailsById]);
 
   // State for selected collection ID
   const [selectedCollectionId, setSelectedCollectionId] = useState<
@@ -212,7 +203,7 @@ export const Help = ({
       // Reset scroll when navigating to collection
       resetAllScroll();
     },
-    [onShowBackButton, onShowDetails, resetAllScroll]
+    [onShowBackButton, onShowDetails]
   );
 
   const handle_article_click = useCallback(

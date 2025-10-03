@@ -11,13 +11,13 @@ import {
 import {
   THelpArticleDetail,
   THelpArticleDetailResponse,
+  TNavigationItemType,
 } from "@/types/help-types";
 
 // Navigation stack item types
-export type NavigationItemType = "article" | "collection" | "list";
 
 export type NavigationStackItem = {
-  type: NavigationItemType;
+  type: TNavigationItemType;
   id: string;
   title?: string;
   data?: THelpArticleDetail | unknown;

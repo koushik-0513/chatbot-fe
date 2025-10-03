@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
-import type { TApiPromise, TQueryOpts } from "@/types/api";
+import type { TApiPromise, TMutationOpts, TQueryOpts } from "@/types/api";
 import type {
   TConversationAPIResponse,
   TConversationListAPIResponse,
@@ -18,7 +18,6 @@ type TGetConversationListQParams = {
 type TGetConversationByIdQParams = {
   conversationId: string;
 };
-
 
 type TSendMessagePayload = {
   conversationId: string | null;
@@ -44,24 +43,32 @@ const getConversationById = ({
   return api.get(`/conversation/${conversationId}`, { params });
 };
 
+const sendMessage = async ({
+  conversationId,
+  message,
+  userId,
+  messageId,
+}: TSendMessagePayload): TApiPromise<Response> => {
+  const payload = {
+    message,
+    user_id: userId,
+    conversation_id: conversationId,
+    ...(messageId ? { message_id: messageId } : {}),
+  };
 
-const sendMessage = ({ conversationId, message, userId, messageId }: TSendMessagePayload): TApiPromise<Response> => {
-  const url = `/chat/stream/${conversationId}?user_id=${userId}`;
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  return fetch(`${api.defaults.baseURL}${url}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "text/event-stream",
-    },
-    cache: "no-store",
-    body: JSON.stringify({
-      message,
-      user_id: userId,
-      conversation_id: conversationId,
-      message_id: messageId,
-    }),
-  });
+  return fetch(
+    `${backendUrl}/chat/stream/${conversationId}?user_id=${userId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
 };
 
 // Chat Hooks
@@ -86,7 +93,6 @@ export const useGetConversationById = (
     ...options,
   });
 };
-
 
 export const useSendMessage = (
   options?: TMutationOpts<TSendMessagePayload, Response>

@@ -6,3 +6,4 @@ export const STATUS = [
   "unprocessed",
   "failed",
 ] as const;
+export const NavigationItemType = ["article", "collection", "list"] as const;

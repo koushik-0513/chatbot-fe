@@ -1,7 +1,9 @@
-import { CURRENT_VIEW } from "@/constants/enums";
+import { CURRENT_VIEW, NavigationItemType } from "@/constants/enums";
 import { ARTICLE_REACTIONS } from "@/constants/reaction";
 
 import { TAuthor } from "./types";
+
+export type TNavigationItemType = (typeof NavigationItemType)[number];
 
 export type TInfiniteScrollCollectionsResponse = {
   message: string;

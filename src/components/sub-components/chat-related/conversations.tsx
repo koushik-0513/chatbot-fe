@@ -7,11 +7,7 @@ type TChatHistoryProps = {
   onClick: (id: string) => void;
 };
 
-export const Conversation = ({
-  id,
-  title,
-  onClick,
-}: TChatHistoryProps) => {
+export const Conversation = ({ id, title, onClick }: TChatHistoryProps) => {
   const handleClick = () => {
     onClick(id);
   };
