@@ -8,7 +8,7 @@ import { Chatbot } from "@/components/chat-bot";
 
 import { useUserId } from "@/hooks/custom/use-user-id";
 
-const HomePage = (): React.JSX.Element => {
+export default function Page() {
   const [isChatbotopen, setIsChatbotOpen] = useState(false);
   const { userId } = useUserId();
   return (
@@ -22,11 +22,9 @@ const HomePage = (): React.JSX.Element => {
 
       {isChatbotopen && userId && (
         <div key="chatbot-container" className="fixed right-6 bottom-20 z-50">
-          <Chatbot user_id={userId} onClose={() => setIsChatbotOpen(false)} />
+          <Chatbot />
         </div>
       )}
     </div>
   );
 };
-
-export { HomePage };

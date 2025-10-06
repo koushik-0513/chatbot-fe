@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, UseInfiniteQueryOptions, InfiniteData } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
@@ -27,11 +27,12 @@ type TGetArticleDetailsQParams = {
 };
 
 type TInfiniteScrollCollectionsOptions = {
-  retry: number;
-  staleTime: number;
-  refetchOnWindowFocus: boolean;
-  enabled: boolean;
-};
+  initialPageParam: unknown;
+  getNextPageParam: (lastPage: TInfiniteScrollCollectionsResponse) => unknown;
+} & Omit<
+  UseInfiniteQueryOptions<TInfiniteScrollCollectionsResponse>,
+  "queryKey" | "queryFn" | "initialPageParam" | "getNextPageParam" | "select"
+>;
 
 // Article Reaction Types
 type TSubmitArticleReactionPayload = {
@@ -133,17 +134,18 @@ export const useGetTopArticles = (
 // Infinite scroll collections hook
 export const useGetInfiniteScrollCollections = (
   params: TGetInfiniteScrollCollectionsParams,
-  options?: TInfiniteScrollCollectionsOptions
+  options: TInfiniteScrollCollectionsOptions
 ) => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    TInfiniteScrollCollectionsResponse,
+    Error,
+    InfiniteData<TInfiniteScrollCollectionsResponse>
+  >({
     queryKey: ["useGetInfiniteScrollCollections", params.limit],
-    queryFn: ({ pageParam }: { pageParam: string | null }) =>
-      getInfiniteScrollCollections({ ...params, cursor: pageParam }),
-    initialPageParam: null,
-    getNextPageParam: (lastPage) =>
-      lastPage.infinite_scroll.has_more
-        ? lastPage.infinite_scroll.next_cursor
-        : undefined,
+    queryFn: ({ pageParam }) => {
+      const cursor = pageParam as string;
+      return getInfiniteScrollCollections({ ...params, cursor });
+    },
     ...options,
   });
 };

@@ -10,7 +10,7 @@ export type TInfiniteScrollCollectionsResponse = {
   data: THelpCollectionDetail[];
   infinite_scroll: {
     has_more: boolean;
-    next_cursor: string | null;
+    next_cursor: string;
     limit: number;
   };
 };
@@ -99,7 +99,7 @@ export type TArticleSearchResponse = {
 // Infinite scroll types for help
 export type TGetInfiniteScrollCollectionsParams = {
   limit: number;
-  cursor?: string | null;
+  cursor: string;
 };
 
 export type TTopArticlesResponse = {

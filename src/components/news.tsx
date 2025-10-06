@@ -8,7 +8,7 @@ import { useScrollContext } from "@/providers/scroll-provider";
 import { useGetInfiniteScrollNews } from "@/hooks/api/news";
 import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
 
-import { TNews } from "@/types/news-types";
+import { TNews, TInfiniteScrollNewsResponse } from "@/types/news-types";
 
 import { NewsCard } from "./sub-components/news-related/news-cards";
 import { NewsDetails } from "./sub-components/news-related/news-details";
@@ -36,7 +36,14 @@ export const News = ({
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-  } = useGetInfiniteScrollNews({ limit: 5 }, { enabled: true });
+  } = useGetInfiniteScrollNews({ limit: 5, cursor: "" }, { 
+    enabled: true, 
+    initialPageParam: "", 
+    getNextPageParam: (lastPage: TInfiniteScrollNewsResponse) => 
+      lastPage.infinite_scroll.has_more 
+        ? lastPage.infinite_scroll.next_cursor 
+        : null 
+  });
 
   // Flatten all pages of news data
   const allNews = infiniteNewsData?.pages.flatMap((page) => page.data) || [];
@@ -89,7 +96,7 @@ export const News = ({
   };
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full p-4 overflow-y-auto">
       <AnimatePresence mode="wait">
         {selectedNewsId && (
           <motion.div

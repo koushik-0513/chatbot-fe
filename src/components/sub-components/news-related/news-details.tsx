@@ -83,7 +83,7 @@ export const NewsDetails = ({ newsId, onBack }: TNewsDetailsProps) => {
   // Reset scroll when component mounts
   useEffect(() => {
     resetAllScroll();
-  }, []);
+  });
 
   // Loading state
   if (isLoading) {

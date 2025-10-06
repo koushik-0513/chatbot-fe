@@ -9,6 +9,7 @@ import { useSearchArticles } from "@/hooks/api/help";
 
 import { TArticleSearchResult } from "@/types/help-types";
 
+
 type TSearchResultsProps = {
   searchQuery: string;
   onArticleClick: (articleId: string) => void;

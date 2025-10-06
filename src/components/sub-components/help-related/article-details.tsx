@@ -19,6 +19,7 @@ import {
 } from "@/constants/reaction";
 
 import { useScrollContext } from "@/providers/scroll-provider";
+import { useTitle } from "@/providers/title-provider";
 
 import { MarkdownRenderer } from "@/components/ui/markdown-renderer";
 
@@ -35,7 +36,6 @@ import { TArticleReaction } from "@/types/help-types";
 type TArticleDetailsProps = {
   articleId: string | null;
   onRelatedArticleClick?: (articleId: string) => void;
-  onTitleChange?: (title: string) => void;
 };
 
 // Type guard to safely convert string to TArticleReaction
@@ -47,9 +47,9 @@ const isValidArticleReaction = (reaction: TArticleReaction | undefined) => {
 export const ArticleDetails = ({
   articleId,
   onRelatedArticleClick,
-  onTitleChange,
 }: TArticleDetailsProps) => {
   const { resetAllScroll } = useScrollContext();
+  const { setTitle } = useTitle();
   const contentRef = useRef<HTMLDivElement>(null);
   const { userId: user_id } = useUserId();
   const queryClient = useQueryClient();
@@ -107,20 +107,22 @@ export const ArticleDetails = ({
     onRelatedArticleClick?.(articleId);
   };
 
-  // Reset scroll when component mounts
+  // Reset scroll only when articleId changes (new article loaded)
   useEffect(() => {
-    resetAllScroll();
-    if (contentRef.current) {
-      contentRef.current.scrollTop = 0;
+    if (articleId) {
+      resetAllScroll();
+      if (contentRef.current) {
+        contentRef.current.scrollTop = 0;
+      }
     }
-  }, []);
+  }, [articleId]);
 
   // Notify parent of article title when data is loaded
   useEffect(() => {
     if (article?.title) {
-      onTitleChange?.(article.title);
+      setTitle(article.title);
     }
-  }, [article?.title, onTitleChange]);
+  }, [article?.title, setTitle]);
 
   // Function to calculate relative time
 
@@ -298,7 +300,7 @@ export const ArticleDetails = ({
             How helpful was this article?
           </motion.h3>
           <motion.div
-            className="flex gap-3"
+            className="flex gap-3 mb-6"
             variants={ITEM_VARIANTS}
             initial="hidden"
             animate="visible"

@@ -6,6 +6,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ArticleNavigationProvider } from "@/providers/article-navigation-provider";
 import { MaximizeProvider } from "@/providers/maximize-provider";
 import { ScrollProvider } from "@/providers/scroll-provider";
+import { TitleProvider } from "@/providers/title-provider";
 
 import { queryClient } from "@/lib/query-client";
 
@@ -20,7 +21,9 @@ export default function RootLayout({
         <QueryClientProvider client={queryClient}>
           <MaximizeProvider>
             <ScrollProvider>
-              <ArticleNavigationProvider>{children}</ArticleNavigationProvider>
+              <TitleProvider>
+                <ArticleNavigationProvider>{children}</ArticleNavigationProvider>
+              </TitleProvider>
             </ScrollProvider>
           </MaximizeProvider>
         </QueryClientProvider>

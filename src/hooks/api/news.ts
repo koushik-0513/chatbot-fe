@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, UseInfiniteQueryOptions, InfiniteData } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
@@ -18,11 +18,12 @@ type TGetNewsByIdQParams = {
 };
 
 type TInfiniteScrollNewsOptions = {
-  retry?: number;
-  staleTime?: number;
-  refetchOnWindowFocus?: boolean;
-  enabled?: boolean;
-};
+  initialPageParam: unknown;
+  getNextPageParam: (lastPage: TInfiniteScrollNewsResponse) => unknown;
+} & Omit<
+  UseInfiniteQueryOptions<TInfiniteScrollNewsResponse>,
+  "queryKey" | "queryFn" | "initialPageParam" | "getNextPageParam" | "select"
+>;
 
 // News Reaction Types
 type TSubmitNewsReactionPayload = {
@@ -74,18 +75,20 @@ export const useGetNewsById = (
 // Infinite scroll news hook
 export const useGetInfiniteScrollNews = (
   params: TGetInfiniteScrollNewsParams,
-  options?: TInfiniteScrollNewsOptions
+  options: TInfiniteScrollNewsOptions
 ) => {
-  return useInfiniteQuery({
+  return useInfiniteQuery<
+    TInfiniteScrollNewsResponse,
+    Error,
+    InfiniteData<TInfiniteScrollNewsResponse>
+  >({
     queryKey: ["useGetInfiniteScrollNews", params.limit],
-    queryFn: ({ pageParam }: { pageParam: string | null }) =>
-      getInfiniteScrollNews({ ...params, cursor: pageParam }),
-    initialPageParam: null,
-    getNextPageParam: (lastPage) =>
-      lastPage.infinite_scroll.has_more
-        ? lastPage.infinite_scroll.next_cursor
-        : undefined,
-    enabled: options?.enabled,
+    queryFn: ({ pageParam }) => {
+      const cursor = pageParam as string;
+      console.log("cursor", cursor);
+      return getInfiniteScrollNews({ ...params, cursor });
+    },
+    ...options,
   });
 };
 

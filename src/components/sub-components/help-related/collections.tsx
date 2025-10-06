@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import { useGetInfiniteScrollCollections } from "@/hooks/api/help";
 import { useInfiniteScroll } from "@/hooks/custom/use-infinite-scroll";
 
-import { THelpCollectionDetail } from "@/types/help-types";
+import { THelpCollectionDetail, TInfiniteScrollCollectionsResponse } from "@/types/help-types";
 
-import { ArticleCard } from "./collection-cards";
+import { CollectionCard } from "./collection-cards";
 
 type TCollectionsListProps = {
   onCollectionClick: (collection: THelpCollectionDetail) => void;
@@ -23,9 +23,14 @@ export const CollectionsList = ({
     isFetchingNextPage,
     fetchNextPage,
   } = useGetInfiniteScrollCollections(
-    { limit: 5 },
+    { limit: 5, cursor: "" },
     {
-      enabled: true,
+      initialPageParam: "",
+      getNextPageParam: (lastPage: TInfiniteScrollCollectionsResponse) =>
+        lastPage.infinite_scroll.has_more
+          ? lastPage.infinite_scroll.next_cursor
+          : null,
+      enabled: true,  
       retry: 2,
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
@@ -34,7 +39,7 @@ export const CollectionsList = ({
 
   // Flatten all pages of collections data
   const allCollections =
-    infiniteCollectionsData?.pages.flatMap((page) => page.data) || [];
+    infiniteCollectionsData?.pages?.flatMap((page) => page.data) || [];
 
   // Infinite scroll hook
   const { lastElementRef } = useInfiniteScroll({
@@ -107,7 +112,7 @@ export const CollectionsList = ({
                   delay: 0.4 + index * 0.1,
                 }}
               >
-                <ArticleCard
+                <CollectionCard
                   collection={collection}
                   onClick={onCollectionClick}
                 />

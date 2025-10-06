@@ -5,11 +5,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useArticleNavigation } from "@/providers/article-navigation-provider";
 import { useMaximize } from "@/providers/maximize-provider";
 import { useScrollContext } from "@/providers/scroll-provider";
+import { useTitle } from "@/providers/title-provider";
 
 import { useDebounce } from "@/hooks/custom/use-debounce";
 
 import {
-  TArticleReaction,
   THelpArticleDetail,
   THelpCollectionDetail,
   THelpPageState,
@@ -28,7 +28,6 @@ type THelppageProps = {
   onShowDetails?: (show: boolean) => void;
   onBackFromDetails?: () => void;
   selectedArticleId?: string | null;
-  onTitleChange?: (title: string) => void;
   navigatedFromHomepage?: boolean;
 };
 
@@ -39,10 +38,10 @@ export const Help = ({
   onShowDetails,
   onBackFromDetails,
   selectedArticleId: propSelectedArticleId,
-  onTitleChange,
   navigatedFromHomepage = false,
 }: THelppageProps) => {
   const { autoMaximize, autoMinimize } = useMaximize();
+  const { setTitle } = useTitle();
   const [pageState, setPageState] = useState<THelpPageState>({
     currentView: "list",
     selectedCollection: null,
@@ -88,7 +87,7 @@ export const Help = ({
       return;
     }
 
-    resetArticleNavigation();
+
     openArticleDetailsById(propSelectedArticleId);
   }, [propSelectedArticleId, selectedArticleId, openArticleDetailsById]);
 
@@ -101,12 +100,20 @@ export const Help = ({
   const [parentCollectionId, setParentCollectionId] = useState<string | null>(
     null
   );
-  const [showTitle, setShowTitle] = useState(false);
+  const [, setShowTitle] = useState(false);
 
   // Handle search query changes
   useEffect(() => {
-    setIsSearching(debouncedSearchQuery.length > 0);
-  }, [debouncedSearchQuery]);
+    const wasSearching = isSearching;
+    const nowSearching = debouncedSearchQuery.length > 0;
+    
+    setIsSearching(nowSearching);
+    
+    // Reset title to "Help" when entering search mode
+    if (!wasSearching && nowSearching) {
+      setTitle("Help");
+    }
+  }, [debouncedSearchQuery, isSearching, setTitle]);
 
   // Auto-show article when selectedArticleId is provided
   useEffect(() => {
@@ -159,6 +166,13 @@ export const Help = ({
         onShowBackButton(false);
         // Ensure navbar is visible when entering help from other tabs
         onShowDetails?.(false);
+        // Set initial title to "Help" when entering help page
+        setTitle("Help");
+      } else {
+        // Even when navigating from homepage, set title to "Help" if no specific article
+        if (!propSelectedArticleId) {
+          setTitle("Help");
+        }
       }
 
       // Force scroll reset for this component
@@ -176,7 +190,7 @@ export const Help = ({
       resetArticleNavigation();
       onShowBackButton(false);
     }
-  }, [activePage, navigatedFromHomepage]);
+  }, [activePage, navigatedFromHomepage, propSelectedArticleId, setTitle]);
   // Handle back button trigger from navbar
   useEffect(() => {
     if (backButtonTrigger > 0) {
@@ -203,7 +217,7 @@ export const Help = ({
       // Reset scroll when navigating to collection
       resetAllScroll();
     },
-    [onShowBackButton, onShowDetails]
+    []
   );
 
   const handle_article_click = useCallback(
@@ -232,8 +246,7 @@ export const Help = ({
 
       onShowDetails?.(true);
       autoMaximize();
-      // Reset scroll when navigating to article
-      resetAllScroll();
+      // Don't reset scroll here - let ArticleDetails handle it when the article loads
     },
     [
       onShowDetails,
@@ -254,22 +267,23 @@ export const Help = ({
         selectedArticle: null, // Will be populated when data is fetched
       });
 
-      // Reset scroll position for new article
-      resetAllScroll();
+      // Don't reset scroll here - let ArticleDetails handle it when the new article loads
     },
-    [pageState.selectedCollection, openArticleDetailsById, resetAllScroll]
+    [pageState.selectedCollection, openArticleDetailsById]
   );
 
   // Search handlers
   const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
-  }, []);
+    setTitle("Help");
+  }, [setTitle]);
 
   const handleClearSearch = useCallback(() => {
     setSearchQuery("");
     setIsSearching(false);
     setCameFromSearch(false); // Reset search navigation state
-  }, []);
+    setTitle("Help"); // Reset title when clearing search
+  }, [setTitle]);
 
   const handle_back_to_list = () => {
     // Check if we came from search results
@@ -288,7 +302,7 @@ export const Help = ({
       onShowDetails?.(false);
       // Don't call onBackFromDetails here - we're going back to search, not home
       // Reset title to "Help"
-      onTitleChange?.("Help");
+      setTitle("Help");
 
       // Reset scroll when going back to search
       resetAllScroll();
@@ -318,7 +332,7 @@ export const Help = ({
       onShowDetails?.(false);
       // Don't call onBackFromDetails here - we're going back to list, not home
       // Reset title to "Help"
-      onTitleChange?.("Help");
+      setTitle("Help");
     }
 
     // Reset scroll when going back
@@ -337,12 +351,16 @@ export const Help = ({
       resetArticleNavigation();
       // Don't hide navbar for search view
       onShowDetails?.(false);
+      // Hide back button when going back to search
+      onShowBackButton(false);
       // Auto-minimize when going back to search
       autoMinimize();
       // Keep search query active
       setIsSearching(true);
+      // Reset title to "Help" when going back to search
+      setTitle("Help");
 
-      // Reset scroll when going back to search
+      // Reset scroll when going back to search (this is appropriate)
       resetAllScroll();
       return;
     }
@@ -385,9 +403,9 @@ export const Help = ({
     // Auto-minimize when going back to collection
     autoMinimize();
     // Reset title to "Help"
-    onTitleChange?.("Help");
+    setTitle("Help");
 
-    // Reset scroll when going back to collection
+    // Reset scroll when going back to collection (this is appropriate)
     resetAllScroll();
   }, [
     cameFromSearch,
@@ -398,8 +416,11 @@ export const Help = ({
     navigatedFromHomepage,
     onShowDetails,
     onBackFromDetails,
-    onTitleChange,
+    onShowBackButton,
+    setTitle,
     resetArticleNavigation,
+    autoMinimize,
+    resetAllScroll,
   ]);
 
   const handle_child_collection_click = (
@@ -434,7 +455,6 @@ export const Help = ({
           <ArticleDetails
             articleId={selectedArticleId}
             onRelatedArticleClick={handle_related_article_click}
-            onTitleChange={onTitleChange}
           />
         </motion.div>
       )}

@@ -20,15 +20,12 @@ import { Chatbot } from "@/components/chat-bot";
 
 import { queryClient } from "@/lib/query-client";
 
-import { useUserId } from "@/hooks/custom/use-user-id";
-
 import { InitialFrameStyles } from "@/types/types";
 
 export default function WidgetPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [, setIsMaximized] = useState(false);
   const [isEmbedded, setIsEmbedded] = useState(false);
-  const { userId } = useUserId();
   const [, setConfig] = useState({
     primaryColor: "#2563eb",
     customerId: "demo",
@@ -186,7 +183,7 @@ export default function WidgetPage() {
           <MaximizeProvider onMaximizeChange={handleMaximizeChange}>
             <ScrollProvider>
               <ArticleNavigationProvider>
-                <Chatbot user_id={userId ?? ""} onClose={() => handleClose()} />
+                <Chatbot />
               </ArticleNavigationProvider>
             </ScrollProvider>
           </MaximizeProvider>

@@ -7,7 +7,7 @@ type TArticleCardProps = {
   onClick: (collection: THelpCollectionDetail) => void;
 };
 
-export const ArticleCard = ({ collection, onClick }: TArticleCardProps) => {
+export const CollectionCard = ({ collection, onClick }: TArticleCardProps) => {
   const handleClick = () => {
     onClick(collection);
   };

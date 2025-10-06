@@ -49,7 +49,7 @@ export type TNewsResponse = {
 // Infinite scroll news params
 export type TGetInfiniteScrollNewsParams = {
   limit: number;
-  cursor?: string | null;
+  cursor: string;
 };
 
 export type TNewsReactionResponse = {

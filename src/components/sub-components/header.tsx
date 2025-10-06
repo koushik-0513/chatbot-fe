@@ -2,8 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 
 import { useMaximize } from "@/providers/maximize-provider";
-
-import { cn } from "@/lib/utils";
+import { useTitle } from "@/providers/title-provider";
 
 type HeaderProps = {
   title: string;
@@ -23,6 +22,10 @@ export const Header = ({
   isScrolled = false,
 }: HeaderProps): React.JSX.Element => {
   const { isMaximized, setMaximized } = useMaximize();
+  const { title: dynamicTitle } = useTitle();
+  
+  // Use dynamic title from context if available, otherwise use prop title
+  const displayTitle = dynamicTitle || title;
 
   return (
     <motion.div className="border-border bg-card sticky top-0 z-50 flex items-center rounded-t-lg border-b p-3">
@@ -36,7 +39,7 @@ export const Header = ({
       )}
       <div className="flex flex-1 flex-col items-center">
         <motion.h2
-          key={title}
+          key={displayTitle}
           className="text-foreground text-md text-center font-semibold"
           initial={{ opacity: 0 }}
           animate={{
@@ -44,7 +47,7 @@ export const Header = ({
           }}
           transition={{ duration: 0.2 }}
         >
-          {title}
+          {displayTitle}
         </motion.h2>
       </div>
       <div className="mr-8 ml-auto flex items-center gap-2">

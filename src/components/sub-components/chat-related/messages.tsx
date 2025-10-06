@@ -266,11 +266,7 @@ export const Messages = ({
                   break;
                 }
               } catch (e) {
-                // If JSON parsing fails, treat as plain text (fallback)
-                if (data.trim()) {
-                  accumulatedContent += data;
-                  setStreamingContent(accumulatedContent);
-                }
+                console.error(e);
               }
             }
           }
@@ -481,9 +477,7 @@ export const Messages = ({
                     {u.name}
                   </span>
                   <span className="text-muted-foreground">
-                    {u.status === "processing" && "Uploading..."}
-                    {u.status === "processed" && "Upload successful"}
-                    {u.status === "failed" && "Upload failed"}
+                    {u.status}
                   </span>
                 </div>
                 {u.status === "failed" && u.error && (

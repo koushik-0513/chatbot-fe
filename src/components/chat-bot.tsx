@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useArticleNavigation } from "@/providers/article-navigation-provider";
 import { useMaximize } from "@/providers/maximize-provider";
 import { useScrollContext } from "@/providers/scroll-provider";
+import { useTitle } from "@/providers/title-provider";
 
 import { cn } from "@/lib/utils";
 
@@ -16,12 +17,7 @@ import { Messages } from "./sub-components/chat-related/messages";
 import { Header } from "./sub-components/header";
 import { Navigation } from "./sub-components/navigation-bar";
 
-type TChatbotProps = {
-  user_id: string; // controlled
-  onClose: () => void;
-};
-
-export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
+export const Chatbot = () => {
   const [activePage, setActivePage] = useState("homepage");
   const [showChatHistory, setShowChatHistory] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
@@ -30,12 +26,12 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(
     null
   );
-  const [dynamicTitle, setDynamicTitle] = useState<string | null>(null);
   const [showActiveChat, setShowActiveChat] = useState(false);
   const [navigatedFromHomepage, setNavigatedFromHomepage] = useState(false);
   const [isArticleScrolled, setIsArticleScrolled] = useState(false);
   const { isArticleDetailsOpen } = useArticleNavigation();
   const { isMaximized, autoMinimize, autoMaximize } = useMaximize();
+  const { title: dynamicTitle } = useTitle();
 
   const [showDetails, setShowDetails] = useState(false);
   const [title, setTitle] = useState<string | null>(null);
@@ -55,7 +51,6 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
     setActivePage(page);
     setShowDetails(false);
     setSelectedArticleId(articleId || null);
-    setDynamicTitle(null);
 
     if (
       page === "homepage" ||
@@ -225,7 +220,6 @@ export const Chatbot = ({ user_id, onClose }: TChatbotProps) => {
             onShowDetails={setShowDetails}
             onBackFromDetails={handleBackFromDetails}
             selectedArticleId={selectedArticleId}
-            onTitleChange={setDynamicTitle}
             navigatedFromHomepage={navigatedFromHomepage}
           />
         </div>
